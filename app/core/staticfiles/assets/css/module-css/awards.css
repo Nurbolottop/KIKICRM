@@ -1,0 +1,228 @@
+/*--------------------------------------------------------------
+# Awards One
+--------------------------------------------------------------*/
+.awards-one {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F2F2FF 64.5%, #FAFAFF 100%);
+  padding: 96px 0 100px;
+  z-index: 1;
+}
+
+.awards-one__sahpe-1 {
+  position: absolute;
+  bottom: 35px;
+  left: 30px;
+  z-index: -1;
+}
+
+.awards-one__sahpe-1 img {
+  width: auto;
+}
+
+.awards-one__sahpe-2 {
+  position: absolute;
+  top: 90px;
+  right: 0px;
+  z-index: -1;
+}
+
+.awards-one__sahpe-2 img {
+  width: auto;
+}
+
+.awards-one__single {
+  position: relative;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.awards-one .faq-one-accrodion .accrodion {
+  position: relative;
+  display: block;
+  border: 1px solid #E7E7E7;
+  background: var(--Freshflow-white);
+  border-radius: 12px;
+  overflow: hidden;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+.awards-one .faq-one-accrodion .accrodion.active {
+  border: 1px solid #E7E7E7;
+  background: var(--Freshflow-white);
+}
+
+.awards-one .faq-one-accrodion .accrodion-title {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  padding: 25px 25px 25px;
+  transition: all 200ms linear;
+  transition-delay: 0.1s;
+}
+
+.awards-one .faq-one-accrodion .accrodion-title h4 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.03em;
+  color: var(--Freshflow-black);
+  position: relative;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+.awards-one .faq-one-accrodion .accrodion+.accrodion {
+  margin-top: 20px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-title h4::before {
+  content: "\f105";
+  font-family: "Font Awesome 5 Pro";
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--Freshflow-black);
+  position: absolute;
+  top: 50%;
+  right: 0;
+  line-height: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+  text-align: center;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(var(--Freshflow-gray-rgb), .21);
+}
+
+.awards-one .faq-one-accrodion .accrodion.active .accrodion-title h4::before {
+  content: "\f107";
+  color: var(--Freshflow-white);
+  background-color: var(--Freshflow-base);
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content {
+  position: relative;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
+  border-top: 1px solid #E7E7E7;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .img-box {
+  position: relative;
+  display: block;
+  max-width: 160px;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .img-box img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box {
+  position: relative;
+  display: block;
+  flex: 1;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .content-box-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 26px;
+  font-family: var(--Freshflow-font);
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .content-box-text {
+  margin-top: 11px;
+  margin-bottom: 13px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .date-box {
+  position: relative;
+  display: block;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .date-box p {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--Freshflow-base);
+  text-transform: uppercase;
+  gap: 7px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .btn-box {
+  position: relative;
+  display: block;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .btn-box a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 14px;
+  color: var(--Freshflow-gray);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .btn-box a span {
+  font-size: 20px;
+}
+
+.awards-one .faq-one-accrodion .accrodion-content .inner .content-box .date-and-btn .btn-box a:hover {
+  color: var(--Freshflow-base);
+}
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------------
+  # End
+  --------------------------------------------------------------*/

@@ -1,0 +1,455 @@
+/*--------------------------------------------------------------
+# Banner One
+--------------------------------------------------------------*/
+.banner-one {
+  position: relative;
+  display: block;
+  padding: 255px 0 0px;
+  background: linear-gradient(102.31deg, #F7F7FF 0%, #EDEEFF 51%, #F6F7FF 100%);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.banner-one__shape-bg-1 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  opacity: .10;
+  mix-blend-mode: plus-lighter;
+  z-index: -1;
+}
+
+
+
+.banner-one__shape-1 {
+  position: absolute;
+  width: 537px;
+  height: 502px;
+  left: -255px;
+  top: 32px;
+  background: rgba(255, 255, 255, 0.39);
+  filter: blur(150px);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.banner-one__shape-2 {
+  position: absolute;
+  width: 537px;
+  height: 502px;
+  left: -268px;
+  bottom: 75px;
+  background: rgba(17, 149, 255, 0.39);
+  filter: blur(150px);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.banner-one__shape-3 {
+  position: absolute;
+  width: 537px;
+  height: 502px;
+  right: -250px;
+  top: 5px;
+  background: rgba(17, 149, 255, 0.39);
+  filter: blur(150px);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.banner-one__shape-4 {
+  position: absolute;
+  bottom: 30px;
+  left: 695px;
+  z-index: -1;
+}
+
+.banner-one__shape-4 img {
+  width: auto;
+}
+
+.banner-one__shape-5 {
+  position: absolute;
+  bottom: 60px;
+  right: 215px;
+  z-index: -1;
+}
+
+.banner-one__shape-5 img {
+  width: auto;
+}
+
+
+
+.banner-one__left {
+  position: relative;
+  display: block;
+  margin-top: 96px;
+  margin-right: -50px;
+}
+
+.banner-one__title-box {
+  position: relative;
+  display: block;
+}
+
+.banner-one__title {
+  font-size: 40px;
+  line-height: 56px;
+  font-weight: 700;
+}
+
+.banner-one__title-color {
+  color: var(--Freshflow-base);
+}
+
+.banner-one__text {
+  font-size: 18px;
+  line-height: 28px;
+  margin-top: 28px;
+  margin-bottom: 42px;
+}
+
+.banner-one__btn-box {
+  position: relative;
+  display: block;
+}
+
+.banner-one__satisfied-partner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 65px;
+}
+
+.banner-one__satisfied-partner-list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.banner-one__satisfied-partner-list li {
+  position: relative;
+  display: block;
+}
+
+.banner-one__satisfied-partner-list li+li {
+  margin-left: -12px;
+}
+
+.banner-one__satisfied-partner-img {
+  position: relative;
+  display: block;
+  max-width: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.banner-one__satisfied-partner-img img {
+  width: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--Freshflow-white);
+}
+
+.banner-one__satisfied-partner-content {
+  position: relative;
+  display: block;
+}
+
+.banner-one__satisfied-partner-content .odometer-formatting-mark {
+  display: none;
+}
+
+.banner-one__satisfied-partner-count-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 7px;
+}
+
+.banner-one__satisfied-partner-count-box p {
+  font-size: 24px;
+  color: var(--Freshflow-black);
+  font-weight: 700;
+  line-height: 24px !important;
+  font-family: var(--Freshflow-font-two) !important;
+}
+
+.banner-one__satisfied-partner-count-box span {
+  font-size: 24px;
+  color: var(--Freshflow-black);
+  font-weight: 700;
+  line-height: 24px;
+  font-family: var(--Freshflow-font-two);
+}
+
+.banner-one__satisfied-partner-text {
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.banner-one__right {
+  position: relative;
+  display: block;
+  margin-left: 30px;
+}
+
+.banner-one__img-box {
+  position: relative;
+  display: block;
+}
+
+.banner-one__img {
+  position: relative;
+  display: block;
+}
+
+.banner-one__img img {
+  width: auto;
+  animation: topBottom 3s ease-in-out infinite;
+}
+
+.banner-one__google-rating {
+  position: absolute;
+  bottom: 138px;
+  left: -85px;
+  background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.61) 100%);
+  box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.03);
+  border-radius: 9px;
+  padding: 20px 20px 20px;
+  max-width: 192px;
+  width: 100%;
+}
+
+.banner-one__google-rating-img {
+  position: relative;
+  display: block;
+  margin-bottom: 11px;
+}
+
+.banner-one__google-rating-img img {
+  width: auto;
+}
+
+.banner-one__google-rating-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.banner-one__google-rating-star {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.banner-one__google-rating-star span {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  color: var(--Freshflow-primary);
+}
+
+.banner-one__google-rating-count {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.banner-one__google-rating-count p {
+  font-size: 18px;
+  color: var(--Freshflow-black);
+  font-weight: 500;
+}
+
+.banner-one__google-rating-count span {
+  font-size: 18px;
+  color: var(--Freshflow-black);
+  font-weight: 500;
+}
+
+
+
+/*--------------------------------------------------------------
+# Banner Two
+--------------------------------------------------------------*/
+.banner-two {
+  position: relative;
+  display: block;
+  padding: 208px 0px 235px;
+  z-index: 1;
+}
+
+.banner-two__img {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+}
+
+.banner-two__img2 {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 0px 0;
+  height: 100%;
+  opacity: 1.0;
+  z-index: -1;
+}
+
+.banner-two__img2::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(-90deg, rgba(5, 23, 61, 0.80) 0%, rgba(5, 23, 61, 0.97) 100%);
+}
+
+.banner-two__shape1 {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: 60px;
+  background-attachment: scroll;
+  background-size: 100% 100%;
+  z-index: 2;
+}
+
+.banner-two__content {
+  position: relative;
+  display: block;
+  padding-left: 100px;
+}
+
+.banner-two__tagline {
+  position: relative;
+  display: block;
+  padding-left: 40px;
+  margin-bottom: 19px;
+}
+
+.banner-two__tagline::before {
+  position: absolute;
+  top: 11px;
+  left: 0;
+  width: 30px;
+  height: 4px;
+  background: rgba(var(--Freshflow-white-rgb), 1.0);
+  border-radius: 2px;
+  content: "";
+}
+
+.banner-two__tagline span {
+  color: var(--Freshflow-white);
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.banner-two__content-inner h2 {
+  position: relative;
+  font-size: 70px;
+  color: var(--Freshflow-white);
+  font-weight: 700;
+  line-height: 80px;
+  text-transform: capitalize;
+  margin-bottom: 19px;
+}
+
+.banner-two__content-inner p {
+  position: relative;
+  display: inline-block;
+  color: #F5F5F5;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28px;
+  margin-bottom: 32px;
+}
+
+.banner-two__btn-box .thm-btn {
+  background-color: var(--Freshflow-primary);
+}
+
+.banner-two__btn::before {
+  background-color: var(--Freshflow-white);
+}
+
+.banner-two__btn::after {
+  background-color: var(--Freshflow-white);
+}
+
+.banner-two__btn:hover {
+  color: var(--Freshflow-base);
+}
+
+.banner-two__social {
+  position: absolute;
+  bottom: 208px;
+  right: -110px;
+  display: flex;
+  align-items: center;
+  transform: rotate(-90deg);
+  z-index: 2;
+}
+
+.banner-two__social a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--Freshflow-black);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--Freshflow-font-two);
+  text-transform: uppercase;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+.banner-two__social a+a {
+  margin-left: 25px;
+}
+
+.banner-two__social a:hover {
+  color: var(--Freshflow-base);
+}
+
+#particles-js {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-position: 50% 50%;
+  opacity: 0.5;
+  z-index: -1;
+}
+
+
+/*--------------------------------------------------------------
+  # End
+  --------------------------------------------------------------*/

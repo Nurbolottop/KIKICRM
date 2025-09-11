@@ -1,0 +1,46 @@
+/*--------------------------------------------------------------
+# Sliding Text One
+--------------------------------------------------------------*/
+.brand-one {
+    position: relative;
+    display: block;
+    z-index: 4;
+}
+
+.brand-one__wrap {
+    position: relative;
+    display: block;
+    padding: 60px 0 60px;
+    border-top: 1px dashed rgba(var(--Freshflow-base-rgb), .30);
+    border-bottom: 1px dashed rgba(var(--Freshflow-base-rgb), .30);
+    background: linear-gradient(180deg, #F3F4FF 0%, #FFFFFF 100%);
+}
+
+.brand-one__list {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: fit-content;
+}
+
+.brand-one__list li {
+    position: relative;
+    display: block;
+    float: left;
+}
+
+.brand-one__list li img {
+    width: auto;
+    margin-right: 40px;
+    margin-left: 40px;
+}
+
+.brand-one__list-two {
+    margin-top: 30px;
+}
+
+/*--------------------------------------------------------------
+# End
+--------------------------------------------------------------*/

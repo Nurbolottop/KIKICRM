@@ -1,0 +1,178 @@
+/*--------------------------------------------------------------
+# Process One
+--------------------------------------------------------------*/
+.process-one {
+    position: relative;
+    display: block;
+    counter-reset: count;
+    padding: 120px 0 90px;
+    border-top: 1px solid rgba(var(--Freshflow-base-rgb), .14);
+    z-index: 1;
+}
+
+.process-one__shape-1 {
+    position: absolute;
+    top: 90px;
+    left: 0;
+    z-index: -1;
+}
+
+.process-one__shape-1 img {
+    width: auto;
+}
+
+.process-one__shape-2 {
+    position: absolute;
+    bottom: 120px;
+    right: 0;
+    z-index: -1;
+}
+
+.process-one__shape-2 img {
+    width: auto;
+}
+
+.process-one .row {
+    --bs-gutter-x: 0;
+}
+
+.process-one__single {
+    position: relative;
+    display: block;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.process-one ul li:nth-child(2) .process-one__single {
+    margin-top: 50px;
+}
+
+.process-one ul li:nth-child(4) .process-one__single {
+    margin-top: 50px;
+}
+
+.process-one__single-shape-1 {
+    position: relative;
+    display: block;
+    margin-bottom: 17px;
+}
+
+.process-one ul li:nth-child(2) .process-one__single-shape-1 {
+    margin-bottom: 36px;
+    margin-top: -18px;
+}
+
+.process-one ul li:nth-child(4) .process-one__single-shape-1 {
+    margin-bottom: 36px;
+    margin-top: -18px;
+}
+
+.process-one__single-shape-1 img {
+    width: 100%;
+}
+
+.process-one__title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 30px;
+}
+
+.process-one__text {
+    margin: 25px 0 39px;
+}
+
+.process-one__icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 110px;
+    border: 1px solid rgba(var(--Freshflow-base-rgb), .14);
+    background-color: var(--Freshflow-white);
+    border-radius: 50%;
+    margin: 0 auto;
+    -webkit-transition: all 500ms ease;
+    transition: all 500ms ease;
+}
+
+.process-one__single:hover .process-one__icon {
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.process-one__icon span {
+    position: relative;
+    display: inline-block;
+    font-size: 56px;
+    color: var(--Freshflow-primary);
+    transition: all 500ms linear;
+    transition-delay: 0.1s;
+    transform: scale(1);
+}
+
+.process-one__single:hover .process-one__icon span {
+    transform: scale(0.9);
+}
+
+.process-one ul li:nth-child(2) .process-one__icon span {
+    color: var(--Freshflow-base);
+}
+
+.process-one ul li:nth-child(3) .process-one__icon span {
+    color: #5CCB69;
+}
+
+.process-one ul li:nth-child(4) .process-one__icon span {
+    color: #FF2E89;
+}
+
+.process-one__count {
+    position: absolute;
+    right: -22px;
+    bottom: 13px;
+    background-color: var(--Freshflow-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.process-one ul li:nth-child(2) .process-one__count {
+    background-color: var(--Freshflow-base);
+}
+
+.process-one ul li:nth-child(3) .process-one__count {
+    background-color: #5CCB69;
+}
+
+.process-one ul li:nth-child(4) .process-one__count {
+    background-color: #FF2E89;
+}
+
+.process-one__count::before {
+    position: relative;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--Freshflow-white);
+    counter-increment: count;
+    content: "0"counter(count);
+    transition: all 200ms linear;
+    transition-delay: 0.1s;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------------
+# End
+--------------------------------------------------------------*/

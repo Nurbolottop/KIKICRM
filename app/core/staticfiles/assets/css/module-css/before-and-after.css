@@ -1,0 +1,949 @@
+/*--------------------------------------------------------------
+# Before And After
+--------------------------------------------------------------*/
+.before-and-after {
+  position: relative;
+  display: block;
+  background-color: #F0F6FF;
+  padding: 120px 0 120px;
+  z-index: 1;
+}
+
+.before-and-after__bg-shape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  opacity: 0.06;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+}
+
+.before-and-after__shape-1 {
+  position: absolute;
+  top: 65px;
+  left: 65px;
+  opacity: .16;
+  z-index: -1;
+}
+
+.before-and-after__shape-1 img {
+  width: auto;
+}
+
+.before-and-after__shape-2 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+}
+
+.before-and-after__shape-2 img {
+  width: auto;
+}
+
+.before-and-after__shape-3 {
+  position: absolute;
+  bottom: 160px;
+  right: 53px;
+  z-index: -1;
+}
+
+.before-and-after__shape-3 img {
+  width: auto;
+}
+
+.before-and-after__left {
+  position: relative;
+  display: block;
+  margin-right: 52px;
+}
+
+.before-and-after__img-box {
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  border: 4px solid var(--Freshflow-white);
+}
+
+.before-and-after__img-box .before-after {
+  position: relative;
+  display: block;
+  height: 100%;
+}
+
+.before-and-after__img-box .before-after .twentytwenty-container img {
+  width: 100%;
+  border-radius: 16px;
+}
+
+.before-and-after__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:before {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 100px;
+  height: 100px;
+  line-height: 90px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  background: transparent;
+  z-index: 1;
+  transform: rotate(-45deg);
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-and-after__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:after {
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 0px;
+  width: 100px;
+  height: 100px;
+  clip-path: polygon(0% 0%, 100% 0%, 0% 100%, 0% 100%, 0% 0%);
+}
+
+
+
+.before-and-after__img-box .before-after .twentytwenty-horizontal .twentytwenty-after-label:before {
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 140px;
+  text-align: center;
+  font-size: 16px;
+  background: transparent;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  bottom: 0px;
+  transform: rotate(-45deg);
+  z-index: 1;
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-and-after__img-box.before-after .twentytwenty-horizontal .twentytwenty-after-label:after {
+  position: absolute;
+  content: '';
+  bottom: 0px;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  clip-path: polygon(0% 100%, 100% 0%, 100% 100%, 0% 100%, 0% 0%);
+}
+
+.twentytwenty-after-label,
+.twentytwenty-before-label {
+  opacity: 1 !important;
+}
+
+.before-and-after__img-box .twentytwenty-horizontal .twentytwenty-handle:before {
+  height: 290px;
+  top: -292px;
+}
+
+.before-and-after__img-box .twentytwenty-horizontal .twentytwenty-handle:after {
+  height: 275px;
+}
+
+.before-and-after__img-box .twentytwenty-overlay {
+  border-radius: 10px
+}
+
+.before-and-after__img-holder-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  height: 160px;
+  width: 158px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.before-and-after__img-holder {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  transition: all 500ms ease;
+  border-radius: 10px;
+  height: 160px;
+  width: 158px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.before-and-after__img-holder:before {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  content: "";
+  border: 4px solid var(--Freshflow-white);
+  border-radius: 24px;
+  z-index: 1;
+  transition: all 500ms ease;
+}
+
+.swiper-slide-active .before-and-after__img-holder:before,
+.swiper-slide-thumb-active .before-and-after__img-holder:before {
+  border: 4px solid var(--Freshflow-base);
+}
+
+.before-and-after__img-holder>img {
+  width: 100%;
+  transition: all 0.5s ease-in-out 0.6s;
+  border-radius: 24px;
+}
+
+.before-and-after__tag {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.before-and-after__tag span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 24px;
+  text-transform: uppercase;
+  font-family: var(--Freshflow-font-two);
+  color: var(--Freshflow-black);
+  background-color: var(--Freshflow-white);
+  padding: 8px 20px 8px;
+  border-radius: 12px;
+}
+
+.before-and-after__tag-2 {
+  left: inherit;
+  right: 20px;
+}
+
+.before-and-after__right {
+  position: relative;
+  display: block;
+  margin-top: 80px;
+}
+
+.before-and-after__right .section-title {
+  margin-bottom: 26px;
+}
+
+.before-and-after__points {
+  position: relative;
+  display: block;
+  margin: 32px 0 41px;
+}
+
+.before-and-after__points li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.before-and-after__points li+li {
+  margin-top: 14px;
+}
+
+.before-and-after__points li .icon {
+  position: relative;
+  display: inline-block;
+}
+
+.before-and-after__points li .icon span {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  color: var(--Freshflow-base);
+}
+
+.before-and-after__points li p {
+  font-weight: 600;
+  color: var(--Freshflow-black);
+}
+
+.before-and-after__img-list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.before-and-after__img-list li {
+  position: relative;
+  display: block;
+}
+
+.before-and-after__img-list-img {
+  position: relative;
+  display: block;
+  border: 10px solid var(--Freshflow-white);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.before-and-after__img-list-img::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(var(--Freshflow-black-rgb), .70);
+  opacity: 0;
+  transform: translateY(90px);
+  transition: background-color 0.7s ease;
+  transition: all 0.7s ease;
+  z-index: 1;
+}
+
+.before-and-after__img-list li:hover .before-and-after__img-list-img::before {
+  opacity: 1;
+  transform: translateY(0px);
+}
+
+.before-and-after__img-list-img img {
+  border-radius: 50%;
+  width: 100%;
+  transform: scale(1.0);
+  transition: all 1500ms ease;
+}
+
+.before-and-after__img-list li:hover .before-and-after__img-list-img img {
+  transform: scale(1.05) rotate(0deg);
+}
+
+/*--------------------------------------------------------------
+# Before After Two
+--------------------------------------------------------------*/
+.before-after-two {
+  position: relative;
+  display: block;
+  background-color: var(--Freshflow-secondary);
+  padding: 120px 0 35px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.before-after-two__bg-shape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.03;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+}
+
+.before-after-two__shape-1 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: -1;
+}
+
+.before-after-two_-shape-1 img {
+  width: auto;
+}
+
+.before-after-two__shape-2 {
+  position: absolute;
+  width: 423px;
+  height: 396px;
+  left: -212px;
+  bottom: -10px;
+  background: rgba(17, 149, 255, 0.39);
+  filter: blur(150px);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.before-after-two__shape-3 {
+  position: absolute;
+  width: 334px;
+  height: 313px;
+  right: -55px;
+  top: -11px;
+  background: rgba(17, 149, 255, 0.39);
+  filter: blur(150px);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.before-after-two__left {
+  position: relative;
+  display: block;
+  margin-right: 10px;
+}
+
+.before-after-two__img-box {
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  border: 4px solid var(--Freshflow-white);
+}
+
+.before-after-two__img-box .before-after {
+  position: relative;
+}
+
+.before-after-two__img-box .before-after .twentytwenty-container img {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.before-after-two__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:before {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 100px;
+  height: 100px;
+  line-height: 90px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  background: transparent;
+  z-index: 1;
+  transform: rotate(-45deg);
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-two__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:after {
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 0px;
+  width: 100px;
+  height: 100px;
+  clip-path: polygon(0% 0%, 100% 0%, 0% 100%, 0% 100%, 0% 0%);
+}
+
+.before-after-two__img-box .before-after .twentytwenty-horizontal .twentytwenty-after-label:before {
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 140px;
+  text-align: center;
+  font-size: 16px;
+  background: transparent;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  bottom: 0px;
+  transform: rotate(-45deg);
+  z-index: 1;
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-two__img-box.before-after .twentytwenty-horizontal .twentytwenty-after-label:after {
+  position: absolute;
+  content: '';
+  bottom: 0px;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  clip-path: polygon(0% 100%, 100% 0%, 100% 100%, 0% 100%, 0% 0%);
+}
+
+.twentytwenty-after-label,
+.twentytwenty-before-label {
+  opacity: 1 !important;
+}
+
+.before-after-two__img-box .twentytwenty-handle {
+  background-color: var(--Freshflow-base);
+}
+
+.before-after-two__img-box .twentytwenty-overlay {
+  border-radius: 10px
+}
+
+.before-after-two__tag {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.before-after-two__tag span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 24px;
+  text-transform: uppercase;
+  font-family: var(--Freshflow-font-two);
+  color: var(--Freshflow-black);
+  background-color: var(--Freshflow-white);
+  padding: 8px 20px 8px;
+  border-radius: 12px;
+}
+
+.before-after-two__tag-2 {
+  left: inherit;
+  right: 20px;
+}
+
+.before-after-two__client-and-points {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 90px;
+  margin-top: 42px;
+}
+
+.before-after-two__client-box-inner {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__client-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 38px;
+}
+
+.before-after-two__client-list {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.before-after-two__client-list li {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__client-list li+li {
+  margin-left: -15px;
+}
+
+.before-after-two__client-img {
+  position: relative;
+  display: block;
+  max-width: 48px;
+  width: 100%;
+}
+
+.before-after-two__client-img img {
+  width: 100%;
+  border: 2px solid var(--Freshflow-white);
+  border-radius: 50%;
+}
+
+.before-after-two__counter-box {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__count-box {
+  position: relative;
+  display: inline-flex;
+}
+
+.before-after-two__count-box p {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 24px !important;
+  font-family: var(--Freshflow-font-two) !important;
+  color: var(--Freshflow-black);
+  text-transform: uppercase;
+  top: -1px;
+}
+
+.before-after-two__count-box span {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 24px !important;
+  font-family: var(--Freshflow-font-two) !important;
+  color: var(--Freshflow-black);
+  text-transform: uppercase;
+}
+
+.before-after-two__btn-box {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__btn-box .thm-btn {
+  background-color: var(--Freshflow-primary);
+}
+
+.before-after-two__points-box {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__points {
+  position: relative;
+  display: block;
+}
+
+.before-after-two__points li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.before-after-two__points li+li {
+  margin-top: 14px;
+}
+
+.before-after-two__points li .icon {
+  position: relative;
+  display: inline-block;
+}
+
+.before-after-two__points li .icon span {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  color: var(--Freshflow-base);
+}
+
+.before-after-two__points li p {
+  font-weight: 600;
+  color: var(--Freshflow-black);
+}
+
+.before-after-two__right {
+  position: relative;
+  display: block;
+  margin-left: 10px;
+}
+
+.before-after-two__right .section-title {
+  margin-bottom: 39px;
+}
+
+.before-after-two__img-box-2 {
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  border: 4px solid var(--Freshflow-white);
+}
+
+.before-after-two__img-box-2 .before-after {
+  position: relative;
+}
+
+.before-after-two__img-box-2 .before-after .twentytwenty-container img {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.before-after-two__img-box-2 .before-after .twentytwenty-horizontal .twentytwenty-before-label:before {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 100px;
+  height: 100px;
+  line-height: 90px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  background: transparent;
+  z-index: 1;
+  transform: rotate(-45deg);
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-two__img-box-2 .before-after .twentytwenty-horizontal .twentytwenty-before-label:after {
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 0px;
+  width: 100px;
+  height: 100px;
+  clip-path: polygon(0% 0%, 100% 0%, 0% 100%, 0% 100%, 0% 0%);
+}
+
+.before-after-two__img-box-2 .before-after .twentytwenty-horizontal .twentytwenty-after-label:before {
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 140px;
+  text-align: center;
+  font-size: 16px;
+  background: transparent;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  bottom: 0px;
+  transform: rotate(-45deg);
+  z-index: 1;
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-two__img-box-2.before-after .twentytwenty-horizontal .twentytwenty-after-label:after {
+  position: absolute;
+  content: '';
+  bottom: 0px;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  clip-path: polygon(0% 100%, 100% 0%, 100% 100%, 0% 100%, 0% 0%);
+}
+
+.twentytwenty-after-label,
+.twentytwenty-before-label {
+  opacity: 1 !important;
+}
+
+.before-after-two__img-box-2 .twentytwenty-handle {
+  background-color: var(--Freshflow-base);
+}
+
+.before-after-two__img-box-2 .twentytwenty-overlay {
+  border-radius: 10px
+}
+
+.before-after-two__sliding-text {
+  position: relative;
+  display: block;
+  margin-top: 100px;
+}
+
+.before-after-two__sliding-text-list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: fit-content;
+}
+
+.before-after-two__sliding-text-list li {
+  position: relative;
+  display: block;
+  float: left;
+  margin-right: 30px;
+}
+
+.before-after-two__sliding-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--Freshflow-gray);
+  font-size: 24px;
+  line-height: 34px;
+  font-weight: 500;
+  font-family: var(--Freshflow-font);
+  font-style: normal;
+  text-transform: capitalize;
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.before-after-two__sliding-title:before {
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  color: var(--Freshflow-base);
+  white-space: nowrap;
+  content: attr(data-hover);
+  transition: all 0.5s cubic-bezier(0.17, 0.67, 0.32, 0.87);
+}
+
+.before-after-two__sliding-text-list li:hover .before-after-two__sliding-title:before {
+  width: 100%;
+  color: var(--Freshflow-base);
+}
+
+.before-after-two__sliding-title span {
+  margin-left: 30px;
+  position: relative;
+  font-size: 24px;
+  color: var(--Freshflow-gray);
+}
+
+/*--------------------------------------------------------------
+# Before After Three
+--------------------------------------------------------------*/
+.before-after-three {
+  position: relative;
+  display: block;
+  padding: 120px 0 120px;
+  z-index: 1;
+}
+
+.before-after-three__img-box {
+  position: relative;
+  display: block;
+  border-radius: 20px;
+  border: 4px solid var(--Freshflow-white);
+}
+
+.before-after-three__img-box .before-after {
+  position: relative;
+}
+
+.before-after-three__img-box .before-after .twentytwenty-container img {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.before-after-three__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:before {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 100px;
+  height: 100px;
+  line-height: 90px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  background: transparent;
+  z-index: 1;
+  transform: rotate(-45deg);
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-three__img-box .before-after .twentytwenty-horizontal .twentytwenty-before-label:after {
+  position: absolute;
+  content: '';
+  left: 0px;
+  top: 0px;
+  width: 100px;
+  height: 100px;
+  clip-path: polygon(0% 0%, 100% 0%, 0% 100%, 0% 100%, 0% 0%);
+}
+
+.before-after-three__img-box .before-after .twentytwenty-horizontal .twentytwenty-after-label:before {
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 140px;
+  text-align: center;
+  font-size: 16px;
+  background: transparent;
+  font-weight: 700;
+  color: #fff;
+  margin: 0px;
+  padding: 0px;
+  bottom: 0px;
+  transform: rotate(-45deg);
+  z-index: 1;
+  text-transform: uppercase;
+  display: none;
+}
+
+.before-after-three__img-box.before-after .twentytwenty-horizontal .twentytwenty-after-label:after {
+  position: absolute;
+  content: '';
+  bottom: 0px;
+  right: 0px;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  clip-path: polygon(0% 100%, 100% 0%, 100% 100%, 0% 100%, 0% 0%);
+}
+
+.twentytwenty-after-label,
+.twentytwenty-before-label {
+  opacity: 1 !important;
+}
+
+.before-after-three__img-box .twentytwenty-handle {
+  background-color: var(--Freshflow-base);
+}
+
+.before-after-three__img-box .twentytwenty-horizontal .twentytwenty-handle:before {
+  height: 290px;
+  top: -292px;
+}
+
+.before-after-three__img-box .twentytwenty-horizontal .twentytwenty-handle:after {
+  height: 275px;
+}
+
+.before-after-three__img-box .twentytwenty-overlay {
+  border-radius: 10px
+}
+
+.before-after-three__tag {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.before-after-three__tag span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 24px;
+  text-transform: uppercase;
+  font-family: var(--Freshflow-font-two);
+  color: var(--Freshflow-white);
+  background-color: var(--Freshflow-base);
+  padding: 8px 20px 8px;
+  border-radius: 12px;
+}
+
+.before-after-three__tag-2 {
+  left: inherit;
+  right: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------------
+# End
+--------------------------------------------------------------*/

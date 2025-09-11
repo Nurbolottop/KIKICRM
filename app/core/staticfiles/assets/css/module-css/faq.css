@@ -1,0 +1,286 @@
+/*--------------------------------------------------------------
+# Faq One
+--------------------------------------------------------------*/
+.faq-one {
+  position: relative;
+  display: block;
+  padding: 120px 0 109px;
+  z-index: 1;
+}
+
+.faq-one__shape-1 {
+  position: absolute;
+  top: 120px;
+  right: 0;
+  z-index: -1;
+}
+
+.faq-one__shape-1 img {
+  width: auto;
+}
+
+.faq-one__left {
+  position: relative;
+  display: block;
+  margin-right: 80px;
+}
+
+.faq-one__left .section-title {
+  margin-bottom: 22px;
+}
+
+.faq-one__text {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 27px;
+}
+
+.faq-one__points {
+  position: relative;
+  display: block;
+  margin-top: 24px;
+  margin-bottom: 90px;
+}
+
+.faq-one__points li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.faq-one__points li+li {
+  margin-top: 19px;
+}
+
+.faq-one__points li .icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.faq-one__points li .icon span {
+  font-size: 16px;
+  color: var(--Freshflow-base);
+}
+
+.faq-one__points li .text {
+  position: relative;
+  display: block;
+  flex: 1;
+}
+
+.faq-one__points li .text p {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--Freshflow-black);
+  line-height: 24px;
+}
+
+.faq-one__contact-box {
+  position: relative;
+  display: block;
+  background: linear-gradient(270deg, #0052FC 0%, #2E72FF 100%);
+  border-radius: 20px;
+  padding: 30px 25px 35px;
+  z-index: 1;
+}
+
+.faq-one__contact-img {
+  position: absolute;
+  bottom: 0;
+  right: 14px;
+  z-index: -1;
+}
+
+.faq-one__contact-img img {
+  width: auto;
+  animation: leftRight 4s ease-in-out infinite;
+}
+
+.faq-one__contact-big-text {
+  position: absolute;
+  bottom: 2px;
+  right: 0;
+  font-weight: 600;
+  font-size: 80px;
+  line-height: 80px;
+  letter-spacing: -0.03em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(var(--Freshflow-white-rgb), .10);
+}
+
+.faq-one__contact-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--Freshflow-white);
+  line-height: 26px;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+}
+
+.faq-one__btn-box {
+  position: relative;
+  display: block;
+}
+
+.faq-one__btn-box .thm-btn {
+  background-color: var(--Freshflow-extra);
+  color: var(--Freshflow-black);
+  padding: 4px 15px 4px;
+  padding-right: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  gap: 10px;
+}
+
+.faq-one__btn-box .thm-btn span {
+  width: 36px;
+  height: 36px;
+  background-color: rgba(var(--Freshflow-white-rgb), .25);
+  color: var(--Freshflow-black);
+}
+
+.faq-one__right {
+  position: relative;
+  display: block;
+  margin-top: 40px;
+}
+
+.faq-one .faq-one-accrodion .accrodion {
+  position: relative;
+  display: block;
+  border: 1px solid #F1F1F2;
+  background: var(--Freshflow-white);
+  border-radius: 20px;
+  overflow: hidden;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+.faq-one .faq-one-accrodion .accrodion.active {
+  border: 1px solid var(--Freshflow-base);
+  background: #F3F4FF;
+}
+
+.faq-one .faq-one-accrodion .accrodion-title {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  padding: 30px 25px 30px;
+  transition: all 200ms linear;
+  transition-delay: 0.1s;
+}
+
+.faq-one .faq-one-accrodion .accrodion-title h4 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.03em;
+  color: var(--Freshflow-black);
+  position: relative;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+
+.faq-one .faq-one-accrodion .accrodion+.accrodion {
+  margin-top: 20px;
+}
+
+.faq-one .faq-one-accrodion .accrodion-title h4::before {
+  content: "\f105";
+  font-family: "Font Awesome 5 Pro";
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--Freshflow-gray);
+  position: absolute;
+  top: 50%;
+  right: 0;
+  line-height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+  text-align: center;
+  width: 40px;
+  height: 40px;
+  background-color: #F1F1F2;
+}
+
+.faq-one .faq-one-accrodion .accrodion.active .accrodion-title h4::before {
+  content: "\f107";
+  color: var(--Freshflow-white);
+  background-color: var(--Freshflow-base);
+  border: 1px solid var(--Freshflow-base);
+  border-radius: 50%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.faq-one .faq-one-accrodion .accrodion-content {
+  position: relative;
+  padding-bottom: 28px;
+  margin-top: -10px;
+  padding-left: 25px;
+  padding-right: 25px;
+  border-radius: 20px;
+}
+
+.faq-one .faq-one-accrodion .accrodion-content p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/*--------------------------------------------------------------
+  # Faq Two
+  --------------------------------------------------------------*/
+.faq-one__shape-bg-1 {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 39px;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  z-index: 1;
+}
+
+/*--------------------------------------------------------------
+  # Faq Page
+  --------------------------------------------------------------*/
+.faq-page {
+  padding: 120px 0 100px;
+}
+
+.faq-page__single {
+  position: relative;
+  display: block;
+  margin-bottom: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*--------------------------------------------------------------
+  # End
+  --------------------------------------------------------------*/
