@@ -20,4 +20,10 @@ INSTALLED_APPS = [
     'apps.contacts',
     'apps.telegram_bot',
     'apps.users',
+#apps roles 
+    'apps.roles.founder',
+    'apps.roles.smm',
+    'apps.roles.manager',
+    'apps.roles.senior_cleaner',
+    'apps.roles.cleaner',
 ]

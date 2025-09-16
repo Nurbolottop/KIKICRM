@@ -25,6 +25,12 @@ urlpatterns = [
     path('', include('apps.cms.urls')),
     path('', include('apps.contacts.urls')),
     path('', include('apps.telegram_bot.urls')),
+    path('', include('apps.users.urls')),
+    path('', include('apps.roles.founder.urls')),
+    path('', include('apps.roles.smm.urls')),
+    path('', include('apps.roles.manager.urls')),
+    path('', include('apps.roles.cleaner.urls')),
+    path('', include('apps.roles.senior_cleaner.urls')),
 ]
 
 if settings.DEBUG:
