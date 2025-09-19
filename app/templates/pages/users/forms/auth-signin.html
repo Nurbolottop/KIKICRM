@@ -2,12 +2,24 @@
 {% block content %}
 {% load static %}
 
-    <!-- loader Start -->
-    <div id="loading">
-      <div id="loading-center" style="background: url('./assets/images/') no-repeat scroll 50%;"></div>
-    </div>
-    <!-- loader END -->
+   <!-- <style>
+    .card {
+        background-color: rgba(255, 255, 255, 0.85); /* белый с прозрачностью */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+    }
+    </style> -->
     <div class="wrapper">
+      <div style="
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: url('/static/assets/images/bg-mountains.jpg') no-repeat center center;
+        background-size: cover;
+        z-index: -1;">
+      </div>
+
       <section class="login-content">
         <div class="container h-100">
           <div class="row align-items-center justify-content-center h-100">
@@ -15,7 +27,7 @@
               <div class="card">
                 <div class="card-body">
                   <a href="/" class="auth-logo d-flex justify-content-center mb-3">
-                    <img src="{% static 'images/logo.png' %}" class="img-fluid rounded-normal" alt="logo" style="max-height: 80px;">
+                    <img src="{{settings.icon.url}}" class="img-fluid rounded-normal" alt="logo" style="max-height: 80px;">
                   </a>
                   <h2 class="mb-2 text-center">Вход</h2>
                   <p class="text-center">Пожалуйста, введите свои данные для входа.</p>

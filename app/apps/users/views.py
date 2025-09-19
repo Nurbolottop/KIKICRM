@@ -1,8 +1,8 @@
-from django.contrib import messages
-from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.messages import get_messages
+from django.shortcuts import render, redirect
+from apps.cms import models as cms_models
+from django.contrib import messages
 
 def redirect_user_by_role(request, user):
     if user.role == 'FOUNDER':
@@ -25,6 +25,7 @@ def redirect_user_by_role(request, user):
         return redirect('login')
 
 def login_view(request):
+    settings = cms_models.Settings.objects.first()
     if request.user.is_authenticated:
         if hasattr(request.user, 'role'):
             return redirect_user_by_role(request, request.user)
@@ -51,4 +52,4 @@ def login_view(request):
         else:
             messages.error(request, 'Неверный логин или пароль')
 
-    return render(request, 'pages/users/forms/auth-signin.html')
+    return render(request, 'pages/users/forms/auth-signin.html',locals())

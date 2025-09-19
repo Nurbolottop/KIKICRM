@@ -31,7 +31,7 @@ urlpatterns = [
     path('manager/', include('apps.roles.manager.urls', namespace='manager')),
     path('cleaner/', include('apps.roles.cleaner.urls', namespace='cleaner')),
     path('senior_cleaner/', include('apps.roles.senior_cleaner.urls', namespace='senior_cleaner')),
-    path('', include('users.urls')),
+    path('', include('apps.users.urls')),
     path('admin/', admin.site.urls),
 ]
 if settings.DEBUG:
