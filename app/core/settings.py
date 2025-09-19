@@ -20,6 +20,8 @@ ROOT_URLCONF = 'core.urls'
 
 # from core.project_settings.templates import *
 
+LOGIN_URL = '/login/'
+
 CSRF_TRUSTED_ORIGINS = [
     'https://cleaningkiki.kg',
 ]

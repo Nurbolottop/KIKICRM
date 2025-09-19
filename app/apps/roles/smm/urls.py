@@ -6,4 +6,4 @@ app_name = 'smm'
 
 urlpatterns = [
     path('', smm_views.index, name='index'),
-]
+]   

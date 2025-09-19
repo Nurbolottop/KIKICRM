@@ -18,20 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.users import views as users_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('', include('apps.cms.urls')),
-    path('', include('apps.contacts.urls')),
-    path('', include('apps.telegram_bot.urls')),
-    path('', include('apps.users.urls')),
-    path('', include('apps.roles.founder.urls')),
-    path('', include('apps.roles.smm.urls')),
-    path('', include('apps.roles.manager.urls')),
-    path('', include('apps.roles.cleaner.urls')),
-    path('', include('apps.roles.senior_cleaner.urls')),
-]
+    path('', users_views.login_view, name='login'),
+    path('login/', users_views.login_view, name='login'), 
 
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    # Подключение ролей
+    path('founder/', include('apps.roles.founder.urls', namespace='founder')),
+    path('smm/', include('apps.roles.smm.urls', namespace='smm')),
+    path('manager/', include('apps.roles.manager.urls', namespace='manager')),
+    path('cleaner/', include('apps.roles.cleaner.urls', namespace='cleaner')),
+    path('senior_cleaner/', include('apps.roles.senior_cleaner.urls', namespace='senior_cleaner')),
+    path('', include('users.urls')),
+    path('admin/', admin.site.urls),
+]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

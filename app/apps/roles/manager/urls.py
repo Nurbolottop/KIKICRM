@@ -1,9 +1,9 @@
 
 from django.urls import path
-from apps.roles.smm import views as smm_views
+from apps.roles.manager import views as manager_views
 
 app_name = 'manager'
 
 urlpatterns = [
-    path('', smm_views.index, name='index'),
+    path('', manager_views.index, name='index'),
 ]

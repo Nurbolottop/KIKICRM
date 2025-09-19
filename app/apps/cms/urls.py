@@ -4,5 +4,4 @@ from apps.cms import views as cms_views
 from apps.contacts import views as contacts_views
 
 urlpatterns = [
-    path('', cms_views.index, name='index'),
 ]
