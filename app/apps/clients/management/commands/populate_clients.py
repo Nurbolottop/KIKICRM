@@ -1,10 +1,16 @@
+import random
+import string
+from random import randint
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from random import choice, randint
 from ...models import Client, ClientNote
 
 User = get_user_model()
+
+def generate_client_id():
+    """Generate a random 5-character alphanumeric ID"""
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 class Command(BaseCommand):
     help = 'Populates the database with sample client data'
@@ -24,8 +30,9 @@ class Command(BaseCommand):
             {
                 'first_name': 'Александр',
                 'last_name': 'Иванов',
+                'middle_name': 'Сергеевич',
                 'organization': 'ТОО "ТехноПром"',
-                'phone': '87011234567',  # Казахстанский номер с 8
+                'phone': '87011234567',
                 'email': 'a.ivanov@example.com',
                 'gender': 'male',
                 'category': 'vip',
@@ -34,12 +41,16 @@ class Command(BaseCommand):
                 'whatsapp': '87011234567',
                 'telegram_id': 'aivanov',
                 'age': 35,
+                'client_id': 'A1B2C',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Елена',
                 'last_name': 'Петрова',
+                'middle_name': 'Игоревна',
                 'organization': 'АО "КазТехноСервис"',
-                'phone': '87771234567',  # Казахстанский номер с 8
+                'phone': '87771234567',
                 'email': 'e.petrova@example.com',
                 'gender': 'female',
                 'category': 'regular',
@@ -48,12 +59,16 @@ class Command(BaseCommand):
                 'whatsapp': '87771234567',
                 'telegram_id': 'elena_petrova',
                 'age': 28,
+                'client_id': 'D3E4F',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Айбек',
                 'last_name': 'Кыдыров',
+                'middle_name': 'Темирбекович',
                 'organization': 'ИП "Кыдыров А.К."',
-                'phone': '0700123456',  # Кыргызский номер с 0
+                'phone': '0700123456',
                 'email': 'a.kydyrov@example.com',
                 'gender': 'male',
                 'category': 'vip',
@@ -62,12 +77,16 @@ class Command(BaseCommand):
                 'whatsapp': '0700123456',
                 'telegram_id': 'aibek_k',
                 'age': 42,
+                'client_id': 'G5H6I',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Айгерим',
                 'last_name': 'Каримова',
+                'middle_name': 'Сериковна',
                 'organization': 'ТОО "АстанаТрейд"',
-                'phone': '87471234567',  # Казахстанский номер с 8
+                'phone': '87471234567',
                 'email': 'a.karimova@example.com',
                 'gender': 'female',
                 'category': 'regular',
@@ -76,12 +95,16 @@ class Command(BaseCommand):
                 'whatsapp': '87471234567',
                 'telegram_id': 'aigerim_k',
                 'age': 31,
+                'client_id': 'J7K8L',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Нурлан',
                 'last_name': 'Абдыкадыров',
+                'middle_name': 'Алибекович',
                 'organization': '',
-                'phone': '0555123456',  # Кыргызский номер с 0
+                'phone': '0555123456',
                 'email': 'n.abdikadyrov@example.com',
                 'gender': 'male',
                 'category': 'new',
@@ -90,26 +113,34 @@ class Command(BaseCommand):
                 'whatsapp': '0555123456',
                 'telegram_id': 'nurlan_a',
                 'age': 25,
+                'client_id': 'M9N0P',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Айсулу',
                 'last_name': 'Омарова',
+                'middle_name': 'Канатовна',
                 'organization': 'АО "КазАвтоПром"',
-                'phone': '87771234568',  # Казахстанский номер с 8
+                'phone': '87771234568',
                 'email': 'a.omarova@example.com',
                 'gender': 'female',
                 'category': 'vip',
                 'source': 'referral',
-                'address': 'г. Актобе, пр. Абылай хана, 67',
+                'address': 'г. Актобе, пр. Абылай хана, 1',
                 'whatsapp': '87771234568',
                 'telegram_id': 'aisulu_o',
-                'age': 38,
+                'age': 29,
+                'client_id': 'Q1R2S',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Арман',
                 'last_name': 'Жумабаев',
+                'middle_name': 'Аскарович',
                 'organization': 'ТОО "ТехноСтарт"',
-                'phone': '87021234567',  # Казахстанский номер с 8
+                'phone': '87021234567',
                 'email': 'a.zhumabayev@example.com',
                 'gender': 'male',
                 'category': 'regular',
@@ -118,12 +149,16 @@ class Command(BaseCommand):
                 'whatsapp': '87021234567',
                 'telegram_id': 'armanzh',
                 'age': 33,
+                'client_id': 'T3U4V',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Айпери',
                 'last_name': 'Асанова',
+                'middle_name': 'Кубанычбековна',
                 'organization': 'ИП "Асанова А.К."',
-                'phone': '0777123456',  # Кыргызский номер с 0
+                'phone': '0777123456',
                 'email': 'a.asanova@example.com',
                 'gender': 'female',
                 'category': 'new',
@@ -132,12 +167,16 @@ class Command(BaseCommand):
                 'whatsapp': '0777123456',
                 'telegram_id': 'aiperi_a',
                 'age': 27,
+                'client_id': 'W5X6Y',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Данияр',
                 'last_name': 'Садыков',
+                'middle_name': 'Рашидович',
                 'organization': 'ТОО "ОйлСервис"',
-                'phone': '87051234567',  # Казахстанский номер с 8
+                'phone': '87051234567',
                 'email': 'd.sadykov@example.com',
                 'gender': 'male',
                 'category': 'vip',
@@ -146,12 +185,16 @@ class Command(BaseCommand):
                 'whatsapp': '87051234567',
                 'telegram_id': 'daniyar_s',
                 'age': 45,
+                'client_id': 'Z7A8B',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Айнур',
                 'last_name': 'Искакова',
+                'middle_name': 'Маратовна',
                 'organization': 'АО "КазТрансОйл"',
-                'phone': '87071234567',  # Казахстанский номер с 8
+                'phone': '87071234567',
                 'email': 'a.iskakova@example.com',
                 'gender': 'female',
                 'category': 'regular',
@@ -160,12 +203,16 @@ class Command(BaseCommand):
                 'whatsapp': '87071234567',
                 'telegram_id': 'ainur_i',
                 'age': 36,
+                'client_id': 'C9D0E',
+                'created_by': admin_user,
+                'updated_by': admin_user
             },
             {
                 'first_name': 'Максат',
                 'last_name': 'Абдуллаев',
+                'middle_name': 'Темирланович',
                 'organization': '',
-                'phone': '0700123457',  # Кыргызский номер с 0
+                'phone': '0700123457',
                 'email': 'm.abdullayev@example.com',
                 'gender': 'male',
                 'category': 'new',
@@ -178,7 +225,8 @@ class Command(BaseCommand):
         ]
 
         # Create clients
-        created_count = 0
+        clients_created = 0
+        
         # Sample notes for clients
         sample_notes = [
             "Клиент заинтересован в оптовой закупке. Требуется перезвонить 25.09",
@@ -194,44 +242,38 @@ class Command(BaseCommand):
             "Требуется консультация по ассортименту. Перезвонить завтра в 15:00"
         ]
 
-        for idx, client_data in enumerate(clients_data):
-            # Set random dates for first and last order (within last year)
-            days_ago = randint(1, 365)
-            first_order = timezone.now() - timezone.timedelta(days=days_ago)
-            last_order = first_order + timezone.timedelta(days=randint(1, days_ago))
-            
-            # Create client with additional fields
-            client, created = Client.objects.get_or_create(
-                phone=client_data['phone'],
-                defaults={
-                    'first_name': client_data['first_name'],
-                    'last_name': client_data['last_name'],
-                    'organization': client_data['organization'] or None,
-                    'email': client_data['email'],
-                    'gender': client_data['gender'],
-                    'category': client_data['category'],
-                    'source': client_data['source'],
-                    'address': client_data['address'],
-                    'whatsapp': client_data['whatsapp'],
-                    'telegram_id': client_data['telegram_id'],
-                    'age': client_data['age'],
-                    'created_by': admin_user,
-                    'updated_by': admin_user,
-                    'first_order_date': first_order.date(),
-                    'last_order_date': last_order.date(),
-                    'orders_count': randint(1, 15),
-                    'total_spent': randint(10000, 500000),
-                }
-            )
-            
-            if created:
-                created_count += 1
+        for client_data in clients_data:
+            try:
+                # Generate a unique client_id if not provided
+                if not client_data.get('client_id'):
+                    while True:
+                        new_id = generate_client_id()
+                        if not Client.objects.filter(client_id=new_id).exists():
+                            client_data['client_id'] = new_id
+                            break
                 
-                # Create a note for the client
-                ClientNote.objects.create(
-                    client=client,
-                    text=sample_notes[idx],
-                    created_by=admin_user
+                # Create the client
+                client = Client.objects.create(**client_data)
+                clients_created += 1
+                self.stdout.write(
+                    self.style.SUCCESS(f'Создан клиент: {client.last_name} {client.first_name} (ID: {client.client_id})')
                 )
-
-        self.stdout.write(self.style.SUCCESS(f'Successfully created {created_count} clients'))
+                
+                # Add some sample notes for the client
+                num_notes = random.randint(1, 3)
+                for _ in range(num_notes):
+                    note_text = random.choice(sample_notes)
+                    ClientNote.objects.create(
+                        client=client,
+                        text=note_text,
+                        created_by=admin_user
+                    )
+                
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f'Ошибка при создании клиента {client_data.get("last_name")} {client_data.get("first_name")}: {str(e)}')
+                )
+        
+        self.stdout.write(
+            self.style.SUCCESS(f'\nГотово! Создано {clients_created} клиентов с заметками.')
+        )
