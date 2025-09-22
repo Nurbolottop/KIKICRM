@@ -229,9 +229,29 @@ Index Of Script
         /*---------------------------------------------------------------------
         Data tables
         -----------------------------------------------------------------------*/
-        if($.fn.DataTable){
-            const table = $('.data-table').DataTable();
+        if ($.fn.DataTable) {
+            const table = $('.data-table').DataTable({
+                lengthChange: false,
+                info: false,
+                paging: true,
+                searching: true,   // оставляем включённым поиск
+                language: {
+                    paginate: {
+                        previous: "Назад",
+                        next: "Вперёд"
+                    },
+                    search: "" // убираем текст "Search:" (оставим пустым)
+                },
+                dom: 't<"bottom"p>' // ❌ убираем встроенный search-box
+            });
+        
+            // подключаем кастомный input
+            $('#exampleInputText').on('keyup', function () {
+                table.search(this.value).draw();
+            });
         }
+        
+        
 
 
         /*---------------------------------------------------------------------

@@ -1,0 +1,503 @@
+{% extends 'pages/manager/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+
+    <!-- loader END -->
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+        {% include 'pages/manager/include/others/dashboard.html' %}
+        
+        {% include 'pages/manager/include/others/header.html' %}
+
+        <div class="content-page">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb p-0 mb-0">
+                        <li class="breadcrumb-item">
+                          <a href="{% url 'customer' %}">Клиенты</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">{{client.first_name}} {{client.last_name}}</li>
+                      </ol>
+                    </nav>
+                  </div>
+                  <a href="{% url 'customer' %}" class="btn btn-primary btn-sm d-flex align-items-center justify-content-between ms-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="ms-2">Назад</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-4">
+                <div class="card">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                      <div>
+                        <ul class="list-style-1 mb-0">
+                          <li class="list-item d-flex justify-content-start align-items-center">
+                            <div class="avatar">
+                              {% if client.photo %}
+                              <img class="avatar avatar-img avatar-60 rounded-circle" src="{{client.photo.url}}" alt="01.jpg" />
+                              {% else %}
+                                {% if client.gender == 'male' %}
+                                <img class="avatar avatar-img avatar-60 rounded-circle" src="{% static 'assets/mystatic/images/users/man-icon.png' %}" alt="01.jpg" style="width: 60px; height: 60px;" />
+                                {% elif client.gender == 'female' %}
+                                <img class="avatar avatar-img avatar-60 rounded-circle" src="{% static 'assets/mystatic/images/users/girl-icon.png' %}" alt="01.jpg" style="width: 60px; height: 60px;" />
+                                {% else %}
+                                <img class="avatar avatar-img avatar-60 rounded-circle" src="{% static 'assets/mystatic/images/users/other-icon.png' %}" alt="01.jpg" style="width: 70px; height: 70px;" />
+                                {% endif %}
+                              {% endif %}
+                            </div>
+                            <div class="list-style-detail ms-4 me-2">
+                              <h5 class="fw-bold">{% if client.first_name %} {{client.first_name}} {% endif %} {% if client.last_name %} {{client.last_name}} {% endif %} {% if client.middle_name %} {{client.middle_name}} {% endif %}</h5>
+                              <p class="m-0 text-secondary small">
+                                {% if client.organization %}
+                                  {{ client.organization }}
+                                {% else %}
+                                  Частный клиент
+                                {% endif %}
+                              </p>
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+                      <div class="row mt-3 row mt-3 gx-lg-2 gx-xl-3">
+                        <div class="col-6 text-center mb-2">
+                          <a href="{{ client.whatsapp }}" target="_blank" class="btn btn-block btn-sm btn-success w-100" {% if not client.whatsapp %}disabled{% endif %}>
+                            <i class="fab fa-whatsapp me-2"></i>
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
+                        <div class="col-6 text-center">
+                          <a href="{% url 'customer_edit' pk=client.id %}" class="btn btn-outline-primary btn-sm w-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="me-2" width="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            <span class="">Редактировать</span>
+                          </a>
+                        </div>
+                      </div>
+                    </li>
+                    <li class="list-group-item">
+                      <table class="table table-borderless mb-0">
+                        {% if client.client_id %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">ID</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.client_id }}</p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        {% if client.email %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Email</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.email }}</p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Телефон</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">
+                              <a href="tel:{{ client.phone }}" class="text-decoration-none">
+                                {{ client.phone }}
+                              </a>
+                            </p>
+                          </td>
+                        </tr>
+                        {% if client.whatsapp %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">WhatsApp</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">
+                              <a href="{{ client.whatsapp }}" target="_blank" class="text-decoration-none">
+                                {{ client.phone }}
+                              </a>
+                            </p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        {% if client.age %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Возраст</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.age }} лет</p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        {% if client.gender %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Пол</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.get_gender_display }}</p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        {% if client.address %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Адрес</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.address }}</p>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Категория</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.get_category_display }}</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="p-0">
+                            <p class="mb-0 text-muted">Канал привлечения</p>
+                          </td>
+                          <td>
+                            <p class="mb-0">{{ client.get_source_display }}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </li>
+                    <li class="list-group-item border-0">
+                      <h6 class="font-weight-bold mb-4 d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-graph-up me-2" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5Z"/>
+                        </svg>
+                        Статистика заказов
+                      </h6>
+                      <div class="row g-3">
+                        <div class="col-6">
+                          <div class="p-3 border rounded-3 h-100">
+                            <div class="d-flex align-items-center mb-2">
+                              <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart-check text-primary" viewBox="0 0 16 16">
+                                  <path d="M11.354 6.354a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+                                  <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                              </div>
+                              <h6 class="mb-0">Всего заказов</h6>
+                            </div>
+                            <h3 class="mb-0">{{ client.orders_count|default:0 }}</h3>
+                          </div>
+                        </div>
+                        <div class="col-6">
+                          <div class="p-3 border rounded-3 h-100">
+                            <div class="d-flex align-items-center mb-2">
+                              <div class="bg-success bg-opacity-10 p-2 rounded-circle me-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-currency-exchange text-success" viewBox="0 0 16 16">
+                                  <path d="M0 5a5.002 5.002 0 0 0 4.027 4.905 6.46 6.46 0 0 1 .544-2.073C3.695 7.536 3.132 6.864 3 5.91h-.5v-.426h.466V5.05c0-.046 0-.093.004-.135H2.5v-.427h.511C3.236 3.24 4.213 2.5 5.681 2.5c.316 0 .59.031.819.085v.733a3.5 3.5 0 0 0-.815-.082c-.919 0-1.538.466-1.734 1.252h1.917v.427h-1.98c-.003.046-.003.097-.003.147v.422h1.983v.427H3.93c.118.602.468 1.03 1.005 1.229a6.5 6.5 0 0 1 4.97-3.113A5.002 5.002 0 0 0 0 5zm16 5.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0zm-7.75 1.322c.069.835.746 1.485 1.964 1.562V14h.54v-.62c1.259-.086 1.996-.74 1.996-1.69 0-.865-.563-1.31-1.57-1.54l-.426-.1V8.374c.54.06.884.347.966.745h.948c-.07-.804-.779-1.433-1.914-1.502V7h-.54v.629c-1.076.103-1.908.732-1.908 1.658 0 .967.681 1.398 1.518 1.6l.358.085v1.78c-.554-.08-.92-.376-1.003-.787H8.25zm1.96-1.895c-.532-.12-.82-.364-.82-.732 0-.41.311-.719.824-.809v1.54h-.005zm.622 1.044c.645.145.943.38.943.796 0 .474-.37.8-1.02.86v-1.674l.077.018z"/>
+                                </svg>
+                              </div>
+                              <h6 class="mb-0">Общая сумма</h6>
+                            </div>
+                            <h3 class="mb-0">{{ client.total_spent|default:0|floatformat:0 }} <small class="text-muted fs-6">Сом</small></h3>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                          <span class="text-muted">Первый заказ</span>
+                          <span class="fw-medium">{{ client.first_order_date|date:"d.m.Y"|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                          <span class="text-muted">Последний заказ</span>
+                          <span class="fw-medium">{{ client.last_order_date|date:"d.m.Y"|default:"—" }}</span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-lg-8">
+                <div class="card">
+                  <div class="card-body p-0">
+                    <nav class="tab-bottom-bordered ">
+                      <ul class="nav nav-tabs pt-2 mb-0">
+                        <li class="pb-0 mb-0 nav-item">
+                          <a data-bs-toggle="tab" class="fw-bold text-uppercase nav-link px-5  active" href="#invoice">Invoices</a>
+                        </li>
+                        <li class="pb-0 mb-0 nav-item">
+                          <a data-bs-toggle="tab" class="fw-bold text-uppercase nav-link px-5 " href="#activity">Activity</a>
+                        </li>
+                      </ul>
+                    </nav>
+                    <div class="tab-content">
+                      <div id="invoice" class="tab-pane fade show active">
+                        <div class="d-flex justify-content-between align-items-center p-3 pb-md-0">
+                          <h5>Invoice List</h5>
+                          <button class="btn btn-secondary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="me-1" width="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg> Export </button>
+                        </div>
+                        <div class="table-responsive">
+                          <table class="table data-table mb-0">
+                            <thead class="table-color-heading">
+                              <tr class="text-muted">
+                                <th scope="col">ID</th>
+                                <th scope="col">Date </th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>IN-902559</td>
+                                <td>12 Jan 2020</td>
+                                <td> Order OR-561488 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$104.98</td>
+                              </tr>
+                              <tr>
+                                <td>IN-552149</td>
+                                <td>15 Jan 2020</td>
+                                <td> Order OR-568842 </td>
+                                <td>
+                                  <p class="mb-0 text-warning d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#db7e06"></circle>
+                                    </svg> Pending
+                                  </p>
+                                </td>
+                                <td class="text-right">$99.98</td>
+                              </tr>
+                              <tr>
+                                <td>IN-941529</td>
+                                <td>12 Jan 2020</td>
+                                <td> Order OR-598550 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$966.12</td>
+                              </tr>
+                              <tr>
+                                <td>IN-125623</td>
+                                <td>16 Jan 2020</td>
+                                <td> Order OR-325548 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Completed
+                                  </p>
+                                </td>
+                                <td class="text-right">$65.00</td>
+                              </tr>
+                              <tr>
+                                <td>IN-911211</td>
+                                <td>18 Jan 2020</td>
+                                <td> Order OR-125475 </td>
+                                <td>
+                                  <p class="mb-0 text-danger d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#F42B3D"></circle>
+                                    </svg>Cancelled
+                                  </p>
+                                </td>
+                                <td class="text-right">$108.99</td>
+                              </tr>
+                              <tr>
+                                <td>IN-902210</td>
+                                <td>19 Jan 2020</td>
+                                <td> Order OR-595508 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$199.99</td>
+                              </tr>
+                              <tr>
+                                <td>IN-902445</td>
+                                <td>20 Jan 2020</td>
+                                <td> Order OR-884155 </td>
+                                <td>
+                                  <p class="mb-0 text-warning d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#db7e06"></circle>
+                                    </svg> Pending
+                                  </p>
+                                </td>
+                                <td class="text-right">$99.99</td>
+                              </tr>
+                              <tr>
+                                <td>IN-901020</td>
+                                <td>22 Jan 2020</td>
+                                <td> Order OR-500008 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$449.00</td>
+                              </tr>
+                              <tr>
+                                <td>IN-9036510</td>
+                                <td>22 Jan 2020</td>
+                                <td> Order OR-489523 </td>
+                                <td>
+                                  <p class="mb-0 text-danger d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#F42B3D"></circle>
+                                    </svg>Cancelled
+                                  </p>
+                                </td>
+                                <td class="text-right">$1,299.05</td>
+                              </tr>
+                              <tr>
+                                <td>IN-120010</td>
+                                <td>23 Jan 2020</td>
+                                <td> Order OR-965508 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$6,325.99</td>
+                              </tr>
+                              <tr>
+                                <td>IN-302240</td>
+                                <td>15 Jan 2020</td>
+                                <td> Order OR-654412 </td>
+                                <td>
+                                  <p class="mb-0 text-success d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#3cb72c"></circle>
+                                    </svg> Paid
+                                  </p>
+                                </td>
+                                <td class="text-right">$699.00</td>
+                              </tr>
+                              <tr>
+                                <td>IN-662210</td>
+                                <td>26 Jan 2020</td>
+                                <td> Order OR-965508 </td>
+                                <td>
+                                  <p class="mb-0 text-danger d-flex justify-content-start align-items-center">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="none">
+                                      <circle cx="12" cy="12" r="8" fill="#F42B3D"></circle>
+                                    </svg>Cancelled
+                                  </p>
+                                </td>
+                                <td class="text-right">$150.03</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div id="activity" class="tab-pane fade p-3">
+                        <h3 class="mb-3">Activity</h3>
+                        <div class="iq-timeline0 m-0 d-flex align-items-center justify-content-between position-relative">
+                          <ul class="list-inline p-0 m-0">
+                            <li>
+                              <div class="pt-3">
+                                <p class="mb-0 text-muted font-weight-bold text-uppercase">13, September 2020</p>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Signed Out</h6>
+                              <div class="d-inline-block w-100">
+                                <p class="mb-0">Santander crea una sociedad para gestionar las sucursales que cierra</p>
+                                <div class="d-inline-block w-100">
+                                  <p>Probablemente, la bodega más sostenible de españa</p>
+                                </div>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Create Invoice IN-302240</h6>
+                              <div class="d-inline-block w-100">
+                                <p>Repsol sopesa elegir primero un socio para su área de renovables y después sacarla a Bolsa</p>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Signed In</h6>
+                              <div class="d-inline-block w-100">
+                                <p>El Ibex busca nuevos máximos en la última jornada de abril</p>
+                              </div>
+                              <div class="pt-3">
+                                <p class="mb-0 text-muted font-weight-bold text-uppercase">14, September 2020</p>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Signed Out</h6>
+                              <div class="d-inline-block w-100">
+                                <p>Ecoener se atreve con la Bolsa y se estrenará con una valoración de 336 millones</p>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Create Invoice IN-662210</h6>
+                              <div class="d-inline-block w-100">
+                                <p class="mb-0">BBVA supera la crisis del Covid y gana 1.210 millones en el primer trimestre</p>
+                              </div>
+                              <div class="d-inline-block w-100">
+                                <p>Probablemente, la bodega más sostenible de españa</p>
+                              </div>
+                            </li>
+                            <li>
+                              <div class="timeline-dots timeline-dot1 border-primary text-primary"></div>
+                              <h6 class="float-left mb-1 font-weight-bold">Signed In</h6>
+                              <div class="d-inline-block w-100">
+                                <p class="mb-0">El mercado se prepara para una corrección en mayo tras el rally bursátil</p>
+                              </div>
+                              <div class="d-inline-block w-100">
+                                <p>Repsol sopesa elegir primero un socio para su área de renovables y después sacarla a Bolsa</p>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <!-- Wrapper End-->
+     {% include 'pages/manager/include/others/footer.html' %}
+{% endblock %}
