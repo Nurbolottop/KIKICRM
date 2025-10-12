@@ -4,6 +4,7 @@ services:
   db_kikicrm:
     image: postgres:14
     container_name: postgres_db_kikicrm
+    restart: always
     env_file:
       - ../.env
     volumes:
@@ -19,6 +20,7 @@ services:
   redis_kikicrm:
     image: redis:6
     container_name: redis_kikicrm
+    restart: always
     networks:
       - portfolio_network_kikicrm
 
@@ -27,10 +29,11 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: django_web_kikicrm
-    command: sh -c "/entrypoint.sh && gunicorn core.wsgi:application --bind 0.0.0.0:8000"
+    restart: always
+    command: sh -c "/entrypoint.sh && gunicorn core.wsgi:application --bind 0.0.0.0:8001"
     volumes:
       - ../app:/app
-      - ../app/static:/app/static
+      - ../app/core/staticfiles:/app/core/staticfiles
       - ../app/media:/app/media
     env_file:
       - ../.env
@@ -42,15 +45,16 @@ services:
       redis_kikicrm:
         condition: service_started
     ports:
-      - "8001:8000"
+      - "8001:8001"
     networks:
       - portfolio_network_kikicrm
 
-  telegram_bot:
+  telegram_bot_kikicrm:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: telegram_bot_kikicrm
+    restart: always
     command: python manage.py bot
     volumes:
       - ../app:/app
