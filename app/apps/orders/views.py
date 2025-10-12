@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import models
 from apps.orders import models as orders_models
 from apps.clients import models as clients_models
 from apps.cms import models as cms_models
@@ -10,6 +11,49 @@ from apps.cms import models as cms_models
 def order_list(request):
     settings = cms_models.Settings.objects.first()
     orders = orders_models.Order.objects.all()
+    
+    # Фильтрация по поисковому запросу
+    search_query = request.GET.get('q', '')
+    if search_query:
+        orders = orders.filter(
+            models.Q(code__icontains=search_query) |
+            models.Q(client__first_name__icontains=search_query) |
+            models.Q(client__last_name__icontains=search_query) |
+            models.Q(client__phone__icontains=search_query) |
+            models.Q(address__icontains=search_query)
+        )
+    
+    # Фильтрация по статусу оператора
+    status_operator = request.GET.get('status_operator', '')
+    if status_operator:
+        orders = orders.filter(status_operator=status_operator)
+    
+    # Фильтрация по статусу менеджера
+    status_manager = request.GET.get('status_manager', '')
+    if status_manager:
+        orders = orders.filter(status_manager=status_manager)
+    
+    # Фильтрация по приоритету
+    priority = request.GET.get('priority', '')
+    if priority:
+        orders = orders.filter(priority=priority)
+    
+    # Фильтрация по услуге
+    service = request.GET.get('service', '')
+    if service:
+        orders = orders.filter(service_id=service)
+    
+    # Фильтрация по дате
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    if date_from:
+        orders = orders.filter(date_time__gte=date_from)
+    if date_to:
+        orders = orders.filter(date_time__lte=date_to)
+    
+    # Получаем данные для фильтров
+    services = cms_models.Services.objects.all()
+    
     return render(request, "pages/system/others/orders/order.html", locals())
 
 

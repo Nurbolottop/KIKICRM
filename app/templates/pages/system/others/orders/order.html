@@ -21,7 +21,7 @@
                     <div class="modal-product-search d-flex flex-wrap">
                       <form class="me-3 position-relative" method="get" action="">
                         <div class="form-group mb-0">
-                          <input type="text" name="q" class="form-control" placeholder="Поиск (код, клиент, адрес)">
+                          <input type="text" name="q" class="form-control" placeholder="Поиск (код, клиент, адрес)" value="{{ request.GET.q }}">
                           <button class="search-link btn btn-link position-absolute top-0 end-0 h-100 d-flex align-items-center pe-2" type="submit">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -40,13 +40,102 @@
             </div>
           </div>
 
+          <!-- Filters -->
+          <div class="row mb-3">
+            <div class="col-lg-12">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                  <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Фильтры
+                  </h6>
+                  <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="collapse show" id="filterCollapse">
+                  <div class="card-body">
+                    <form method="get" action="" id="filterForm">
+                    <div class="row g-3">
+                      <!-- Статус оператора -->
+                      <div class="col-md-3">
+                        <label class="form-label small">Статус оператора</label>
+                        <select name="status_operator" class="form-select form-select-sm">
+                          <option value="">Все</option>
+                          <option value="IN_PROGRESS" {% if request.GET.status_operator == 'IN_PROGRESS' %}selected{% endif %}>В обработке</option>
+                          <option value="ACCEPTED" {% if request.GET.status_operator == 'ACCEPTED' %}selected{% endif %}>Принято</option>
+                          <option value="DECLINED" {% if request.GET.status_operator == 'DECLINED' %}selected{% endif %}>Отклонено</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Статус менеджера -->
+                      <div class="col-md-3">
+                        <label class="form-label small">Статус менеджера</label>
+                        <select name="status_manager" class="form-select form-select-sm">
+                          <option value="">Все</option>
+                          <option value="ASSIGNED" {% if request.GET.status_manager == 'ASSIGNED' %}selected{% endif %}>Назначен</option>
+                          <option value="COMPLETED" {% if request.GET.status_manager == 'COMPLETED' %}selected{% endif %}>Завершён</option>
+                          <option value="REVISION" {% if request.GET.status_manager == 'REVISION' %}selected{% endif %}>Переделка</option>
+                          <option value="DECLINED" {% if request.GET.status_manager == 'DECLINED' %}selected{% endif %}>Отклонено</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Приоритет -->
+                      <div class="col-md-2">
+                        <label class="form-label small">Приоритет</label>
+                        <select name="priority" class="form-select form-select-sm">
+                          <option value="">Все</option>
+                          <option value="NORMAL" {% if request.GET.priority == 'NORMAL' %}selected{% endif %}>Обычный</option>
+                          <option value="URGENT" {% if request.GET.priority == 'URGENT' %}selected{% endif %}>Срочный</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Услуга -->
+                      <div class="col-md-4">
+                        <label class="form-label small">Услуга</label>
+                        <select name="service" class="form-select form-select-sm">
+                          <option value="">Все услуги</option>
+                          {% for s in services %}
+                            <option value="{{ s.id }}" {% if request.GET.service == s.id|stringformat:"s" %}selected{% endif %}>{{ s.title }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      
+                      <!-- Дата от -->
+                      <div class="col-md-3">
+                        <label class="form-label small">Дата от</label>
+                        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request.GET.date_from }}">
+                      </div>
+                      
+                      <!-- Дата до -->
+                      <div class="col-md-3">
+                        <label class="form-label small">Дата до</label>
+                        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request.GET.date_to }}">
+                      </div>
+                      
+                      <!-- Кнопки -->
+                      <div class="col-md-6 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fas fa-filter me-1"></i> Применить
+                        </button>
+                        <a href="{% url 'orders:order_list' %}" class="btn btn-secondary btn-sm">
+                          <i class="fas fa-times me-1"></i> Сбросить
+                        </a>
+                      </div>
+                    </div>
+                  </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Orders Table -->
           <div class="row">
             <div class="col-lg-12">
               <div class="card card-block card-stretch">
                 <div class="card-body p-0">
-                  <div class="d-flex justify-content-between align-items-center p-3 pb-0">
-                    <h5 class="fw-bold">Список заказов</h5>
+                  <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-2">
+                    <div class="text-muted small">
+                      Найдено заказов: <strong>{{ orders.count }}</strong>
+                    </div>
                   </div>
                   <div class="table-responsive iq-order-table">
                     <table class="table table-hover mb-0 align-middle">
@@ -106,11 +195,11 @@
                               </td>
                               <td class="text-end">
                                 <a href="{% url 'orders:order_detail' o.pk %}" class="btn btn-sm btn-outline-primary">
-                                  <i class="bi bi-eye"></i>
+                                  <i class="fas fa-eye"></i>
                                 </a>
                                 {% if request.user.role == 'OPERATOR' %}
                                   <a href="{% url 'orders:order_operator_update' o.pk %}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="fas fa-pencil-alt"></i>
                                   </a>
                                 {% endif %}
                               </td>
@@ -134,4 +223,26 @@
     </div>
     <!-- Wrapper End -->
     {% include 'pages/system/include/others/footer.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Изменение иконки при сворачивании/разворачивании фильтров
+  document.addEventListener('DOMContentLoaded', function() {
+    const filterCollapse = document.getElementById('filterCollapse');
+    const chevronIcon = document.querySelector('[data-bs-target="#filterCollapse"] i.fa-chevron-down, [data-bs-target="#filterCollapse"] i.fa-chevron-up');
+    
+    if (filterCollapse && chevronIcon) {
+      filterCollapse.addEventListener('show.bs.collapse', function() {
+        chevronIcon.classList.remove('fa-chevron-down');
+        chevronIcon.classList.add('fa-chevron-up');
+      });
+      
+      filterCollapse.addEventListener('hide.bs.collapse', function() {
+        chevronIcon.classList.remove('fa-chevron-up');
+        chevronIcon.classList.add('fa-chevron-down');
+      });
+    }
+  });
+</script>
 {% endblock %}
