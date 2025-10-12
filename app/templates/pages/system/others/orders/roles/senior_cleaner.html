@@ -1,0 +1,12 @@
+{% load static %}
+<!-- Блок для Старшего клинера -->
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Назначенные задачи</h5>
+        {% for task in order.tasks.all %}
+        <p><b>{{ task.description }}</b> — {{ task.get_status_display }}</p>
+        {% empty %}
+        <p>Нет задач для этого заказа.</p>
+        {% endfor %}
+    </div>
+</div>

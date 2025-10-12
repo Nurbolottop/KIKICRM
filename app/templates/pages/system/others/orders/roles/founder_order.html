@@ -1,0 +1,16 @@
+{% load static %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Финансы и контроль</h5>
+        <p><b>Предварительная стоимость:</b> {{ order.estimated_cost }} сом</p>
+        <p><b>Итоговая стоимость:</b> {{ order.final_cost|default:"—" }} сом</p>
+        <p><b>Менеджер:</b> {{ order.senior_cleaner.full_name|default:"—" }}</p>
+        <p><b>Оператор:</b> {{ order.operator.full_name|default:"—" }}</p>
+        <p><b>Клинеры:</b> 
+        {% for cleaner in order.cleaners.all %}
+            <span class="badge bg-light text-dark">{{ cleaner.full_name }}</span>
+        {% empty %} — {% endfor %}
+        </p>
+        <p><b>Комментарий менеджера:</b> {{ order.manager_comment|default:"—" }}</p>
+    </div>
+</div>

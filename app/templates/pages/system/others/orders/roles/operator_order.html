@@ -1,0 +1,83 @@
+{% load static %}
+<div class="card border">
+    <div class="card-header bg-light border-bottom">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-person-badge me-2 text-primary"></i>Действия оператора</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <!-- Текущий статус -->
+            <div class="col-md-4">
+                <label class="text-dark fw-semibold d-block mb-2">Текущий статус</label>
+                {% if order.status_operator == 'ACCEPTED' %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>{{ order.get_status_operator_display }}</span>
+                {% elif order.status_operator == 'DECLINED' %}
+                    <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ order.get_status_operator_display }}</span>
+                {% elif order.status_operator == 'IN_PROGRESS' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>{{ order.get_status_operator_display }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">Не указан</span>
+                {% endif %}
+            </div>
+            
+            <!-- Оператор -->
+            <div class="col-md-4">
+                <label class="text-dark fw-semibold d-block mb-2">Оператор</label>
+                <p class="mb-0">{{ order.operator.full_name|default:user.full_name }}</p>
+            </div>
+            
+            <!-- Примечания клиента -->
+            <div class="col-md-4">
+                <label class="text-dark fw-semibold d-block mb-2">Примечания клиента</label>
+                <p class="mb-0 text-muted">{{ order.notes|default:"—" }}</p>
+            </div>
+        </div>
+        
+        <hr class="my-3">
+        
+        <!-- Кнопки действий -->
+        <div class="d-flex gap-2">
+            {% if order.status_operator != 'ACCEPTED' %}
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#sendToManagerModal">
+                <i class="bi bi-arrow-right-circle me-1"></i>Передать менеджеру
+            </button>
+            {% else %}
+            <div class="alert alert-success mb-0 py-2 px-3">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>Заказ уже передан менеджеру</strong>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения -->
+<div class="modal fade" id="sendToManagerModal" tabindex="-1" aria-labelledby="sendToManagerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white border-0">
+        <h5 class="modal-title" id="sendToManagerModalLabel">
+          <i class="bi bi-arrow-right-circle me-2"></i>Передать заказ менеджеру
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div class="mb-3">
+          <i class="bi bi-question-circle text-success" style="font-size: 4rem;"></i>
+        </div>
+        <h6 class="mb-3">Вы уверены, что хотите передать заказ менеджеру?</h6>
+        <p class="text-muted mb-0">Статус автоматически изменится на <strong class="text-success">"Принято"</strong></p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Отмена
+        </button>
+        <form method="post" action="{% url 'orders:order_send_to_manager' order.id %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle me-1"></i>Да, передать
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

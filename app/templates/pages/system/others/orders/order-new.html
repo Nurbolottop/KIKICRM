@@ -1,0 +1,305 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+      {% include 'pages/system/include/others/dashboard.html' %}
+      
+      {% include 'pages/system/include/others/header.html' %}
+      
+      <div class="content-page">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12 mb-3 d-flex justify-content-between">
+                  <h4 class="fw-bold d-flex align-items-center">Создание заказа</h4>
+                  <a href="{% url 'orders:order_list' %}" class="btn btn-primary btn-sm">Назад</a>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <form class="row g-3" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Role context (used for front-end capability validation). Expected to be provided by backend as user_role or request.user.role -->
+                    <div id="role_ctx" data-user-role="{{ user_role|default:request.user.role|default:'' }}" style="display:none;"></div>
+              
+                    <!-- Клиент -->
+                    <div class="col-md-6">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <label for="client" class="form-label fw-bold mb-0">Клиент</label>
+                        {% if request.GET.client %}
+                          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="enableClientEdit(this)">Изменить</button>
+                        {% endif %}
+                      </div>
+                      <select class="form-select" name="client" id="client" {% if request.GET.client %}disabled{% endif %} required>
+                        {% for c in clients %}
+                          <option value="{{ c.id }}" {% if request.GET.client and request.GET.client|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>{{ c.full_name }} ({{ c.phone }})</option>
+                        {% endfor %}
+                      </select>
+                      {% if request.GET.client %}
+                        <input type="hidden" name="client" id="client_hidden" value="{{ request.GET.client }}">
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Категория заказа -->
+                    <div class="col-md-6">
+                      <label for="category" class="form-label fw-bold">Категория заказа</label>
+                      <select class="form-select" name="category" id="category" required>
+                        <option value="NEW">Новый</option>
+                        <option value="REPEATED">Повторный</option>
+                      </select>
+                    </div>
+
+                    <!-- Тип услуги -->
+                    <div class="col-md-6">
+                      <label for="service" class="form-label fw-bold">Услуга</label>
+                      <select class="form-select" name="service" id="service" required>
+                        <option value="" disabled selected>Выберите услугу</option>
+                        {% for s in services %}
+                          <option value="{{ s.id }}">{{ s.title }}{% if s.price %} — {{ s.price }}{% endif %}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    
+                    <script>
+                      function enableClientEdit(button) {
+                        const clientSelect = document.getElementById('client');
+                        let hidden = document.getElementById('client_hidden');
+                        if (clientSelect.disabled) {
+                          // Enable editing: remove hidden and enable select
+                          clientSelect.disabled = false;
+                          if (hidden) hidden.remove();
+                          button.innerText = 'Отменить';
+                        } else {
+                          // Disable editing: add hidden with current value and disable select
+                          clientSelect.disabled = true;
+                          if (!hidden) {
+                            hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = 'client';
+                            hidden.id = 'client_hidden';
+                            clientSelect.insertAdjacentElement('afterend', hidden);
+                          }
+                          hidden.value = clientSelect.value;
+                          button.innerText = 'Изменить';
+                        }
+                      }
+                      // Keep hidden in sync if user changes selection while editing enabled
+                      document.addEventListener('change', function(e) {
+                        if (e.target && e.target.id === 'client') {
+                          const hidden = document.getElementById('client_hidden');
+                          if (hidden) hidden.value = e.target.value;
+                        }
+                      });
+                    </script>
+                    <!-- Адрес -->
+                    <div class="col-md-6">
+                      <label for="address" class="form-label fw-bold">Адрес выполнения</label>
+                      <input type="text" class="form-control" name="address" id="address" required>
+                    </div>
+              
+                    <!-- Дата -->
+                    <div class="col-md-6">
+                      <label for="date_time" class="form-label fw-bold">Дата и время уборки</label>
+                      <input type="text" class="form-control" name="date_time" id="date_time" placeholder="Выберите дату и время" autocomplete="off" required>
+                    </div>
+              
+                    <!-- Предварительная стоимость -->
+                    <div class="col-md-6">
+                      <label for="estimated_cost" class="form-label fw-bold">Предварительная стоимость</label>
+                      <input type="number" step="0.01" class="form-control" name="estimated_cost" id="estimated_cost">
+                    </div>
+              
+                    <!-- Метраж -->
+                    <div class="col-md-6">
+                      <label for="estimated_area" class="form-label fw-bold">Метраж / объём</label>
+                      <input type="number" class="form-control" name="estimated_area" id="estimated_area">
+                    </div>
+              
+                    <!-- Канал привлечения -->
+                    <div class="col-6">
+                      <label for="channel" class="form-label fw-bold">Канал привлечения</label>
+                      <select class="form-select" name="channel" id="channel">
+                        <option value="" selected disabled>Выберите канал</option>
+                        <option value="WEBSITE">Сайт</option>
+                        <option value="INSTAGRAM">Instagram</option>
+                        <option value="TELEGRAM">Telegram</option>
+                        <option value="WHATSAPP">WhatsApp</option>
+                        <option value="PHONE">Звонок</option>
+                        <option value="REFERRAL">Рекомендация</option>
+                        <option value="ADS">Реклама</option>
+                        <option value="OTHER">Другое</option>
+                      </select> 
+                    </div>
+              
+                    <!-- Источник -->
+                    <div class="col-6">
+                      <label for="source" class="form-label fw-bold">Источник обращения</label>
+                      <select class="form-select" name="source" id="source" disabled>
+                        <option value="" selected>Сначала выберите канал</option>
+                      </select>
+                    </div>
+              
+                    <!-- Приоритет -->
+                    <div class="col-md-6">
+                      <label for="priority" class="form-label fw-bold">Приоритет</label>
+                      <select class="form-select" name="priority" id="priority">
+                        <option value="NORMAL">Обычный</option>
+                        <option value="URGENT">Срочный</option>
+                      </select>
+                    </div>
+
+                    <!-- Заметки -->
+                    <div class="col-12">
+                      <label for="notes" class="form-label fw-bold">Заметки</label>
+                      <textarea class="form-control" name="notes" id="notes" rows="3"></textarea>
+                    </div>
+              
+                    <!-- Файл -->
+                    <div class="col-12">
+                      <label for="attachments" class="form-label fw-bold">Файл клиента</label>
+                      <input type="file" class="form-control" name="attachments" id="attachments">
+                    </div>
+              
+                    <div class="col-12 d-flex justify-content-end align-items-center flex-wrap gap-2">
+                      <div class="input-group input-group-sm" style="max-width: 460px;">
+                        <span class="input-group-text fw-bold">Статус (оператор)</span>
+                        <select class="form-select" name="status_operator" id="status_operator">
+                          <option value="IN_PROGRESS" selected>В обработке</option>
+                          <option value="ACCEPTED">Принято</option>
+                          <option value="DECLINED">Отклонено оператором</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Создать заказ</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+        </div>
+      </div>
+    </div>
+
+    {% include 'pages/system/include/others/footer.html' %}  <!-- Library Bundle Script -->
+
+    <!-- Flatpickr date-time picker (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.flatpickr) {
+          flatpickr('#date_time', {
+            locale: 'ru',
+            enableTime: true,
+            time_24hr: true,
+            minuteIncrement: 15,
+            // Показывать человеку удобный формат, а отправлять в том, что ожидает сервер
+            altInput: true,
+            altFormat: 'd.m.Y H:i',
+            // Значение для отправки: совпадает с форматом input type="datetime-local"
+            dateFormat: 'Y-m-d\\TH:i',
+            minDate: 'today',
+            disableMobile: true,
+            placeholder: 'Выберите дату и время',
+          });
+        }
+
+        // Связанные выпадающие списки: Канал -> Источник
+        const channelEl = document.getElementById('channel');
+        const sourceEl = document.getElementById('source');
+        const sourceMap = {
+          WEBSITE: [
+            {v: 'WEBSITE_FORM', t: 'Форма на сайте'},
+            {v: 'WEBSITE_CHAT', t: 'Чат на сайте'}
+          ],
+          INSTAGRAM: [
+            {v: 'INSTAGRAM_DM', t: 'Instagram Direct'},
+            {v: 'INSTAGRAM_BIO', t: 'Ссылка в профиле'}
+          ],
+          TELEGRAM: [
+            {v: 'TELEGRAM_BOT', t: 'Telegram-бот'},
+            {v: 'TELEGRAM_DM', t: 'Личные сообщения Telegram'}
+          ],
+          WHATSAPP: [
+            {v: 'WHATSAPP_CHAT', t: 'Чат WhatsApp'}
+          ],
+          PHONE: [
+            {v: 'PHONE_CALL', t: 'Телефонный звонок'}
+          ],
+          REFERRAL: [
+            {v: 'REFERRAL_FRIEND', t: 'Рекомендация (знакомые)'},
+            {v: 'REFERRAL_PARTNER', t: 'Рекомендация (партнёры)'}
+          ],
+          ADS: [
+            {v: 'GOOGLE_ADS', t: 'Google Ads'},
+            {v: 'YANDEX_ADS', t: 'Яндекс Реклама'},
+            {v: 'SOCIAL_ADS', t: 'Реклама в соцсетях'}
+          ],
+          OTHER: [
+            {v: 'OTHER', t: 'Другое'}
+          ]
+        };
+
+        function fillSources(channelValue) {
+          sourceEl.innerHTML = '';
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = channelValue ? 'Выберите источник' : 'Сначала выберите канал';
+          placeholder.selected = true;
+          placeholder.disabled = !channelValue;
+          sourceEl.appendChild(placeholder);
+
+          const items = sourceMap[channelValue] || [];
+          for (const item of items) {
+            const opt = document.createElement('option');
+            opt.value = item.v;
+            opt.textContent = item.t;
+            sourceEl.appendChild(opt);
+          }
+          sourceEl.disabled = !channelValue;
+        }
+
+        if (channelEl) {
+          channelEl.addEventListener('change', function () {
+            fillSources(channelEl.value);
+          });
+        }
+        // Если на форме был предзаполненный канал — восстановить источники
+        if (channelEl && channelEl.value) {
+          fillSources(channelEl.value);
+        }
+
+        // ===== Role-based front-end validation for capabilities =====
+        // Only OPERATOR can create new orders on this page. Others get read-only UI.
+        (function enforceRoleCapabilities() {
+          const roleEl = document.getElementById('role_ctx');
+          const role = (roleEl && roleEl.dataset.userRole ? roleEl.dataset.userRole : '').toUpperCase();
+          // Known roles: OPERATOR, MANAGER, SENIOR_CLEANER, CLEANER, FOUNDER, SMM, IT
+          const canCreateOrder = role === 'OPERATOR';
+
+          // If role is known and is NOT OPERATOR, make form read-only and hide submit
+          if (role && !canCreateOrder) {
+            const form = document.querySelector('form');
+            if (form) {
+              const controls = form.querySelectorAll('input, select, textarea, button[type="submit"]');
+              controls.forEach(el => {
+                // Keep the Back link intact; disable all inputs/selects/textarea and the submit button
+                if (el.tagName === 'BUTTON' && el.type === 'submit') {
+                  el.disabled = true;
+                  // Also hide submit to make state explicit
+                  el.style.display = 'none';
+                } else {
+                  el.disabled = true;
+                }
+              });
+
+              // Show an informational banner at the top of the form
+              const info = document.createElement('div');
+              info.className = 'alert alert-warning py-2 mb-2';
+              info.textContent = 'Ваша роль ("' + role + '") не может создавать заказы. Форма доступна только для чтения.';
+              form.insertAdjacentElement('afterbegin', info);
+            }
+          }
+        })();
+      });
+    </script>
+{% endblock %}

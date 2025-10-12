@@ -3,13 +3,16 @@ from django.contrib.auth.decorators import login_required
 from apps.clients import models as clients_models
 from django.utils.timezone import now, timedelta
 from apps.cms import models as cms_models
+from apps.orders import models as orders_models
+from django.db.models import Sum, Case, When, F, Value
+from django.db.models.functions import Coalesce
 
 # ✅ список всех клиентов
 @login_required
 def customer_list(request):
     settings = cms_models.Settings.objects.first()
     clients = clients_models.Client.objects.all().order_by("-updated_at")
-    return render(request, "pages/manager/others/customer/customer.html", locals())
+    return render(request, "pages/system/others/customer/customer.html", locals())
 
 
 # ✅ просмотр клиента
@@ -17,7 +20,33 @@ def customer_list(request):
 def customer_view(request, pk):
     settings = cms_models.Settings.objects.first()
     client = get_object_or_404(clients_models.Client, pk=pk)
-    return render(request, "pages/manager/others/customer/customer-view.html", locals())
+    # Calculate order statistics for this client
+    orders_qs = orders_models.Order.objects.filter(client=client)
+    # Total spent: prefer final_cost, fallback to estimated_cost
+    total_agg = orders_qs.aggregate(
+        total=Sum(
+            Case(
+                When(final_cost__isnull=False, then=F("final_cost")),
+                default=F("estimated_cost"),
+                output_field=orders_models.Order._meta.get_field("final_cost").__class__(),
+            )
+        )
+    )
+    client.orders_count = orders_qs.count()
+    client.total_spent = total_agg.get("total") or 0
+    client.first_order_date = orders_qs.order_by("date_time").values_list("date_time", flat=True).first()
+    client.last_order_date = orders_qs.order_by("-date_time").values_list("date_time", flat=True).first()
+    # Handle add note POST from the customer view page
+    if request.method == "POST":
+        note_text = (request.POST.get("note_text") or "").strip()
+        if note_text:
+            clients_models.ClientNote.objects.create(
+                client=client,
+                text=note_text,
+                created_by=request.user,
+            )
+        return redirect("customer_view", pk=client.pk)
+    return render(request, "pages/system/others/customer/customer-view.html", locals())
 
 
 # ✅ добавление клиента
@@ -45,7 +74,7 @@ def customer_add(request):
         )
         client.save()
         return redirect("customer")
-    return render(request, "pages/manager/others/customer/customer-add.html", locals())
+    return render(request, "pages/system/others/customer/customer-add.html", locals())
 
 
 # ✅ редактирование клиента
@@ -53,6 +82,8 @@ def customer_add(request):
 def customer_edit(request, pk):
     settings = cms_models.Settings.objects.first()
     client = get_object_or_404(clients_models.Client, pk=pk)
+    notes = clients_models.ClientNote.objects.filter(client=client).order_by('-created_at')
+
     if request.method == "POST":
         client.first_name = request.POST.get("first_name")
         client.last_name = request.POST.get("last_name")
@@ -60,7 +91,6 @@ def customer_edit(request, pk):
         client.phone = request.POST.get("phone")
         client.email = request.POST.get("email")
         client.whatsapp = request.POST.get("whatsapp")
-        client.telegram_id = request.POST.get("telegram_id")
         client.address = request.POST.get("address")
         client.organization = request.POST.get("organization")
         client.age = request.POST.get("age") or None
@@ -71,8 +101,17 @@ def customer_edit(request, pk):
             client.photo = request.FILES.get("photo")
         client.updated_by = request.user
         client.save()
+
+        new_note_text = request.POST.get("new_note")
+        if new_note_text:
+            clients_models.ClientNote.objects.create(
+                client=client,
+                text=new_note_text,
+                created_by=request.user
+            )
+
         return redirect("customer_view", pk=client.pk)
-    return render(request, "pages/manager/others/customer/customer-edit.html", locals())
+    return render(request, "pages/system/others/customer/customer-edit.html", locals())
 
 
 # ✅ клиенты, которых меняли за последние 7 дней
@@ -86,9 +125,8 @@ def customer_delete(request, pk):
     return redirect('customer_edit', pk=pk)
 
 
-@login_required
 def recent_updates(request):
     settings = cms_models.Settings.objects.first()
     seven_days_ago = now() - timedelta(days=7)
     clients = clients_models.Client.objects.filter(updated_at__gte=seven_days_ago).select_related("updated_by")
-    return render(request, "pages/manager/others/customer/recent_updates.html", locals())
+    return render(request, "pages/system/others/customer/recent_updates.html", locals())

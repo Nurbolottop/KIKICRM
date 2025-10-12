@@ -1,0 +1,302 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <!-- loader END -->
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+        {% include 'pages/system/include/others/dashboard.html' %}
+        
+        {% include 'pages/system/include/others/header.html' %}
+        <div class="content-page">
+            <div class="container-fluid">
+              <!-- Хлебные крошки -->
+              <div class="row">
+                <div class="col-lg-12">
+                  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                    <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb p-0 mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'orders:order_list' %}">Заказы</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ order.code }}</li>
+                      </ol>
+                    </nav>
+                </div>
+              </div>
+          
+                <!-- Заголовок -->
+                <div class="col-lg-12 mb-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="fw-bold">
+                      Заказ №{{ order.code }} — {{ order.service.title }}
+                    </h4>
+                    {% if user.role == "OPERATOR" %}
+                    <a class="btn btn-primary btn-sm" href="{% url 'orders:order_operator_update' order.id %}">
+                      <i class="bi bi-pencil-square me-1"></i>
+                      Редактировать заказ
+                    </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+          
+              <!-- Основная информация -->
+              <div class="row g-3">
+                <!-- Левая колонка: Клиент -->
+                <div class="col-lg-3">
+                  <div class="card border h-100">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-circle me-2 text-primary"></i>Клиент</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="text-center mb-3 pb-3 border-bottom">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 64px; height: 64px;">
+                          <i class="bi bi-person-fill fs-2"></i>
+                        </div>
+                        <h6 class="mb-1 fw-semibold">{{ order.client.first_name }} {{ order.client.last_name|default:"" }}</h6>
+                        <small class="text-muted">ID: {{ order.client.client_id|default:"—" }}</small>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2"><i class="bi bi-telephone me-1 text-success"></i>Телефон</label>
+                        <a href="tel:{{ order.client.phone }}" class="btn btn-sm btn-outline-success w-100">
+                          <i class="bi bi-telephone me-1"></i>{{ order.client.phone|default:"—" }}
+                        </a>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2"><i class="bi bi-envelope me-1 text-primary"></i>Email</label>
+                        <a href="mailto:{{ order.client.email }}" class="btn btn-sm btn-outline-primary w-100">
+                          <i class="bi bi-envelope me-1"></i>{{ order.client.email|default:"—" }}
+                        </a>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2"><i class="bi bi-house me-1 text-info"></i>Адрес клиента</label>
+                        <p class="mb-0">{{ order.client.address|default:"—" }}</p>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>Адрес выполнения</label>
+                        <p class="mb-0 fw-medium">{{ order.address|default:"—" }}</p>
+                      </div>
+                      
+                      {% if order.notes %}
+                      <div class="bg-warning bg-opacity-10 border border-warning rounded p-2 mt-3 small">
+                        <strong class="text-warning"><i class="bi bi-chat-quote me-1"></i>Примечания:</strong>
+                        <p class="mb-0 mt-1">{{ order.notes }}</p>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Центральная колонка: Основная информация -->
+                <div class="col-lg-5">
+                  <div class="card border h-100">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-info-circle me-2 text-primary"></i>Информация о заказе</h6>
+                    </div>
+                    <div class="card-body">
+                      <!-- Код и даты -->
+                      <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-semibold">Код заказа</span>
+                          <span class="badge bg-primary px-3 py-2">{{ order.code|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium"><i class="bi bi-clock-history me-1 text-secondary"></i>Создан</span>
+                          <span>{{ order.created_at|date:"d.m.Y H:i"|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium"><i class="bi bi-telephone-inbound me-1 text-secondary"></i>Обращение</span>
+                          <span>{{ order.contact_time|date:"d.m.Y H:i"|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-semibold"><i class="bi bi-calendar-event me-1 text-primary"></i>Дата уборки</span>
+                          <span class="fw-bold text-primary">{{ order.date_time|date:"d.m.Y H:i"|default:"—" }}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Услуга и категория -->
+                      <div class="mb-3 pb-3 border-bottom">
+                        <div class="mb-3">
+                          <span class="text-dark fw-semibold d-block mb-2"><i class="bi bi-briefcase me-1 text-primary"></i>Услуга</span>
+                          <span class="fw-medium">{{ order.service.title|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium">Категория</span>
+                          <span class="badge bg-info">{{ order.get_category_display|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-medium">Приоритет</span>
+                          {% if order.priority == 'URGENT' %}
+                            <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ order.get_priority_display }}</span>
+                          {% else %}
+                            <span class="badge bg-secondary">{{ order.get_priority_display|default:"—" }}</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                      
+                      <!-- Маркетинг -->
+                      <div class="mb-3 pb-3 border-bottom">
+                        <h6 class="text-dark fw-semibold mb-3"><i class="bi bi-megaphone me-1 text-warning"></i>Маркетинг</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium">Канал</span>
+                          <span class="badge bg-warning text-dark">{{ order.get_channel_display|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-medium">Источник</span>
+                          <span>{{ order.get_source_display|default:"—" }}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Оператор -->
+                      <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-semibold"><i class="bi bi-person-badge me-1 text-info"></i>Оператор</span>
+                          <span class="fw-medium">{{ order.operator.full_name|default:"—" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Правая колонка: Финансы и статусы -->
+                <div class="col-lg-4">
+                  <!-- Статусы -->
+                  <div class="card border mb-3">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-clipboard-check me-2 text-success"></i>Статусы</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="text-dark fw-semibold mb-0">Оператор</label>
+                        {% if order.status_operator == 'ACCEPTED' %}
+                          <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>{{ order.get_status_operator_display }}</span>
+                        {% elif order.status_operator == 'DECLINED' %}
+                          <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ order.get_status_operator_display }}</span>
+                        {% elif order.status_operator == 'IN_PROGRESS' %}
+                          <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>{{ order.get_status_operator_display }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Не указан</span>
+                        {% endif %}
+                      </div>
+                      
+                      <div class="d-flex justify-content-between align-items-center">
+                        <label class="text-dark fw-semibold mb-0">Менеджер</label>
+                        {% if order.status_manager == 'COMPLETED' %}
+                          <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% elif order.status_manager == 'DECLINED' %}
+                          <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% elif order.status_manager == 'ASSIGNED' %}
+                          <span class="badge bg-primary"><i class="bi bi-person-check-fill me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% elif order.status_manager == 'REVISION' %}
+                          <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Не указан</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Финансы -->
+                  <div class="card border mb-3">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-cash-coin me-2 text-success"></i>Финансы</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium">План</span>
+                          <span class="text-muted">{{ order.estimated_cost|default:"—" }} {% if order.estimated_cost %}сом{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-semibold">Финальная стоимость</span>
+                          <span class="fw-bold text-success fs-5">{{ order.final_cost|default:"—" }} {% if order.final_cost %}сом{% endif %}</span>
+                        </div>
+                      </div>
+                      <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium">Метраж (план)</span>
+                          <span>{{ order.estimated_area|default:"—" }} {% if order.estimated_area %}м²{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-semibold">Метраж (факт)</span>
+                          <span class="fw-semibold">{{ order.final_area|default:"—" }} {% if order.final_area %}м²{% endif %}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span class="text-dark fw-semibold"><i class="bi bi-alarm me-1 text-danger"></i>Дедлайн</span>
+                          <span class="badge bg-danger">{{ order.deadline|date:"d.m.Y H:i"|default:"Не указан" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Исполнители -->
+                  {% if order.senior_cleaner or order.cleaners.exists %}
+                  <div class="card border">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-people me-2 text-warning"></i>Исполнители</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2">Старший клинер</label>
+                        <div class="d-flex align-items-center">
+                          <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            <i class="bi bi-star-fill"></i>
+                          </div>
+                          <span class="fw-medium">{{ order.senior_cleaner.full_name|default:"Не назначен" }}</span>
+                        </div>
+                      </div>
+                      {% if order.cleaners.exists %}
+                      <div>
+                        <label class="text-dark fw-semibold d-block mb-2">Клинеры</label>
+                        <div class="d-flex flex-wrap gap-2">
+                          {% for cleaner in order.cleaners.all %}
+                            <span class="badge bg-primary"><i class="bi bi-person-check-fill me-1"></i>{{ cleaner.full_name }}</span>
+                          {% endfor %}
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Комментарий менеджера -->
+                  {% if order.manager_comment %}
+                  <div class="card border mt-3">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-chat-left-text me-2 text-info"></i>Комментарий менеджера</h6>
+                    </div>
+                    <div class="card-body">
+                      <p class="mb-0 small">{{ order.manager_comment }}</p>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Вторая строка: Панель действий по ролям -->
+              <div class="row g-3 mt-2">
+                <div class="col-12">
+                  {% if user.role == "FOUNDER" %}
+                    {% include 'pages/system/others/orders/roles/founder_order.html' %}
+                  {% elif user.role == "OPERATOR" %}
+                    {% include 'pages/system/others/orders/roles/operator_order.html' %}
+                  {% elif user.role == "MANAGER" %}
+                    {% include 'pages/system/others/orders/roles/manager_order.html' %}
+                  {% elif user.role == "SENIOR_CLEANER" %}
+                    {% include 'pages/system/others/orders/roles/senior_cleaner.html' %}
+                  {% elif user.role == "CLEANER" %}
+                    {% include 'pages/system/others/orders/roles/cleaner_order.html' %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+      </div>
+    <!-- Wrapper End-->
+    {% include 'pages/system/include/others/footer.html' %}
+{% endblock %}

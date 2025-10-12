@@ -20,11 +20,26 @@ class User(AbstractUser):
         CLEANER = 'CLEANER', 'Клинер'
         CANDIDATE = 'CANDIDATE', 'Кандидат'
 
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", "Активен"
+        CANDIDATE = "CANDIDATE", "Кандидат"
+        FIRED = "FIRED", "Уволен"
+
+    class PaymentType(models.TextChoices):
+        HOURLY = "HOURLY", "Почасовая оплата"
+        PER_ORDER = "PER_ORDER", "Оплата за заказ"
+        FIXED = "FIXED", "Фиксированная ставка"
+        MIXED = "MIXED", "Смешанный формат"  # можно доработать позже
+
     role = models.CharField(
         max_length=50, choices=Role.choices, default=Role.CANDIDATE, verbose_name="Роль"
     )
+    status = models.CharField(
+        max_length=50, choices=Status.choices, default=Status.CANDIDATE, verbose_name="Статус сотрудника"
+    )
     avatar = ResizedImageField(
-        force_format="WEBP", quality=100, upload_to='users_avatars/', verbose_name="Логотип"
+        force_format="WEBP", quality=100, upload_to='users_avatars/', blank=True, null=True,
+        verbose_name="Фото"
     )
     full_name = models.CharField(max_length=100, verbose_name="Полное имя")
     phone = models.CharField(max_length=100, blank=True, verbose_name="Номер телефона")
@@ -34,6 +49,27 @@ class User(AbstractUser):
         help_text="Введите номер в формате +996558000350 или 996558000350"
     )
     telegram_id = models.BigIntegerField(null=True, blank=True, verbose_name="Telegram ID")
+    hire_date = models.DateField(null=True, blank=True, verbose_name="Дата найма")
+
+    # Финансовая часть
+    payment_type = models.CharField(
+        max_length=50, choices=PaymentType.choices, default=PaymentType.HOURLY,
+        verbose_name="Формат оплаты"
+    )
+    rate = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name="Ставка"
+    )
+
+    # Документы
+    passport_front = ResizedImageField(
+        force_format="WEBP", quality=100, upload_to='users_passports/', blank=True, null=True,
+        verbose_name="Фото паспорта (лицевая сторона)"
+    )
+    passport_back = ResizedImageField(
+        force_format="WEBP", quality=100, upload_to='users_passports/', blank=True, null=True,
+        verbose_name="Фото паспорта (обратная сторона)"
+    )
 
     def whatsapp_link(self):
         if self.whatsapp:
@@ -41,7 +77,6 @@ class User(AbstractUser):
             url = f"https://wa.me/{number}"
             return format_html('<a href="{}" target="_blank">Открыть чат</a>', url)
         return '-'
-
     whatsapp_link.short_description = 'WhatsApp'
 
     def __str__(self):
@@ -51,4 +86,3 @@ class User(AbstractUser):
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
         ordering = ['-date_joined']
-

@@ -1,0 +1,82 @@
+{% load static %}
+<!-- Оператор -->
+{% if user.role == "OPERATOR" %}
+          
+<!-- Клиенты -->
+<li class="sidebar-layout">
+  <a href="{% url 'customer' %}" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857m12.288 0a5.002 5.002 0 00-9.288 0M12 4a4 4 0 110 8 4 4 0 010-8z" />
+      </svg>
+    </i>
+    <span class="ms-2">Клиенты</span>
+  </a>
+</li>
+
+<!-- Заказы -->
+<li class="sidebar-layout">
+  <a href="{% url 'orders:order_list' %}" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    </i>
+    <span class="ms-2">Заказы</span>
+  </a>
+</li>
+
+<!-- Календарь -->
+<li class="sidebar-layout">
+  <a href="./calendar.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </i>
+    <span class="ms-2">Календарь</span>
+  </a>
+</li>
+
+<!-- Чат -->
+<li class="sidebar-layout">
+  <a href="./chat.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M7 8h10M7 12h6m5 8l-5-5H6a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-3l-5 5z" />
+      </svg>
+    </i>
+    <span class="ms-2">Чат</span>
+  </a>
+</li>
+
+<!-- Задачи -->
+<li class="sidebar-layout">
+  <a href="./tasks.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 12h6m2 7H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
+      </svg>
+    </i>
+    <span class="ms-2">Задачи</span>
+  </a>
+</li>
+
+<!-- Профиль -->
+<li class="sidebar-layout">
+  <a href="./profile.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M5.121 17.804A9 9 0 1119 9c0 4.971-4.029 9-9 9a9.003 9.003 0 01-4.879-1.196z" />
+      </svg>
+    </i>
+    <span class="ms-2">Профиль</span>
+  </a>
+</li>
+{% endif %}

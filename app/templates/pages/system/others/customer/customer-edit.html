@@ -1,0 +1,232 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+        {% include 'pages/system/include/others/dashboard.html' %}
+        
+        {% include 'pages/system/include/others/header.html' %}
+
+        <div class="content-page">
+            <div class="container-fluid">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb mb-0">
+                                        <li class="breadcrumb-item">
+                                            <a href="{% url 'customer' %}" class="text-decoration-none">
+                                                <i class="bi bi-people me-1"></i>Клиенты
+                                            </a>
+                                        </li>
+                                        <li class="breadcrumb-item active" aria-current="page">Редактирование клиента #{{ client.client_id }}</li>
+                                    </ol>
+                                </nav>
+                                <a href="{% url 'customer' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Назад к списку
+                                </a>
+                            </div>
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
+                                    <i class="bi bi-pencil-square text-primary fs-4"></i>
+                                </div>
+                                <div>
+                                    <h1 class="h4 mb-0">Редактирование клиента</h1>
+                                    <p class="text-muted mb-0">Обновите информацию о клиенте</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <!-- Left Column - Photo and Classification -->
+                            <div class="col-lg-4">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Фотография</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <div class="photo-upload mb-3">
+                                            <img src="{% if client.photo %}{{ client.photo.url }}{% else %} {% if client.gender == 'male' %}{% static 'assets/mystatic/images/users/man-icon.png' %} {% elif client.gender == 'female' %}{% static 'assets/mystatic/images/users/girl-icon.png' %} {% elif client.gender == 'other' %}{% static 'assets/mystatic/images/users/other-icon.png' %} {% endif %}{% endif %}" 
+                                                 alt="Client Photo" 
+                                                 id="photo-preview" 
+                                                 class="photo-preview rounded-circle mb-3" style="width: 150px; height: 150px;">
+                                            <div class="d-grid">
+                                                <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*" onchange="previewImage(this, 'photo-preview')">
+                                                <label for="photo" class="btn btn-outline-primary">
+                                                    <i class="bi bi-upload me-2"></i>Изменить фото
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Классификация</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="category" class="form-label">Категория <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="category" name="category" required>
+                                                <option value="new" {% if client.category == 'new' %}selected{% endif %}>Новый</option>
+                                                <option value="regular" {% if client.category == 'regular' %}selected{% endif %}>Постоянный</option>
+                                                <option value="vip" {% if client.category == 'vip' %}selected{% endif %}>VIP</option>
+                                                <option value="lost" {% if client.category == 'lost' %}selected{% endif %}>Потерянный</option>
+                                                <option value="other" {% if client.category == 'other' %}selected{% endif %}>Другое</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="source" class="form-label">Источник</label>
+                                            <select class="form-select" id="source" name="source">
+                                                <option value="instagram" {% if client.source == 'instagram' %}selected{% endif %}>Instagram</option>
+                                                <option value="website" {% if client.source == 'website' %}selected{% endif %}>Сайт</option>
+                                                <option value="referral" {% if client.source == 'referral' %}selected{% endif %}>Рекомендация</option>
+                                                <option value="other" {% if client.source == 'other' %}selected{% endif %}>Другое</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-0">
+                                            <label for="gender" class="form-label">Пол</label>
+                                            <select class="form-select" id="gender" name="gender">
+                                                <option value="" {% if not client.gender %}selected{% endif %}>Не указан</option>
+                                                <option value="male" {% if client.gender == 'male' %}selected{% endif %}>Мужской</option>
+                                                <option value="female" {% if client.gender == 'female' %}selected{% endif %}>Женский</option>
+                                                <option value="other" {% if client.gender == 'other' %}selected{% endif %}>Другое</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Main Form -->
+                            <div class="col-lg-8">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Основная информация</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="last_name" class="form-label">Фамилия</label>
+                                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ client.last_name|default:'' }}" placeholder="Введите фамилию">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="first_name" class="form-label">Имя <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ client.first_name }}" required placeholder="Введите имя">
+                                                <div class="invalid-feedback">Пожалуйста, укажите имя</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="middle_name" class="form-label">Отчество</label>
+                                                <input type="text" class="form-control" id="middle_name" name="middle_name" value="{{ client.middle_name|default:'' }}" placeholder="Введите отчество">
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label for="organization" class="form-label">Организация</label>
+                                                <input type="text" class="form-control" id="organization" name="organization" value="{{ client.organization|default:'' }}" placeholder="Название организации">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Контактные данные</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="phone" class="form-label">Телефон <span class="text-danger">*</span></label>
+                                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ client.phone }}" required placeholder="+996 555 123456">
+                                                <div class="invalid-feedback">Введите корректный номер телефона</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="email" name="email" value="{{ client.email|default:'' }}" placeholder="email@example.com">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="whatsapp" class="form-label">WhatsApp</label>
+                                                <input type="tel" class="form-control" id="whatsapp" name="whatsapp" value="{{ client.whatsapp|default:'' }}" placeholder="+996 555 123456">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="age" class="form-label">Возраст</label>
+                                                <input type="number" class="form-control" id="age" name="age" min="1" max="120" value="{{ client.age|default:'' }}" placeholder="Укажите возраст">
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="address" class="form-label">Адрес</label>
+                                                <input type="text" class="form-control" id="address" name="address" value="{{ client.address|default:'' }}" placeholder="Введите адрес">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+                            <div>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteClientModal">
+                                    <i class="bi bi-trash me-2"></i>Удалить клиента
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'customer_view' client.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-2"></i>Отмена
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-save me-2"></i>Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteClientModalLabel">Подтверждение удаления</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Вы уверены, что хотите удалить клиента <strong>{{ client.first_name }} {{ client.last_name }}</strong>?
+                                    Это действие необратимо.
+                                </div>
+                                <div class="modal-footer">
+                                    <form action="{% url 'customer_delete' client.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                        <button type="submit" class="btn btn-danger">Удалить</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Wrapper End-->
+    {% include 'pages/system/include/others/footer.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const file = input.files[0];
+    const reader = new FileReader();
+    const label = input.nextElementSibling;
+
+    reader.onloadend = function() {
+        preview.src = reader.result;
+    }
+
+    if (file) {
+        reader.readAsDataURL(file);
+        label.innerHTML = `<i class="bi bi-file-earmark-image me-2"></i>${file.name}`;
+    } else {
+        preview.src = "{% if client.photo %}{{ client.photo.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}";
+        label.innerHTML = `<i class="bi bi-upload me-2"></i>Изменить фото`;
+    }
+}
+</script>
+{% endblock %}

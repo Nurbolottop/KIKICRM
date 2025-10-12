@@ -1,0 +1,171 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+      {% include 'pages/system/include/others/dashboard.html' %}
+      
+      {% include 'pages/system/include/others/header.html' %}
+      
+      <div class="content-page">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12 mb-3 d-flex justify-content-between align-items-center">
+                  <h4 class="fw-bold">Редактирование заказа {{ order.code }}</h4>
+                  <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Назад
+                  </a>
+                </div>
+              </div>
+              
+              <div class="card border">
+                <div class="card-header bg-light">
+                  <h5 class="mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Информация о заказе</h5>
+                </div>
+                <div class="card-body">
+                  <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                      <!-- Клиент (только для просмотра) -->
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Клиент</label>
+                        <input type="text" class="form-control" value="{{ order.client.first_name }} {{ order.client.last_name }} ({{ order.client.phone }})" disabled>
+                        <small class="text-muted">Клиента нельзя изменить после создания заказа</small>
+                      </div>
+                      
+                      <!-- Категория заказа -->
+                      <div class="col-md-6">
+                        <label for="category" class="form-label fw-semibold">Категория заказа <span class="text-danger">*</span></label>
+                        <select class="form-select" name="category" id="category" required>
+                          <option value="NEW" {% if order.category == 'NEW' %}selected{% endif %}>Новый</option>
+                          <option value="REPEATED" {% if order.category == 'REPEATED' %}selected{% endif %}>Повторный</option>
+                        </select>
+                      </div>
+
+                      <!-- Услуга -->
+                      <div class="col-md-6">
+                        <label for="service" class="form-label fw-semibold">Услуга <span class="text-danger">*</span></label>
+                        <select class="form-select" name="service" id="service" required>
+                          <option value="" disabled>Выберите услугу</option>
+                          {% for s in services %}
+                            <option value="{{ s.id }}" {% if order.service.id == s.id %}selected{% endif %}>
+                              {{ s.title }}{% if s.price %} — {{ s.price }} сом{% endif %}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      
+                      <!-- Адрес -->
+                      <div class="col-md-6">
+                        <label for="address" class="form-label fw-semibold">Адрес выполнения <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="address" id="address" value="{{ order.address }}" required>
+                      </div>
+              
+                      <!-- Дата и время -->
+                      <div class="col-md-6">
+                        <label for="date_time" class="form-label fw-semibold">Дата и время уборки <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" name="date_time" id="date_time" 
+                               value="{{ order.date_time|date:'Y-m-d\TH:i' }}" required>
+                      </div>
+              
+                      <!-- Предварительная стоимость -->
+                      <div class="col-md-6">
+                        <label for="estimated_cost" class="form-label fw-semibold">Предварительная стоимость (сом)</label>
+                        <input type="number" step="0.01" class="form-control" name="estimated_cost" id="estimated_cost" 
+                               value="{{ order.estimated_cost }}" placeholder="Необязательно">
+                      </div>
+              
+                      <!-- Предварительный метраж -->
+                      <div class="col-md-6">
+                        <label for="estimated_area" class="form-label fw-semibold">Предварительный метраж (м²)</label>
+                        <input type="number" class="form-control" name="estimated_area" id="estimated_area" 
+                               value="{{ order.estimated_area }}" placeholder="Необязательно">
+                      </div>
+              
+                      <!-- Канал привлечения -->
+                      <div class="col-md-6">
+                        <label for="channel" class="form-label fw-semibold">Канал привлечения</label>
+                        <select class="form-select" name="channel" id="channel">
+                          <option value="">Не указан</option>
+                          <option value="WEBSITE" {% if order.channel == 'WEBSITE' %}selected{% endif %}>Сайт</option>
+                          <option value="INSTAGRAM" {% if order.channel == 'INSTAGRAM' %}selected{% endif %}>Instagram</option>
+                          <option value="TELEGRAM" {% if order.channel == 'TELEGRAM' %}selected{% endif %}>Telegram</option>
+                          <option value="WHATSAPP" {% if order.channel == 'WHATSAPP' %}selected{% endif %}>WhatsApp</option>
+                          <option value="PHONE" {% if order.channel == 'PHONE' %}selected{% endif %}>Звонок</option>
+                          <option value="REFERRAL" {% if order.channel == 'REFERRAL' %}selected{% endif %}>Рекомендация</option>
+                          <option value="ADS" {% if order.channel == 'ADS' %}selected{% endif %}>Реклама</option>
+                          <option value="OTHER" {% if order.channel == 'OTHER' %}selected{% endif %}>Другое</option>
+                        </select>
+                      </div>
+              
+                      <!-- Источник обращения -->
+                      <div class="col-md-6">
+                        <label for="source" class="form-label fw-semibold">Источник обращения</label>
+                        <select class="form-select" name="source" id="source">
+                          <option value="">Не указан</option>
+                          <option value="WEBSITE_FORM" {% if order.source == 'WEBSITE_FORM' %}selected{% endif %}>Форма на сайте</option>
+                          <option value="WEBSITE_CHAT" {% if order.source == 'WEBSITE_CHAT' %}selected{% endif %}>Чат на сайте</option>
+                          <option value="INSTAGRAM_DM" {% if order.source == 'INSTAGRAM_DM' %}selected{% endif %}>Instagram Direct</option>
+                          <option value="INSTAGRAM_BIO" {% if order.source == 'INSTAGRAM_BIO' %}selected{% endif %}>Ссылка в профиле</option>
+                          <option value="TELEGRAM_BOT" {% if order.source == 'TELEGRAM_BOT' %}selected{% endif %}>Telegram-бот</option>
+                          <option value="TELEGRAM_DM" {% if order.source == 'TELEGRAM_DM' %}selected{% endif %}>Личные сообщения Telegram</option>
+                          <option value="WHATSAPP_CHAT" {% if order.source == 'WHATSAPP_CHAT' %}selected{% endif %}>Чат WhatsApp</option>
+                          <option value="PHONE_CALL" {% if order.source == 'PHONE_CALL' %}selected{% endif %}>Телефонный звонок</option>
+                          <option value="REFERRAL_FRIEND" {% if order.source == 'REFERRAL_FRIEND' %}selected{% endif %}>Рекомендация (знакомые)</option>
+                          <option value="REFERRAL_PARTNER" {% if order.source == 'REFERRAL_PARTNER' %}selected{% endif %}>Рекомендация (партнёры)</option>
+                          <option value="GOOGLE_ADS" {% if order.source == 'GOOGLE_ADS' %}selected{% endif %}>Google Ads</option>
+                          <option value="YANDEX_ADS" {% if order.source == 'YANDEX_ADS' %}selected{% endif %}>Яндекс Реклама</option>
+                          <option value="SOCIAL_ADS" {% if order.source == 'SOCIAL_ADS' %}selected{% endif %}>Реклама в соцсетях</option>
+                          <option value="OTHER" {% if order.source == 'OTHER' %}selected{% endif %}>Другое</option>
+                        </select>
+                      </div>
+              
+                      <!-- Приоритет -->
+                      <div class="col-md-6">
+                        <label for="priority" class="form-label fw-semibold">Приоритет</label>
+                        <select class="form-select" name="priority" id="priority">
+                          <option value="NORMAL" {% if order.priority == 'NORMAL' %}selected{% endif %}>Обычный</option>
+                          <option value="URGENT" {% if order.priority == 'URGENT' %}selected{% endif %}>Срочный</option>
+                        </select>
+                      </div>
+              
+                      <!-- Статус оператора -->
+                      <div class="col-md-6">
+                        <label for="status_operator" class="form-label fw-semibold">Статус оператора</label>
+                        <select class="form-select" name="status_operator" id="status_operator">
+                          <option value="IN_PROGRESS" {% if order.status_operator == 'IN_PROGRESS' %}selected{% endif %}>В обработке</option>
+                          <option value="ACCEPTED" {% if order.status_operator == 'ACCEPTED' %}selected{% endif %}>Принято</option>
+                          <option value="DECLINED" {% if order.status_operator == 'DECLINED' %}selected{% endif %}>Отклонено</option>
+                        </select>
+                      </div>
+              
+                      <!-- Заметки клиента -->
+                      <div class="col-12">
+                        <label for="notes" class="form-label fw-semibold">Заметки клиента</label>
+                        <textarea class="form-control" name="notes" id="notes" rows="3" placeholder="Дополнительные пожелания или комментарии клиента">{{ order.notes }}</textarea>
+                      </div>
+                      
+                      <!-- Кнопки -->
+                      <div class="col-12">
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                          <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Отмена
+                          </a>
+                          <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Сохранить изменения
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+        </div>
+      </div>
+      
+    </div>
+    <!-- Wrapper End-->
+    {% include 'pages/system/include/others/footer.html' %}
+{% endblock %}

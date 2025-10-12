@@ -1,0 +1,107 @@
+{% load static %}
+<!-- Основатель -->
+{% if user.role == "FOUNDER" %}
+<!-- Клиенты -->
+<li class="sidebar-layout">
+  <a href="./customer.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    </i>
+    <span class="ms-2">Клиенты</span>
+  </a>
+</li>
+
+<!-- Заказы -->
+<li class="sidebar-layout">
+  <a href="./orders.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M3 7h18M3 12h18M3 17h18" />
+      </svg>
+    </i>
+    <span class="ms-2">Заказы</span>
+  </a>
+</li>
+
+<!-- Сотрудники -->
+<li class="sidebar-layout">
+  <a href="./staff.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857m12.288 0a5.002 5.002 0 00-9.288 0M12 4a4 4 0 110 8 4 4 0 010-8z" />
+      </svg>
+    </i>
+    <span class="ms-2">Сотрудники</span>
+  </a>
+</li>
+
+<!-- Финансы -->
+<li class="sidebar-layout">
+  <a href="./finance.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 8c-2.21 0-4 .79-4 3.5S9.79 15 12 15s4 .79 4-3.5S14.21 8 12 8zm0 0V5m0 10v3m8-9a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </i>
+    <span class="ms-2">Финансы</span>
+  </a>
+</li>
+
+<!-- Аналитика -->
+<li class="sidebar-layout">
+  <a href="./analytics.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M11 3v18M6 8l6-5 6 5M4 21h16" />
+      </svg>
+    </i>
+    <span class="ms-2">Аналитика</span>
+  </a>
+</li>
+
+<!-- Календарь -->
+<li class="sidebar-layout">
+  <a href="./calendar.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </i>
+    <span class="ms-2">Календарь</span>
+  </a>
+</li>
+
+<!-- Чат -->
+<li class="sidebar-layout">
+  <a href="./chat.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M7 8h10M7 12h6m5 8l-5-5H6a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-3l-5 5z" />
+      </svg>
+    </i>
+    <span class="ms-2">Чат</span>
+  </a>
+</li>
+
+<!-- Задачи -->
+<li class="sidebar-layout">
+  <a href="./tasks.html" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9 12h6m2 7H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
+      </svg>
+    </i>
+    <span class="ms-2">Задачи</span>
+  </a>
+</li>
+{% endif %}

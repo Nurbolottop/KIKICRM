@@ -1,0 +1,137 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <!-- Wrapper Start -->
+    <div class="wrapper">
+      {% include 'pages/system/include/others/dashboard.html' %}
+      
+      {% include 'pages/system/include/others/header.html' %}
+      
+      <div class="content-page">
+        <div class="container-fluid">
+          <!-- Header -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 my-schedule mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h4 class="fw-bold">Все Заказы</h4>
+                </div>
+                <div class="create-workform">
+                  <div class="d-flex flex-wrap align-items-center justify-content-between">
+                    <div class="modal-product-search d-flex flex-wrap">
+                      <form class="me-3 position-relative" method="get" action="">
+                        <div class="form-group mb-0">
+                          <input type="text" name="q" class="form-control" placeholder="Поиск (код, клиент, адрес)">
+                          <button class="search-link btn btn-link position-absolute top-0 end-0 h-100 d-flex align-items-center pe-2" type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </form>
+                      <a href="{% url 'orders:order_create' %}" class="btn btn-primary position-relative d-flex align-items-center justify-content-between">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="me-2" width="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg> Добавить заказ </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Orders Table -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card card-block card-stretch">
+                <div class="card-body p-0">
+                  <div class="d-flex justify-content-between align-items-center p-3 pb-0">
+                    <h5 class="fw-bold">Список заказов</h5>
+                  </div>
+                  <div class="table-responsive iq-order-table">
+                    <table class="table table-hover mb-0 align-middle">
+                      <thead class="table-color-heading">
+                        <tr class="text-light">
+                          <th scope="col">Код</th>
+                          <th scope="col">Клиент</th>
+                          <th scope="col">Услуга</th>
+                          <th scope="col">Дата</th>
+                          <th scope="col">Оператор</th>
+                          <th scope="col">Менеджер</th>
+                          <th scope="col">Приоритет</th>
+                          <th scope="col" class="text-end">Действия</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% if orders %}
+                          {% for o in orders %}
+                            <tr>
+                              <td class="fw-semibold"><a href="{% url 'orders:order_detail' o.pk %}">{{ o.code }}</a></td>
+                              <td>
+                                {{ o.client.first_name }} {{ o.client.last_name|default:'' }}
+                                <div class="small text-muted">{{ o.client.phone }}</div>
+                              </td>
+                              <td>{{ o.service.title|default:"—" }}</td>
+                              <td>{{ o.date_time|date:"d.m.Y H:i"|default:"—" }}</td>
+                              <td>
+                                {% if o.status_operator == 'ACCEPTED' %}
+                                  <span class="badge bg-success">{{ o.get_status_operator_display }}</span>
+                                {% elif o.status_operator == 'DECLINED' %}
+                                  <span class="badge bg-danger">{{ o.get_status_operator_display }}</span>
+                                {% elif o.status_operator == 'IN_PROGRESS' %}
+                                  <span class="badge bg-warning text-dark">{{ o.get_status_operator_display }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary">—</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if o.status_manager == 'COMPLETED' %}
+                                  <span class="badge bg-success">{{ o.get_status_manager_display }}</span>
+                                {% elif o.status_manager == 'DECLINED' %}
+                                  <span class="badge bg-danger">{{ o.get_status_manager_display }}</span>
+                                {% elif o.status_manager == 'ASSIGNED' %}
+                                  <span class="badge bg-primary">{{ o.get_status_manager_display }}</span>
+                                {% elif o.status_manager == 'REVISION' %}
+                                  <span class="badge bg-warning text-dark">{{ o.get_status_manager_display }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary">—</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if o.priority == 'URGENT' %}
+                                  <span class="badge bg-danger">Срочный</span>
+                                {% else %}
+                                  <span class="badge bg-secondary">Обычный</span>
+                                {% endif %}
+                              </td>
+                              <td class="text-end">
+                                <a href="{% url 'orders:order_detail' o.pk %}" class="btn btn-sm btn-outline-primary">
+                                  <i class="bi bi-eye"></i>
+                                </a>
+                                {% if request.user.role == 'OPERATOR' %}
+                                  <a href="{% url 'orders:order_operator_update' o.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                  </a>
+                                {% endif %}
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        {% else %}
+                          <tr>
+                            <td colspan="8" class="text-center text-muted py-4">Заказы не найдены</td>
+                          </tr>
+                        {% endif %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    <!-- Wrapper End -->
+    {% include 'pages/system/include/others/footer.html' %}
+{% endblock %}

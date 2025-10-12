@@ -1,0 +1,10 @@
+{% load static %}
+<!-- Блок для SMM -->
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Канал и источник заказа</h5>
+        <p><b>Канал:</b> {{ order.get_channel_display }}</p>
+        <p><b>Источник:</b> {{ order.get_source_display }}</p>
+        <p><b>Дата обращения:</b> {{ order.contact_time|date:"d.m.Y H:i" }}</p>
+    </div>
+</div>

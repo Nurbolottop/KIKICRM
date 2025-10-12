@@ -57,3 +57,42 @@ class Settings(models.Model):
         verbose_name_plural = '1) Настройки'
     def __str__(self):
         return self.title
+
+
+class Services(models.Model):
+    title = models.CharField(
+        max_length=100,
+        verbose_name='Название услуги'
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Цена'
+    )
+    description = RichTextUploadingField(
+        verbose_name='Описание Услуги'
+    )
+    image = ResizedImageField(
+        force_format="WEBP", 
+        quality=100, 
+        upload_to='services/', 
+        verbose_name="Изображение услуги",
+        null=True, blank=True
+    )
+    order = models.IntegerField(
+        verbose_name='Порядок',
+        default=0
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+    )
+    class Meta:
+        verbose_name = '2) Услуги'
+        verbose_name_plural = '2) Услуги'
+    def __str__(self):
+        return self.title

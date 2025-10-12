@@ -1,0 +1,50 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{settings.title}} | {{settings.description}}</title>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{settings.icon.url}}" />
+    <!-- Library / Plugin Css Build -->
+    <link rel="stylesheet" href="{% static 'assets/css/core/libs.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/datum.min.css' %}">
+    <!-- Custom Css -->
+    <link rel="stylesheet" href="{% static 'assets/css/custom.min.css' %}">
+    <!-- Customizer Css -->
+    <link rel="stylesheet" href="{% static 'assets/css/customizer.min.css' %}">
+    <!-- font-awesome css -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/font-awesome/css/all.min.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  </head>
+  <body class="  ">
+    {% block content %}{% endblock %}
+    <!-- Library Bundle Script -->
+    <script src="{% static 'assets/js/core/libs.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/external.min.js' %}"></script>
+    <!-- Chart Custom JavaScript -->
+    <script src="{% static 'assets/js/customizer.js' %}"></script>
+    <script src="{% static 'assets/js/sidebar.js' %}"></script>
+    <!-- Flextree Javascript-->
+    <script src="{% static 'assets/js/flex-tree.min.js' %}"></script>
+    <script src="{% static 'assets/js/tree.js' %}"></script>
+    <!-- Table Treeview JavaScript -->
+    <script src="{% static 'assets/js/table-treeview.js' %}"></script>
+    <!-- SweetAlert JavaScript -->
+    <script src="{% static 'assets/js/sweetalert.js' %}"></script>
+    <!-- Vectoe Map JavaScript -->
+    <script src="{% static 'assets/js/vector-map-custom.js' %}"></script>
+    <!-- Chart Custom JavaScript -->
+    <script src="{% static 'assets/js/chart-custom.js' %}"></script>
+    <script src="{% static 'assets/js/charts/01.js' %}"></script>
+    <!-- slider JavaScript -->
+    <script src="{% static 'assets/js/slider.js' %}"></script>
+    <!-- Emoji picker -->
+    <script src="{% static 'assets/vendor/emoji-picker-element/index.js' %}" type="module"></script>
+    <!-- app JavaScript -->
+    <script src="{% static 'assets/js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

@@ -7,6 +7,25 @@ import re
 
 User = get_user_model()
 
+def validate_phone_number(value):
+    """
+    Валидация номера телефона для Казахстана и Кыргызстана.
+    """
+    if not value:
+        return
+
+    digits = re.sub(r'\D', '', str(value))
+
+    # Казахстан: 11 цифр, начинается с 7 или 8
+    is_kz = len(digits) == 11 and digits.startswith(('7', '8'))
+    # Кыргызстан: 10 цифр, начинается с 0, или 12 цифр с 996, или 9 цифр без 0
+    is_kg = (len(digits) == 10 and digits.startswith('0')) or \
+            (len(digits) == 12 and digits.startswith('996')) or \
+            (len(digits) == 9 and not digits.startswith('0'))
+
+    if not (is_kz or is_kg):
+        raise ValidationError('Введите корректный номер телефона (Казахстан: 7/8... или Кыргызстан: 0...)')
+
 class Client(models.Model):
     GENDER_CHOICES = [
         ("male", "Мужской"),
@@ -41,60 +60,9 @@ class Client(models.Model):
     first_name = models.CharField(max_length=100, verbose_name="Имя")
     last_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Фамилия")
     middle_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Отчество")
-    phone = models.CharField(max_length=20, verbose_name="Телефон")
+    phone = models.CharField(max_length=20, verbose_name="Телефон", validators=[validate_phone_number])
     email = models.EmailField(blank=True, null=True, verbose_name="Email")
     
-    @classmethod
-    def validate_whatsapp_number(cls, value):
-        """
-        Валидация номера WhatsApp для Казахстана и Кыргызстана.
-        Принимает номера в форматах: 77001234567, +77001234567, 7 (700) 123-45-67, 0555123456, +996555123456
-        """
-        if not value:
-            return value
-            
-        # Удаляем все нецифровые символы
-        digits = re.sub(r'\D', '', str(value))
-        
-        # Проверяем казахстанские номера (начинаются с 7 или 8, 11 цифр)
-        if len(digits) == 11 and digits[0] in ('7', '8'):
-            # Конвертируем 8 в 7 для казахстанских номеров
-            return '7' + digits[1:] if digits[0] == '8' else digits
-            
-        # Проверяем кыргызские номера (начинаются с 996 или 0, 9-12 цифр)
-        if digits.startswith('996'):
-            if len(digits) == 12:  # 996555123456
-                return digits[3:]  # Возвращаем без кода страны
-            elif len(digits) == 10:  # 0555123456
-                return digits[1:] if digits.startswith('0') else digits
-        elif digits.startswith('0'):
-            if len(digits) == 10:  # 0555123456
-                return digits[1:]
-            elif len(digits) == 9:  # 555123456
-                return digits
-                
-        # Если номер не соответствует ни одному из форматов
-        raise ValidationError('Введите корректный номер телефона (Казахстан: 7XXXXXXXXXX или Кыргызстан: 0XXXXXXXXX)')
-
-    def get_whatsapp_link(self, phone_number):
-        """Конвертирует номер телефона в ссылку WhatsApp"""
-        if not phone_number:
-            return ''
-            
-        # Удаляем все нецифровые символы
-        digits = re.sub(r'\D', '', str(phone_number))
-        
-        # Обрабатываем казахстанские номера
-        if digits.startswith('7') and len(digits) == 11:
-            return f'https://wa.me/{digits}'
-            
-        # Обрабатываем кыргызские номера
-        if digits.startswith('996') and len(digits) == 12:
-            return f'https://wa.me/{digits}'
-            
-        # Если формат не распознан, возвращаем как есть (на случай будущих изменений)
-        return f'https://wa.me/{digits}'
-
     _whatsapp_number = models.CharField(
         max_length=20, 
         blank=True, 
@@ -112,7 +80,11 @@ class Client(models.Model):
     @whatsapp.setter
     def whatsapp(self, value):
         """Set the WhatsApp number with validation"""
-        self._whatsapp_number = self.validate_whatsapp_number(value) if value else None
+        if value:
+            validate_phone_number(value)  # Validate before setting
+            self._whatsapp_number = value
+        else:
+            self._whatsapp_number = None
     telegram_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="Telegram ID")
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name="Адрес")
     organization = models.CharField(max_length=255, blank=True, null=True, verbose_name="Организация")
@@ -147,6 +119,25 @@ class Client(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Когда добавлен")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Когда изменен")
 
+    def get_whatsapp_link(self, phone_number):
+        """Конвертирует номер телефона в ссылку WhatsApp"""
+        if not phone_number:
+            return ''
+            
+        # Удаляем все нецифровые символы
+        digits = re.sub(r'\D', '', str(phone_number))
+        
+        # Обрабатываем казахстанские номера
+        if digits.startswith('7') and len(digits) == 11:
+            return f'https://wa.me/{digits}'
+            
+        # Обрабатываем кыргызские номера
+        if digits.startswith('996') and len(digits) == 12:
+            return f'https://wa.me/{digits}'
+            
+        # Если формат не распознан, возвращаем как есть (на случай будущих изменений)
+        return f'https://wa.me/{digits}'
+
     def __str__(self):
         return f"{self.first_name} {self.last_name or ''} ({self.phone})"
 
@@ -166,10 +157,31 @@ class Client(models.Model):
             if not Client.objects.filter(client_id=client_id).exists():
                 return client_id
 
+    def _clean_phone_number(self, number):
+        if not number:
+            return None
+        digits = re.sub(r'\D', '', str(number))
+        # KZ: 87... -> 77...
+        if len(digits) == 11 and digits.startswith('8'):
+            return '7' + digits[1:]
+        # KG: 0555... -> 555...
+        if len(digits) == 10 and digits.startswith('0'):
+            return digits[1:]
+        # KG: 996555... -> 555...
+        if len(digits) == 12 and digits.startswith('996'):
+            return digits[3:]
+        return digits
+
     def save(self, *args, **kwargs):
         # Generate a client ID if this is a new client
         if not self.client_id:
             self.client_id = self.generate_unique_client_id()
+        
+        # Clean phone numbers before saving
+        self.phone = self._clean_phone_number(self.phone)
+        if self._whatsapp_number:
+            self._whatsapp_number = self._clean_phone_number(self._whatsapp_number)
+
         super().save(*args, **kwargs)
 
     class Meta: 

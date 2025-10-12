@@ -1,0 +1,19 @@
+{% load static %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Работа менеджера</h5>
+        <p><b>Назначенный оператор:</b> {{ order.operator.full_name|default:"—" }}</p>
+        <p><b>Назначенные клинеры:</b> 
+        {% for cleaner in order.cleaners.all %}
+            <span class="badge bg-light text-dark">{{ cleaner.full_name }}</span>
+        {% empty %} — {% endfor %}
+        </p>
+        <p><b>Комментарий менеджера:</b> {{ order.manager_comment|default:"—" }}</p>
+        <div class="mt-3">
+        <a href="#" class="btn btn-sm btn-success">Подтвердить заказ</a>
+        <a href="#" class="btn btn-sm btn-warning">Переделка</a>
+        <a href="#" class="btn btn-sm btn-danger">Отклонить</a>
+        </div>
+    </div>
+</div>
+          
