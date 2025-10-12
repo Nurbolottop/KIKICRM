@@ -26,7 +26,7 @@ LOGOUT_REDIRECT_URL = '/users/login/'
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://cleaningkiki.kg',
+    'https://crm.cleaningkiki.kg',
 ]
 
 SESSION_COOKIE_SECURE = True

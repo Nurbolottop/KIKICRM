@@ -36,7 +36,7 @@ services:
       - ../app/core/staticfiles:/app/core/staticfiles
       - ../app/media:/app/media
     env_file:
-      - ../.env
+      - /root/KIKICRM/.env
     environment:
       - DJANGO_SETTINGS_MODULE=core.settings
     depends_on:
