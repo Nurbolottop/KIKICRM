@@ -89,7 +89,7 @@ from core.project_settings.internationalization import *
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),   # 👉 Это /app/core/static — ВЕРНО
+    os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
