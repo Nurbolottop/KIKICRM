@@ -94,5 +94,32 @@ class Services(models.Model):
     class Meta:
         verbose_name = '2) Услуги'
         verbose_name_plural = '2) Услуги'
+        ordering = ['order']
     def __str__(self):
         return self.title
+
+
+class ServiceTaskTemplate(models.Model):
+    """Шаблоны задач для услуг - автоматически добавляются при создании заказа"""
+    service = models.ForeignKey(
+        Services, 
+        on_delete=models.CASCADE, 
+        related_name='task_templates',
+        verbose_name='Услуга'
+    )
+    description = models.CharField(
+        max_length=255,
+        verbose_name='Описание задачи'
+    )
+    order = models.IntegerField(
+        default=0,
+        verbose_name='Порядок выполнения'
+    )
+    
+    class Meta:
+        verbose_name = 'Шаблон задачи для услуги'
+        verbose_name_plural = 'Шаблоны задач для услуг'
+        ordering = ['service', 'order']
+    
+    def __str__(self):
+        return f"{self.service.title} - {self.description}"

@@ -13,9 +13,9 @@ class Order(models.Model):
 
     class ManagerStatus(models.TextChoices):
         ASSIGNED = "ASSIGNED", "Назначен"
+        IN_PROGRESS = "IN_PROGRESS", "В работе"
         COMPLETED = "COMPLETED", "Завершён"
-        REVISION = "REVISION", "Переделка"
-        DECLINED = "DECLINED", "Отклонено менеджером"
+        DECLINED = "DECLINED", "Отклонено"
 
     class Priority(models.TextChoices):
         NORMAL = "NORMAL", "Обычный"
@@ -153,8 +153,8 @@ class Task(models.Model):
     description = models.CharField(max_length=255, verbose_name="Описание задачи")
     status = models.CharField(
         max_length=20,
-        choices=[("ASSIGNED", "Назначено"), ("IN_PROGRESS", "В работе"), ("DONE", "Готово")],
-        default="ASSIGNED",
+        choices=[("IN_PROGRESS", "В работе"), ("DONE", "Готово")],
+        default="IN_PROGRESS",
         verbose_name="Статус задачи"
     )
     photo_before = models.ImageField(upload_to="orders/tasks/", null=True, blank=True, verbose_name="Фото до")

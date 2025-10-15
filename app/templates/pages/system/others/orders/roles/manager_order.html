@@ -1,19 +1,146 @@
 {% load static %}
-<div class="card mb-3">
+<div class="card border mb-3">
+    <div class="card-header bg-light border-bottom">
+        <h5 class="mb-0 fw-semibold text-dark">
+            <i class="bi bi-briefcase me-2 text-primary"></i>Панель менеджера
+        </h5>
+    </div>
     <div class="card-body">
-        <h5 class="fw-bold mb-3">Работа менеджера</h5>
-        <p><b>Назначенный оператор:</b> {{ order.operator.full_name|default:"—" }}</p>
-        <p><b>Назначенные клинеры:</b> 
-        {% for cleaner in order.cleaners.all %}
-            <span class="badge bg-light text-dark">{{ cleaner.full_name }}</span>
-        {% empty %} — {% endfor %}
-        </p>
-        <p><b>Комментарий менеджера:</b> {{ order.manager_comment|default:"—" }}</p>
-        <div class="mt-3">
-        <a href="#" class="btn btn-sm btn-success">Подтвердить заказ</a>
-        <a href="#" class="btn btn-sm btn-warning">Переделка</a>
-        <a href="#" class="btn btn-sm btn-danger">Отклонить</a>
+        <!-- Информация о заказе -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <i class="bi bi-person-badge text-info me-2"></i>
+                    <strong>Оператор:</strong> {{ order.operator.full_name|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-star-fill text-warning me-2"></i>
+                    <strong>Старший клинер:</strong> {{ order.senior_cleaner.full_name|default:"Не назначен" }}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <i class="bi bi-people text-primary me-2"></i>
+                    <strong>Клинеры:</strong>
+                    {% for cleaner in order.cleaners.all %}
+                        <span class="badge bg-primary">{{ cleaner.full_name }}</span>
+                    {% empty %}
+                        <span class="text-muted">Не назначены</span>
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Финансы -->
+        <div class="row mb-3 pb-3 border-bottom">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <i class="bi bi-cash text-success me-2"></i>
+                    <strong>Финальная стоимость:</strong> 
+                    {% if order.final_cost %}
+                        <span class="text-success fw-bold">{{ order.final_cost }} сом</span>
+                    {% else %}
+                        <span class="text-muted">Не указана</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <i class="bi bi-alarm text-danger me-2"></i>
+                    <strong>Дедлайн:</strong> 
+                    {% if order.deadline %}
+                        <span class="badge bg-danger">{{ order.deadline|date:"d.m.Y H:i" }}</span>
+                    {% else %}
+                        <span class="text-muted">Не установлен</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Задачи по заказу -->
+        <div class="mb-3">
+            <h6 class="fw-semibold mb-2">
+                <i class="bi bi-list-task text-info me-2"></i>Задачи по заказу:
+            </h6>
+            {% if order.tasks.all %}
+                <div class="list-group">
+                    {% for task in order.tasks.all %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-light text-dark border">{{ forloop.counter }}</span>
+                            <strong>{{ task.description }}</strong>
+                        </div>
+                        <div>
+                            <small class="text-muted me-1">Исполнитель:</small>
+                            {% if task.cleaner %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person-check me-1"></i>{{ task.cleaner.full_name }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-person-x me-1"></i>не назначен
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Задачи еще не добавлены. Нажмите "Редактировать заказ" чтобы добавить задачи.
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Комментарий менеджера -->
+        {% if order.manager_comment %}
+        <div class="mb-3">
+            <p class="mb-1"><strong><i class="bi bi-chat-left-text text-info me-2"></i>Комментарий менеджера:</strong></p>
+            <div class="bg-info bg-opacity-10 border border-info rounded p-2">
+                <small>{{ order.manager_comment }}</small>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Кнопки действий -->
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'orders:order_manager_update' order.pk %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil-square me-1"></i>Редактировать заказ
+            </a>
+            
+            {% if order.status_manager != 'IN_PROGRESS' and order.status_manager != 'COMPLETED' %}
+            <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status_manager" value="IN_PROGRESS">
+                <input type="hidden" name="action" value="quick_status">
+                <button type="submit" class="btn btn-info btn-sm">
+                    <i class="bi bi-play-circle me-1"></i>Начать работу
+                </button>
+            </form>
+            {% endif %}
+            
+            {% if order.status_manager != 'COMPLETED' %}
+            <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status_manager" value="COMPLETED">
+                <input type="hidden" name="action" value="quick_complete">
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Завершить заказ?')">
+                    <i class="bi bi-check-circle me-1"></i>Завершить
+                </button>
+            </form>
+            {% endif %}
+            
+            {% if order.status_manager != 'DECLINED' %}
+            <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status_manager" value="DECLINED">
+                <input type="hidden" name="action" value="quick_status">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Отклонить заказ?')">
+                    <i class="bi bi-x-circle me-1"></i>Отклонить
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
 </div>
-          

@@ -48,9 +48,17 @@
                     </div>
                     <div class="card-body">
                       <div class="text-center mb-3 pb-3 border-bottom">
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 64px; height: 64px;">
-                          <i class="bi bi-person-fill fs-2"></i>
-                        </div>
+                        {% if order.client.photo %}
+                        <img class="avatar avatar-img avatar-60 rounded-circle mb-2" src="{{order.client.photo.url}}" alt="client photo" style="width: 64px; height: 64px;" />
+                        {% else %}
+                          {% if order.client.gender == 'male' %}
+                          <img class="avatar avatar-img avatar-60 rounded-circle mb-2" src="{% static 'assets/mystatic/images/users/man-icon.png' %}" alt="male icon" style="width: 64px; height: 64px;" />
+                          {% elif order.client.gender == 'female' %}
+                          <img class="avatar avatar-img avatar-60 rounded-circle mb-2" src="{% static 'assets/mystatic/images/users/girl-icon.png' %}" alt="female icon" style="width: 64px; height: 64px;" />
+                          {% else %}
+                          <img class="avatar avatar-img avatar-60 rounded-circle mb-2" src="{% static 'assets/mystatic/images/users/other-icon.png' %}" alt="other icon" style="width: 64px; height: 64px;" />
+                          {% endif %}
+                        {% endif %}
                         <h6 class="mb-1 fw-semibold">{{ order.client.first_name }} {{ order.client.last_name|default:"" }}</h6>
                         <small class="text-muted">ID: {{ order.client.client_id|default:"—" }}</small>
                       </div>

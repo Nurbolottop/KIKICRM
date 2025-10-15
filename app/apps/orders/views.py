@@ -105,21 +105,40 @@ def order_create(request):
 
 @login_required
 def order_update(request, pk):
+    """Редактирование заказа менеджером"""
     settings = cms_models.Settings.objects.first()
     order = get_object_or_404(orders_models.Order, pk=pk)
 
     if request.method == "POST":
+        action = request.POST.get("action")
+        
+        # Быстрые действия со статусом (из панели менеджера)
+        if action in ["quick_status", "quick_complete"]:
+            status = request.POST.get("status_manager")
+            if status:
+                order.status_manager = status
+                order.save(update_fields=["status_manager"])
+                messages.success(request, f"Статус заказа {order.code} изменён на {order.get_status_manager_display()}")
+            return redirect("orders:order_detail", pk=order.pk)
+        
+        # Полное редактирование заказа
+        # Обновляем финансовые данные
         order.final_cost = request.POST.get("final_cost") or order.final_cost
         order.final_area = request.POST.get("final_area") or order.final_area
         order.manager_comment = request.POST.get("manager_comment") or order.manager_comment
         order.status_manager = request.POST.get("status_manager") or order.status_manager
         order.deadline = request.POST.get("deadline") or order.deadline
+        
         order.save()
-
+        
         messages.success(request, f"Заказ {order.code} обновлён")
         return redirect("orders:order_detail", pk=order.pk)
 
-    return render(request, "pages/system/others/orders/order-edit.html", locals())
+    context = {
+        'settings': settings,
+        'order': order,
+    }
+    return render(request, "pages/system/others/orders/edit/order-manager-edit.html", context)
 
 
 @login_required
@@ -167,6 +186,18 @@ def order_send_to_manager(request, pk):
     order.status_manager = orders_models.Order.ManagerStatus.ASSIGNED
     order.save()
     
+    # Автоматически создаем задачи из шаблонов для выбранной услуги
+    if order.service and hasattr(order.service, 'task_templates'):
+        task_templates = order.service.task_templates.all()
+        for template in task_templates:
+            orders_models.Task.objects.create(
+                order=order,
+                description=template.description,
+                status='IN_PROGRESS'
+            )
+        if task_templates.exists():
+            messages.info(request, f"Автоматически добавлено {task_templates.count()} задач(и) из шаблона")
+    
     messages.success(request, f"Заказ {order.code} успешно передан менеджеру")
     return redirect("orders:order_detail", pk=order.pk)
 
@@ -194,7 +225,15 @@ def task_update(request, pk):
     task = get_object_or_404(orders_models.Task, pk=pk)
 
     if request.method == "POST":
+        task.description = request.POST.get("description", task.description)
         task.status = request.POST.get("status", task.status)
+        
+        cleaner_id = request.POST.get("cleaner")
+        if cleaner_id:
+            task.cleaner_id = cleaner_id
+        else:
+            task.cleaner = None
+            
         if "photo_before" in request.FILES:
             task.photo_before = request.FILES["photo_before"]
         if "photo_after" in request.FILES:
@@ -203,6 +242,19 @@ def task_update(request, pk):
         task.save()
 
         messages.success(request, "Задача обновлена")
-        return redirect("orders:order_detail", pk=task.order.pk)
+        return redirect("orders:order_manager_update", pk=task.order.pk)
 
-    return render(request, "pages/system/others/orders/task-update.html", locals())
+    return render(request, "pages/system/others/orders/task-form.html", locals())
+
+
+@login_required
+def task_delete(request, pk):
+    """Удаление задачи"""
+    task = get_object_or_404(orders_models.Task, pk=pk)
+    order_id = task.order.pk
+    
+    if request.method == "POST":
+        task.delete()
+        messages.success(request, "Задача удалена")
+    
+    return redirect("orders:order_manager_update", pk=order_id)

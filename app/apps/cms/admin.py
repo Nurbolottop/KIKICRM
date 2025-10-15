@@ -23,6 +23,15 @@ class SettingsAdmin(admin.ModelAdmin):
         }),
     )
 
+
+class ServiceTaskTemplateInline(admin.TabularInline):
+    model = cms_models.ServiceTaskTemplate
+    extra = 1
+    fields = ('description', 'order')
+    verbose_name = 'Шаблон задачи'
+    verbose_name_plural = 'Шаблоны задач (автоматически добавляются при создании заказа)'
+
+
 @admin.register(cms_models.Services)
 class ServicesAdmin(admin.ModelAdmin):
     list_display = ('title', 'price', 'order', 'created_at', 'updated_at', 'image_preview')
@@ -31,6 +40,7 @@ class ServicesAdmin(admin.ModelAdmin):
     list_filter = ('created_at', 'updated_at')
     ordering = ('order', 'title')
     readonly_fields = ('image_preview',)
+    inlines = [ServiceTaskTemplateInline]
 
     fields = (
         'title',
@@ -49,3 +59,11 @@ class ServicesAdmin(admin.ModelAdmin):
                 return '—'
         return '—'
     image_preview.short_description = 'Превью'
+
+
+@admin.register(cms_models.ServiceTaskTemplate)
+class ServiceTaskTemplateAdmin(admin.ModelAdmin):
+    list_display = ('service', 'description', 'order')
+    list_filter = ('service',)
+    search_fields = ('description', 'service__title')
+    ordering = ('service', 'order')

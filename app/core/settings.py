@@ -87,11 +87,15 @@ from core.project_settings.internationalization import *
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'core/static'),
+    os.path.join(BASE_DIR, 'static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'core/staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'core/static'),
+# ]
+# STATIC_ROOT = os.path.join(BASE_DIR, 'core/staticfiles')
 
 MEDIA_URL = '/media/'   # ✅ слеш в начале обязательно
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
