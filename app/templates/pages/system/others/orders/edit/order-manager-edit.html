@@ -143,10 +143,11 @@
                                     {% endif %}
                                   </div>
                                 </div>
-                                <button type="button" class="btn btn-link text-danger p-0" 
+                                <button type="button" class="btn text-danger p-0 border-0 bg-transparent" 
                                         onclick="deleteTask({{ task.id }})"
-                                        title="Удалить задачу">
-                                  <i class="bi bi-trash" style="font-size: 1.2rem;"></i>
+                                        title="Удалить задачу"
+                                        style="cursor: pointer; font-size: 1.3rem;">
+                                  🗑️
                                 </button>
                               </div>
                             </div>
@@ -285,31 +286,6 @@
           <form method="post" action="{% url 'orders:task_create' order.id %}" id="taskForm">
             {% csrf_token %}
             <div class="modal-body">
-              <!-- Подсказки с шаблонами задач -->
-              {% if order.service.task_templates.all %}
-              <div class="alert alert-info mb-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <h6 class="alert-heading mb-0">
-                    <i class="bi bi-lightbulb me-1"></i>Рекомендуемые задачи для "{{ order.service.title }}":
-                  </h6>
-                  <button type="button" class="btn btn-sm btn-success" onclick="addAllTemplates()">
-                    <i class="bi bi-plus-circle-fill me-1"></i>Добавить все
-                  </button>
-                </div>
-                <div class="d-flex flex-wrap gap-2 mt-2">
-                  {% for template in order.service.task_templates.all %}
-                  <button type="button" class="btn btn-sm btn-outline-primary" 
-                          onclick="document.getElementById('task_description').value = '{{ template.description|escapejs }}'">
-                    <i class="bi bi-plus-circle me-1"></i>{{ template.description }}
-                  </button>
-                  {% endfor %}
-                </div>
-                <small class="text-muted mt-2 d-block">
-                  <i class="bi bi-info-circle me-1"></i>Нажмите на задачу, чтобы использовать шаблон, или "Добавить все" для быстрого добавления
-                </small>
-              </div>
-              {% endif %}
-              
               <div class="mb-0">
                 <label for="task_description" class="form-label fw-semibold">Описание задачи <span class="text-danger">*</span></label>
                 <textarea class="form-control" name="description" id="task_description" rows="4" 
