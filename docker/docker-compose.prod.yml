@@ -34,7 +34,7 @@ services:
     volumes:
       - ../app:/app
       - ../app/core/staticfiles:/app/core/staticfiles
-      - ../app/core/media:/app/core/media
+      - ../app/media:/app/media
     env_file:
       - ../.env
     environment:
