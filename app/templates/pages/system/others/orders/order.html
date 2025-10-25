@@ -71,8 +71,9 @@
                         <select name="status_manager" class="form-select form-select-sm">
                           <option value="">Все</option>
                           <option value="ASSIGNED" {% if request.GET.status_manager == 'ASSIGNED' %}selected{% endif %}>Назначен</option>
+                          <option value="IN_PROGRESS" {% if request.GET.status_manager == 'IN_PROGRESS' %}selected{% endif %}>В работе</option>
+                          <option value="PENDING_REVIEW" {% if request.GET.status_manager == 'PENDING_REVIEW' %}selected{% endif %}>На проверке</option>
                           <option value="COMPLETED" {% if request.GET.status_manager == 'COMPLETED' %}selected{% endif %}>Завершён</option>
-                          <option value="REVISION" {% if request.GET.status_manager == 'REVISION' %}selected{% endif %}>Переделка</option>
                           <option value="DECLINED" {% if request.GET.status_manager == 'DECLINED' %}selected{% endif %}>Отклонено</option>
                         </select>
                       </div>
@@ -84,6 +85,20 @@
                           <option value="">Все</option>
                           <option value="NORMAL" {% if request.GET.priority == 'NORMAL' %}selected{% endif %}>Обычный</option>
                           <option value="URGENT" {% if request.GET.priority == 'URGENT' %}selected{% endif %}>Срочный</option>
+                        </select>
+                      </div>
+                      
+                      <!-- Тип помещения -->
+                      <div class="col-md-3">
+                        <label class="form-label small">Тип помещения</label>
+                        <select name="property_type" class="form-select form-select-sm">
+                          <option value="">Все</option>
+                          <option value="APARTMENT" {% if request.GET.property_type == 'APARTMENT' %}selected{% endif %}>Квартира</option>
+                          <option value="HOUSE" {% if request.GET.property_type == 'HOUSE' %}selected{% endif %}>Дом</option>
+                          <option value="LAND" {% if request.GET.property_type == 'LAND' %}selected{% endif %}>Земельный участок</option>
+                          <option value="BUSINESS" {% if request.GET.property_type == 'BUSINESS' %}selected{% endif %}>Бизнес помещение</option>
+                          <option value="OFFICE" {% if request.GET.property_type == 'OFFICE' %}selected{% endif %}>Офис</option>
+                          <option value="OTHER" {% if request.GET.property_type == 'OTHER' %}selected{% endif %}>Другое</option>
                         </select>
                       </div>
                       
@@ -144,6 +159,7 @@
                           <th scope="col">Код</th>
                           <th scope="col">Клиент</th>
                           <th scope="col">Услуга</th>
+                          <th scope="col">Тип помещения</th>
                           <th scope="col">Дата</th>
                           <th scope="col">Оператор</th>
                           <th scope="col">Менеджер</th>
@@ -161,6 +177,13 @@
                                 <div class="small text-muted">{{ o.client.phone }}</div>
                               </td>
                               <td>{{ o.service.title|default:"—" }}</td>
+                              <td>
+                                {% if o.property_type %}
+                                  <span class="badge bg-info">{{ o.get_property_type_display }}</span>
+                                {% else %}
+                                  <span class="text-muted">—</span>
+                                {% endif %}
+                              </td>
                               <td>{{ o.date_time|date:"d.m.Y H:i"|default:"—" }}</td>
                               <td>
                                 {% if o.status_operator == 'ACCEPTED' %}

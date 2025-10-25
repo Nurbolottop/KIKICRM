@@ -87,6 +87,13 @@
                         <p class="mb-0 fw-medium">{{ order.address|default:"—" }}</p>
                       </div>
                       
+                      {% if order.property_type %}
+                      <div class="mb-3">
+                        <label class="text-dark fw-semibold d-block mb-2"><i class="bi bi-building me-1 text-info"></i>Тип помещения</label>
+                        <span class="badge bg-info">{{ order.get_property_type_display }}</span>
+                      </div>
+                      {% endif %}
+                      
                       {% if order.notes %}
                       <div class="bg-warning bg-opacity-10 border border-warning rounded p-2 mt-3 small">
                         <strong class="text-warning"><i class="bi bi-chat-quote me-1"></i>Примечания:</strong>
@@ -134,6 +141,12 @@
                           <span class="text-dark fw-medium">Категория</span>
                           <span class="badge bg-info">{{ order.get_category_display|default:"—" }}</span>
                         </div>
+                        {% if order.property_type %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="text-dark fw-medium"><i class="bi bi-building me-1"></i>Тип помещения</span>
+                          <span class="badge bg-info">{{ order.get_property_type_display }}</span>
+                        </div>
+                        {% endif %}
                         <div class="d-flex justify-content-between align-items-center">
                           <span class="text-dark fw-medium">Приоритет</span>
                           {% if order.priority == 'URGENT' %}
@@ -197,8 +210,10 @@
                           <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ order.get_status_manager_display }}</span>
                         {% elif order.status_manager == 'ASSIGNED' %}
                           <span class="badge bg-primary"><i class="bi bi-person-check-fill me-1"></i>{{ order.get_status_manager_display }}</span>
-                        {% elif order.status_manager == 'REVISION' %}
-                          <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% elif order.status_manager == 'IN_PROGRESS' %}
+                          <span class="badge bg-info"><i class="bi bi-gear-fill me-1"></i>{{ order.get_status_manager_display }}</span>
+                        {% elif order.status_manager == 'PENDING_REVIEW' %}
+                          <span class="badge bg-warning text-dark"><i class="bi bi-eye-fill me-1"></i>{{ order.get_status_manager_display }}</span>
                         {% else %}
                           <span class="badge bg-secondary">Не указан</span>
                         {% endif %}

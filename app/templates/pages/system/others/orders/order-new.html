@@ -92,9 +92,25 @@
                       });
                     </script>
                     <!-- Адрес -->
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                       <label for="address" class="form-label fw-bold">Адрес выполнения</label>
                       <input type="text" class="form-control" name="address" id="address" required>
+                    </div>
+                    
+                    <!-- Тип помещения -->
+                    <div class="col-md-6">
+                      <label for="property_type" class="form-label fw-bold">
+                        <i class="bi bi-building me-1"></i>Тип помещения
+                      </label>
+                      <select class="form-select" name="property_type" id="property_type">
+                        <option value="">Не указан</option>
+                        <option value="APARTMENT">🏢 Квартира</option>
+                        <option value="HOUSE">🏠 Дом</option>
+                        <option value="LAND">🌳 Земельный участок</option>
+                        <option value="BUSINESS">🏪 Бизнес помещение</option>
+                        <option value="OFFICE">🏢 Офис</option>
+                        <option value="OTHER">📦 Другое</option>
+                      </select>
                     </div>
               
                     <!-- Дата -->

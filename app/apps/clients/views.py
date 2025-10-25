@@ -64,7 +64,7 @@ def customer_add(request):
             telegram_id=request.POST.get("telegram_id"),
             address=request.POST.get("address"),
             organization=request.POST.get("organization"),
-            age=request.POST.get("age") or None,
+            birth_date=request.POST.get("birth_date") or None,
             gender=request.POST.get("gender"),
             category=request.POST.get("category"),
             source=request.POST.get("source"),
@@ -93,7 +93,7 @@ def customer_edit(request, pk):
         client.whatsapp = request.POST.get("whatsapp")
         client.address = request.POST.get("address")
         client.organization = request.POST.get("organization")
-        client.age = request.POST.get("age") or None
+        client.birth_date = request.POST.get("birth_date") or None
         client.gender = request.POST.get("gender")
         client.category = request.POST.get("category")
         client.source = request.POST.get("source")

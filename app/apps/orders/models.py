@@ -14,12 +14,22 @@ class Order(models.Model):
     class ManagerStatus(models.TextChoices):
         ASSIGNED = "ASSIGNED", "Назначен"
         IN_PROGRESS = "IN_PROGRESS", "В работе"
+        PENDING_REVIEW = "PENDING_REVIEW", "На проверке"
         COMPLETED = "COMPLETED", "Завершён"
         DECLINED = "DECLINED", "Отклонено"
 
     class Priority(models.TextChoices):
         NORMAL = "NORMAL", "Обычный"
         URGENT = "URGENT", "Срочный"
+    
+    # Тип помещения
+    class PropertyType(models.TextChoices):
+        APARTMENT = "APARTMENT", "Квартира"
+        HOUSE = "HOUSE", "Дом"
+        LAND = "LAND", "Земельный участок"
+        BUSINESS = "BUSINESS", "Бизнес помещение"
+        OFFICE = "OFFICE", "Офис"
+        OTHER = "OTHER", "Другое"
 
     # Канал привлечения (верхний уровень)
     class Channel(models.TextChoices):
@@ -68,9 +78,16 @@ class Order(models.Model):
         blank=True,
     )
     address = models.TextField(verbose_name="Адрес выполнения")
+    property_type = models.CharField(
+        max_length=20,
+        choices=PropertyType.choices,
+        null=True,
+        blank=True,
+        verbose_name="Тип помещения"
+    )
     date_time = models.DateTimeField(verbose_name="Дата и время уборки")
 
-    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Предварительная стоимость")
+    estimated_cost = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительная стоимость")
     estimated_area = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительный метраж / объём")
     notes = models.TextField(blank=True, null=True, verbose_name="Заметки клиента")
 
@@ -126,6 +143,26 @@ class Order(models.Model):
 
     manager_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий менеджера")
     status_manager = models.CharField(max_length=20, choices=ManagerStatus.choices, null=True, blank=True, verbose_name="Статус (менеджер)")
+    
+    # --- Отслеживание работы ---
+    work_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа начата")
+    work_finished_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа завершена")
+    
+    # --- Оценка качества ---
+    quality_rating = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        verbose_name="Оценка качества (1-5)",
+        help_text="Оценка от 1 до 5 звёзд"
+    )
+    quality_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий по качеству")
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата проверки")
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reviewed_orders",
+        verbose_name="Проверил (менеджер)"
+    )
 
     def __str__(self):
         service_title = self.service.title if getattr(self, "service", None) else "—"

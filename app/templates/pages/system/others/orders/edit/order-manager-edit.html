@@ -63,6 +63,17 @@
                           </div>
                         </div>
                         
+                        <!-- Тип помещения (только для просмотра) -->
+                        {% if order.property_type %}
+                        <div class="mb-3">
+                          <label class="form-label fw-semibold text-dark">Тип помещения</label>
+                          <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                            <input type="text" class="form-control" value="{{ order.get_property_type_display }}" disabled>
+                          </div>
+                        </div>
+                        {% endif %}
+                        
                         <!-- Дата и время (только для просмотра) -->
                         <div class="mb-3">
                           <label class="form-label fw-semibold text-dark">Дата и время уборки</label>
@@ -163,6 +174,52 @@
                       </div>
                     </div>
                     
+                    <!-- Назначение исполнителей -->
+                    <div class="card border mb-3">
+                      <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-people me-2 text-warning"></i>Назначение исполнителей</h5>
+                      </div>
+                      <div class="card-body">
+                        <!-- Старший клинер -->
+                        <div class="mb-3">
+                          <label for="senior_cleaner" class="form-label fw-semibold text-dark">
+                            <i class="bi bi-star-fill text-warning me-1"></i>Старший клинер
+                          </label>
+                          <select class="form-select" name="senior_cleaner" id="senior_cleaner">
+                            <option value="">Не назначен</option>
+                            {% for cleaner in senior_cleaners %}
+                              <option value="{{ cleaner.id }}" 
+                                      {% if order.senior_cleaner.id == cleaner.id %}selected{% endif %}>
+                                {{ cleaner.full_name }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                          <small class="text-muted">Старший клинер контролирует выполнение заказа</small>
+                        </div>
+                        
+                        <!-- Обычные клинеры -->
+                        <div class="mb-0">
+                          <label class="form-label fw-semibold text-dark">
+                            <i class="bi bi-people-fill text-primary me-1"></i>Клинеры
+                          </label>
+                          <select class="form-select" name="cleaners" id="cleaners" multiple size="6" style="min-height: 150px;">
+                            {% for cleaner in cleaners %}
+                              <option value="{{ cleaner.id }}" 
+                                      {% if cleaner in order.cleaners.all %}selected{% endif %}>
+                                {{ cleaner.full_name }}
+                              </option>
+                            {% empty %}
+                              <option disabled>Нет доступных клинеров</option>
+                            {% endfor %}
+                          </select>
+                          <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Удерживайте <kbd>Ctrl</kbd> (или <kbd>Cmd</kbd> на Mac) для выбора нескольких клинеров
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <!-- Финансы и сроки -->
                     <div class="card border mb-3">
                       <div class="card-header bg-light">
@@ -227,6 +284,9 @@
                             </option>
                             <option value="IN_PROGRESS" {% if order.status_manager == 'IN_PROGRESS' %}selected{% endif %}>
                               🧹 В работе
+                            </option>
+                            <option value="PENDING_REVIEW" {% if order.status_manager == 'PENDING_REVIEW' %}selected{% endif %}>
+                              👁️ На проверке
                             </option>
                             <option value="COMPLETED" {% if order.status_manager == 'COMPLETED' %}selected{% endif %}>
                               ✅ Завершено

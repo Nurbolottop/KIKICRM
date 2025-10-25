@@ -1,12 +1,145 @@
 {% load static %}
 <!-- Блок для Старшего клинера -->
-<div class="card mb-3">
+<div class="card border mb-3">
+    <div class="card-header bg-light border-bottom">
+        <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-star-fill text-warning me-2"></i>Панель старшего клинера
+        </h5>
+    </div>
     <div class="card-body">
-        <h5 class="fw-bold mb-3">Назначенные задачи</h5>
-        {% for task in order.tasks.all %}
-        <p><b>{{ task.description }}</b> — {{ task.get_status_display }}</p>
-        {% empty %}
-        <p>Нет задач для этого заказа.</p>
-        {% endfor %}
+        <!-- Статус работы -->
+        <div class="mb-3">
+            <h6 class="fw-semibold mb-2">Статус работы:</h6>
+            {% if not order.work_started_at %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Работа ещё не начата. Нажмите кнопку "Начать работу" когда приступите к выполнению заказа.
+                </div>
+            {% elif order.work_started_at and not order.work_finished_at %}
+                <div class="alert alert-success mb-0">
+                    <i class="bi bi-play-circle-fill me-2"></i>
+                    <strong>Работа в процессе</strong><br>
+                    <small>Начата: {{ order.work_started_at|date:"d.m.Y H:i" }}</small>
+                </div>
+            {% else %}
+                <div class="alert alert-primary mb-0">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Работа завершена</strong><br>
+                    <small>Начата: {{ order.work_started_at|date:"d.m.Y H:i" }}</small><br>
+                    <small>Завершена: {{ order.work_finished_at|date:"d.m.Y H:i" }}</small>
+                </div>
+            {% endif %}
+        </div>
+        
+        <hr>
+        
+        <!-- Задачи по заказу -->
+        <h6 class="fw-semibold mb-3">
+            <i class="bi bi-list-task text-info me-2"></i>Задачи по заказу:
+        </h6>
+        {% if order.tasks.all %}
+            <div class="list-group mb-3">
+                {% for task in order.tasks.all %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-light text-dark border">{{ forloop.counter }}</span>
+                                <h6 class="mb-0">{{ task.description }}</h6>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted me-2">Исполнитель:</small>
+                                {% if task.cleaner %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-person-check me-1"></i>{{ task.cleaner.full_name }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-person-x me-1"></i>Не назначен
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if task.comment %}
+                            <div class="bg-light rounded p-2 small">
+                                <i class="bi bi-chat-left-text text-muted me-1"></i>
+                                {{ task.comment }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="ms-3">
+                            <span class="badge {% if task.status == 'DONE' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                {{ task.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'orders:task_update' task.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Редактировать задачу
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Задачи ещё не добавлены для этого заказа.
+            </div>
+        {% endif %}
+        
+        <hr>
+        
+        <!-- Информация о заказе -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="fw-semibold mb-2">
+                    <i class="bi bi-people text-primary me-2"></i>Команда:
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for cleaner in order.cleaners.all %}
+                        <span class="badge bg-primary">
+                            <i class="bi bi-person-fill me-1"></i>{{ cleaner.full_name }}
+                        </span>
+                    {% empty %}
+                        <span class="text-muted">Клинеры не назначены</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if order.property_type %}
+            <div class="col-md-6">
+                <h6 class="fw-semibold mb-2">
+                    <i class="bi bi-building text-info me-2"></i>Тип помещения:
+                </h6>
+                <span class="badge bg-info">{{ order.get_property_type_display }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <hr>
+        
+        <!-- Кнопки действий -->
+        <div class="d-flex flex-wrap gap-2">
+            {% if not order.work_started_at %}
+                <form method="post" action="{% url 'orders:order_start_work' order.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-play-circle me-1"></i>Начать работу
+                    </button>
+                </form>
+            {% elif not order.work_finished_at %}
+                <form method="post" action="{% url 'orders:order_finish_work' order.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" 
+                            onclick="return confirm('Завершить работу и отправить на проверку менеджеру?')">
+                        <i class="bi bi-check-circle me-1"></i>Завершить работу
+                    </button>
+                </form>
+            {% else %}
+                <div class="alert alert-success mb-0">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Работа завершена и отправлена на проверку</strong>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>

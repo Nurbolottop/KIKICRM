@@ -88,7 +88,7 @@ class Client(models.Model):
     telegram_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="Telegram ID")
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name="Адрес")
     organization = models.CharField(max_length=255, blank=True, null=True, verbose_name="Организация")
-    age = models.PositiveIntegerField(blank=True, null=True, verbose_name="Возраст")
+    birth_date = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True, verbose_name="Пол")
 
     # 🔹 Классификация

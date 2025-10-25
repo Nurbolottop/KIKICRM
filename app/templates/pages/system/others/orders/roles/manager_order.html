@@ -17,6 +17,12 @@
                     <i class="bi bi-star-fill text-warning me-2"></i>
                     <strong>Старший клинер:</strong> {{ order.senior_cleaner.full_name|default:"Не назначен" }}
                 </p>
+                {% if order.property_type %}
+                <p class="mb-2">
+                    <i class="bi bi-building text-info me-2"></i>
+                    <strong>Тип помещения:</strong> <span class="badge bg-info">{{ order.property_type }}</span>
+                </p>
+                {% endif %}
             </div>
             <div class="col-md-6">
                 <p class="mb-2">
@@ -109,7 +115,13 @@
                 <i class="bi bi-pencil-square me-1"></i>Редактировать заказ
             </a>
             
-            {% if order.status_manager != 'IN_PROGRESS' and order.status_manager != 'COMPLETED' %}
+            {% if order.status_manager == 'PENDING_REVIEW' %}
+            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#qualityCheckModal">
+                <i class="bi bi-eye me-1"></i>Проверить качество
+            </button>
+            {% endif %}
+            
+            {% if order.status_manager != 'IN_PROGRESS' and order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
             <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
                 {% csrf_token %}
                 <input type="hidden" name="status_manager" value="IN_PROGRESS">
@@ -120,7 +132,7 @@
             </form>
             {% endif %}
             
-            {% if order.status_manager != 'COMPLETED' %}
+            {% if order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
             <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
                 {% csrf_token %}
                 <input type="hidden" name="status_manager" value="COMPLETED">
@@ -143,4 +155,68 @@
             {% endif %}
         </div>
     </div>
+</div>
+
+<!-- Модальное окно проверки качества -->
+<div class="modal fade" id="qualityCheckModal" tabindex="-1" aria-labelledby="qualityCheckModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-warning text-dark border-0">
+        <h5 class="modal-title" id="qualityCheckModalLabel">
+          <i class="bi bi-eye me-2"></i>Проверка качества выполнения
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'orders:order_quality_check' order.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <!-- Оценка -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Оценка качества <span class="text-danger">*</span></label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="quality_rating" value="1" id="rating1" required>
+              <label class="btn btn-outline-danger" for="rating1">1 ⭐</label>
+              
+              <input type="radio" class="btn-check" name="quality_rating" value="2" id="rating2">
+              <label class="btn btn-outline-warning" for="rating2">2 ⭐</label>
+              
+              <input type="radio" class="btn-check" name="quality_rating" value="3" id="rating3">
+              <label class="btn btn-outline-info" for="rating3">3 ⭐</label>
+              
+              <input type="radio" class="btn-check" name="quality_rating" value="4" id="rating4">
+              <label class="btn btn-outline-primary" for="rating4">4 ⭐</label>
+              
+              <input type="radio" class="btn-check" name="quality_rating" value="5" id="rating5">
+              <label class="btn btn-outline-success" for="rating5">5 ⭐</label>
+            </div>
+          </div>
+          
+          <!-- Комментарий -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Комментарий по качеству</label>
+            <textarea class="form-control" name="quality_comment" rows="4" 
+                      placeholder="Опишите результаты проверки, замечания или похвалу..."></textarea>
+          </div>
+          
+          <!-- Решение -->
+          <div class="mb-0">
+            <label class="form-label fw-semibold">Решение <span class="text-danger">*</span></label>
+            <select class="form-select" name="decision" required>
+              <option value="">Выберите...</option>
+              <option value="COMPLETED">✅ Принять работу (завершить заказ)</option>
+              <option value="IN_PROGRESS">🔄 Требуется переделка (вернуть в работу)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Отмена
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Сохранить проверку
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

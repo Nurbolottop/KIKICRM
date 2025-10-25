@@ -57,9 +57,25 @@
                       </div>
                       
                       <!-- Адрес -->
-                      <div class="col-md-6">
+                      <div class="col-md-12">
                         <label for="address" class="form-label fw-semibold">Адрес выполнения <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="address" id="address" value="{{ order.address }}" required>
+                      </div>
+                      
+                      <!-- Тип помещения -->
+                      <div class="col-md-6">
+                        <label for="property_type" class="form-label fw-semibold">
+                          <i class="bi bi-building me-1"></i>Тип помещения
+                        </label>
+                        <select class="form-select" name="property_type" id="property_type">
+                          <option value="">Не указан</option>
+                          <option value="APARTMENT" {% if order.property_type == 'APARTMENT' %}selected{% endif %}>🏢 Квартира</option>
+                          <option value="HOUSE" {% if order.property_type == 'HOUSE' %}selected{% endif %}>🏠 Дом</option>
+                          <option value="LAND" {% if order.property_type == 'LAND' %}selected{% endif %}>🌳 Земельный участок</option>
+                          <option value="BUSINESS" {% if order.property_type == 'BUSINESS' %}selected{% endif %}>🏪 Бизнес помещение</option>
+                          <option value="OFFICE" {% if order.property_type == 'OFFICE' %}selected{% endif %}>🏢 Офис</option>
+                          <option value="OTHER" {% if order.property_type == 'OTHER' %}selected{% endif %}>📦 Другое</option>
+                        </select>
                       </div>
               
                       <!-- Дата и время -->
