@@ -37,6 +37,11 @@ class User(AbstractUser):
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.CANDIDATE, verbose_name="Статус сотрудника"
     )
+    
+    # Статус работы клинера
+    is_on_shift = models.BooleanField(default=False, verbose_name="На смене")
+    is_available = models.BooleanField(default=True, verbose_name="Свободен")
+    
     avatar = ResizedImageField(
         force_format="WEBP", quality=100, upload_to='users_avatars/', blank=True, null=True,
         verbose_name="Фото"

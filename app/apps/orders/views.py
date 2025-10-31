@@ -118,9 +118,16 @@ def order_update(request, pk):
     order = get_object_or_404(orders_models.Order, pk=pk)
     
     # Получаем списки клинеров для выбора
-    senior_cleaners = User.objects.filter(role='SENIOR_CLEANER', is_active=True)
-    # Исключаем старших клинеров из списка обычных клинеров
-    cleaners = User.objects.filter(role='CLEANER', is_active=True)
+    # Старшие клинеры: все активные
+    senior_cleaners = User.objects.filter(
+        role='SENIOR_CLEANER', 
+        is_active=True
+    )
+    # Обычные клинеры: все активные (исключаем старших клинеров)
+    cleaners = User.objects.filter(
+        role='CLEANER', 
+        is_active=True
+    )
 
     if request.method == "POST":
         action = request.POST.get("action")

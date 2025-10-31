@@ -199,24 +199,242 @@
                         
                         <!-- Обычные клинеры -->
                         <div class="mb-0">
-                          <label class="form-label fw-semibold text-dark">
-                            <i class="bi bi-people-fill text-primary me-1"></i>Клинеры
+                          <label class="form-label fw-semibold text-dark mb-3">
+                            <i class="bi bi-people-fill text-primary me-2"></i>Клинеры
                           </label>
-                          <select class="form-select" name="cleaners" id="cleaners" multiple size="6" style="min-height: 150px;">
-                            {% for cleaner in cleaners %}
-                              <option value="{{ cleaner.id }}" 
-                                      {% if cleaner in order.cleaners.all %}selected{% endif %}>
-                                {{ cleaner.full_name }}
-                              </option>
-                            {% empty %}
-                              <option disabled>Нет доступных клинеров</option>
-                            {% endfor %}
-                          </select>
-                          <small class="text-muted d-block mt-2">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Удерживайте <kbd>Ctrl</kbd> (или <kbd>Cmd</kbd> на Mac) для выбора нескольких клинеров
-                          </small>
+                          
+                          <!-- Назначенные клинеры -->
+                          <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                              <i class="bi bi-check-circle-fill text-success me-2"></i>
+                              <span class="fw-semibold small">Назначенные клинеры</span>
+                            </div>
+                            <div id="selected-cleaners" class="border rounded p-3 selected-cleaners-box" style="min-height: 70px;">
+                              {% for cleaner in order.cleaners.all %}
+                                <div class="badge bg-primary d-inline-flex align-items-center me-2 mb-2 px-3 py-2" data-cleaner-id="{{ cleaner.id }}" style="font-size: 0.9rem;">
+                                  <i class="bi bi-person-fill me-2"></i>
+                                  <span>{{ cleaner.full_name }}</span>
+                                  <button type="button" class="btn-close btn-close-white ms-3" style="font-size: 0.65rem;" onclick="removeCleaner({{ cleaner.id }})" title="Удалить"></button>
+                                  <input type="hidden" name="cleaners" value="{{ cleaner.id }}">
+                                </div>
+                              {% empty %}
+                                <div class="text-center py-2 empty-state">
+                                  <i class="bi bi-person-x text-muted" style="font-size: 1.5rem;"></i>
+                                  <p class="text-muted mb-0 small mt-2">Клинеры не назначены</p>
+                                </div>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          
+                          <!-- Доступные клинеры -->
+                          <div>
+                            <div class="d-flex align-items-center mb-2">
+                              <i class="bi bi-person-plus-fill text-info me-2"></i>
+                              <span class="fw-semibold small">Доступные клинеры</span>
+                            </div>
+                            <div id="available-cleaners" class="border rounded p-2 available-cleaners-box" style="max-height: 250px; overflow-y: auto;">
+                              {% for cleaner in cleaners %}
+                                {% if cleaner not in order.cleaners.all %}
+                                  <div class="d-flex justify-content-between align-items-center p-2 mb-1 rounded cleaner-item" id="available-{{ cleaner.id }}" style="transition: all 0.2s;">
+                                    <div class="d-flex align-items-center">
+                                      <i class="bi bi-person-circle text-secondary me-2"></i>
+                                      <div>
+                                        <span class="fw-medium">{{ cleaner.full_name }}</span>
+                                        <div class="mt-1">
+                                          {% if cleaner.is_on_shift and cleaner.is_available %}
+                                            <span class="badge bg-success" style="font-size: 0.65rem;">
+                                              <i class="bi bi-check-circle me-1"></i>На смене
+                                            </span>
+                                          {% elif cleaner.is_on_shift %}
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                              <i class="bi bi-exclamation-circle me-1"></i>Занят
+                                            </span>
+                                          {% else %}
+                                            <span class="badge bg-secondary" style="font-size: 0.65rem;">
+                                              <i class="bi bi-moon me-1"></i>Не на смене
+                                            </span>
+                                          {% endif %}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="addCleaner({{ cleaner.id }}, '{{ cleaner.full_name }}')" style="min-width: 100px;">
+                                      <i class="bi bi-plus-circle me-1"></i>Добавить
+                                    </button>
+                                  </div>
+                                {% endif %}
+                              {% empty %}
+                                <div class="text-center py-3 empty-state">
+                                  <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                                  <p class="text-muted mb-0 small mt-2">Нет доступных клинеров</p>
+                                </div>
+                              {% endfor %}
+                            </div>
+                          </div>
                         </div>
+                        
+                        <script>
+                        function addCleaner(cleanerId, cleanerName) {
+                          // Удаляем из доступных
+                          document.getElementById('available-' + cleanerId).remove();
+                          
+                          // Добавляем в назначенные
+                          const selectedDiv = document.getElementById('selected-cleaners');
+                          const emptyMsg = selectedDiv.querySelector('.text-center');
+                          if (emptyMsg) emptyMsg.remove();
+                          
+                          const badge = document.createElement('div');
+                          badge.className = 'badge bg-primary d-inline-flex align-items-center me-2 mb-2 px-3 py-2';
+                          badge.setAttribute('data-cleaner-id', cleanerId);
+                          badge.style.fontSize = '0.9rem';
+                          badge.innerHTML = `
+                            <i class="bi bi-person-fill me-2"></i>
+                            <span>${cleanerName}</span>
+                            <button type="button" class="btn-close btn-close-white ms-3" style="font-size: 0.65rem;" onclick="removeCleaner(${cleanerId})" title="Удалить"></button>
+                            <input type="hidden" name="cleaners" value="${cleanerId}">
+                          `;
+                          selectedDiv.appendChild(badge);
+                        }
+                        
+                        function removeCleaner(cleanerId) {
+                          // Удаляем из назначенных
+                          const badge = document.querySelector(`[data-cleaner-id="${cleanerId}"]`);
+                          const cleanerName = badge.querySelector('span').textContent;
+                          badge.remove();
+                          
+                          // Проверяем, остались ли назначенные клинеры
+                          const selectedDiv = document.getElementById('selected-cleaners');
+                          if (selectedDiv.querySelectorAll('.badge').length === 0) {
+                            selectedDiv.innerHTML = `
+                              <div class="text-center py-2">
+                                <i class="bi bi-person-x text-muted" style="font-size: 1.5rem;"></i>
+                                <p class="text-muted mb-0 small mt-2">Клинеры не назначены</p>
+                              </div>
+                            `;
+                          }
+                          
+                          // Добавляем обратно в доступные
+                          const availableDiv = document.getElementById('available-cleaners');
+                          const emptyMsg = availableDiv.querySelector('.text-center');
+                          if (emptyMsg) emptyMsg.remove();
+                          
+                          const item = document.createElement('div');
+                          item.className = 'd-flex justify-content-between align-items-center p-2 mb-1 rounded cleaner-item';
+                          item.id = 'available-' + cleanerId;
+                          item.style.transition = 'all 0.2s';
+                          item.innerHTML = `
+                            <div class="d-flex align-items-center">
+                              <i class="bi bi-person-circle text-secondary me-2"></i>
+                              <div>
+                                <span class="fw-medium">${cleanerName}</span>
+                                <div class="mt-1">
+                                  <span class="badge bg-secondary" style="font-size: 0.65rem;">
+                                    <i class="bi bi-moon me-1"></i>Не на смене
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addCleaner(${cleanerId}, '${cleanerName}')" style="min-width: 100px;">
+                              <i class="bi bi-plus-circle me-1"></i>Добавить
+                            </button>
+                          `;
+                          availableDiv.appendChild(item);
+                        }
+                        </script>
+                        
+                        <style>
+                        /* Адаптация под светлую тему */
+                        [data-bs-theme="light"] .selected-cleaners-box {
+                          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        }
+                        
+                        [data-bs-theme="light"] .available-cleaners-box {
+                          background-color: #fff;
+                        }
+                        
+                        [data-bs-theme="light"] .cleaner-item:hover {
+                          background-color: #f8f9fa !important;
+                        }
+                        
+                        /* Адаптация под тёмную тему */
+                        [data-bs-theme="dark"] .selected-cleaners-box {
+                          background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                          border-color: #404040 !important;
+                        }
+                        
+                        [data-bs-theme="dark"] .available-cleaners-box {
+                          background-color: #1a1a1a;
+                          border-color: #404040 !important;
+                        }
+                        
+                        [data-bs-theme="dark"] .cleaner-item {
+                          color: #e0e0e0;
+                        }
+                        
+                        [data-bs-theme="dark"] .cleaner-item:hover {
+                          background-color: #2c2c2c !important;
+                        }
+                        
+                        [data-bs-theme="dark"] .empty-state {
+                          color: #888 !important;
+                        }
+                        
+                        /* Общие стили */
+                        .cleaner-item:hover {
+                          transform: translateX(3px);
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        
+                        .cleaner-item {
+                          transition: all 0.2s;
+                        }
+                        
+                        .badge.bg-primary {
+                          transition: all 0.2s;
+                        }
+                        
+                        .badge.bg-primary:hover {
+                          transform: translateY(-2px);
+                          box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+                        }
+                        
+                        /* Scrollbar для светлой темы */
+                        [data-bs-theme="light"] #available-cleaners::-webkit-scrollbar {
+                          width: 6px;
+                        }
+                        
+                        [data-bs-theme="light"] #available-cleaners::-webkit-scrollbar-track {
+                          background: #f1f1f1;
+                          border-radius: 10px;
+                        }
+                        
+                        [data-bs-theme="light"] #available-cleaners::-webkit-scrollbar-thumb {
+                          background: #888;
+                          border-radius: 10px;
+                        }
+                        
+                        [data-bs-theme="light"] #available-cleaners::-webkit-scrollbar-thumb:hover {
+                          background: #555;
+                        }
+                        
+                        /* Scrollbar для тёмной темы */
+                        [data-bs-theme="dark"] #available-cleaners::-webkit-scrollbar {
+                          width: 6px;
+                        }
+                        
+                        [data-bs-theme="dark"] #available-cleaners::-webkit-scrollbar-track {
+                          background: #2c2c2c;
+                          border-radius: 10px;
+                        }
+                        
+                        [data-bs-theme="dark"] #available-cleaners::-webkit-scrollbar-thumb {
+                          background: #555;
+                          border-radius: 10px;
+                        }
+                        
+                        [data-bs-theme="dark"] #available-cleaners::-webkit-scrollbar-thumb:hover {
+                          background: #777;
+                        }
+                        </style>
                       </div>
                     </div>
                     
