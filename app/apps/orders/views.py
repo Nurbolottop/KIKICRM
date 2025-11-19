@@ -201,21 +201,6 @@ def order_update(request, pk):
             order.senior_cleaner = None
         
         order.save()
-
-        # Если услуга изменилась у оператора — подтянуть задачи из шаблонов (без дублей)
-        if service_changed and order.service and hasattr(order.service, 'task_templates'):
-            existing_desc = set(order.tasks.values_list('description', flat=True))
-            new_count = 0
-            for template in order.service.task_templates.all():
-                if template.description not in existing_desc:
-                    orders_models.Task.objects.create(
-                        order=order,
-                        description=template.description,
-                        status='IN_PROGRESS'
-                    )
-                    new_count += 1
-            if new_count:
-                messages.info(request, f"Добавлено {new_count} задач(и) из шаблонов услуги")
         
         # Назначение обычных клинеров (ManyToMany)
         cleaner_ids = request.POST.getlist("cleaners")
