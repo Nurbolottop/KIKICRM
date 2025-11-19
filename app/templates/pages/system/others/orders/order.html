@@ -203,7 +203,9 @@
                                   <span class="badge bg-danger">{{ o.get_status_manager_display }}</span>
                                 {% elif o.status_manager == 'ASSIGNED' %}
                                   <span class="badge bg-primary">{{ o.get_status_manager_display }}</span>
-                                {% elif o.status_manager == 'REVISION' %}
+                                {% elif o.status_manager == 'IN_PROGRESS' %}
+                                  <span class="badge bg-info">{{ o.get_status_manager_display }}</span>
+                                {% elif o.status_manager == 'PENDING_REVIEW' %}
                                   <span class="badge bg-warning text-dark">{{ o.get_status_manager_display }}</span>
                                 {% else %}
                                   <span class="badge bg-secondary">—</span>

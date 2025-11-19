@@ -17,6 +17,14 @@ class Order(models.Model):
         PENDING_REVIEW = "PENDING_REVIEW", "На проверке"
         COMPLETED = "COMPLETED", "Завершён"
         DECLINED = "DECLINED", "Отклонено"
+    
+    class SeniorCleanerStatus(models.TextChoices):
+        ASSIGNED = "ASSIGNED", "Назначен"
+        ACCEPTED = "ACCEPTED", "Принят"
+        IN_PROGRESS = "IN_PROGRESS", "В работе"
+        PENDING_REVIEW = "PENDING_REVIEW", "На проверке менеджера"
+        COMPLETED = "COMPLETED", "Завершён"
+        DECLINED = "DECLINED", "Отказался"
 
     class Priority(models.TextChoices):
         NORMAL = "NORMAL", "Обычный"
@@ -88,7 +96,13 @@ class Order(models.Model):
     date_time = models.DateTimeField(verbose_name="Дата и время уборки")
 
     estimated_cost = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительная стоимость")
-    estimated_area = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительный метраж / объём")
+    estimated_area = models.CharField(
+        max_length=100,
+        null=True, 
+        blank=True, 
+        verbose_name="Объём работы",
+        help_text="Например: 50 м², 3 комнаты, 5 окон"
+    )
     notes = models.TextField(blank=True, null=True, verbose_name="Заметки клиента")
 
     channel = models.CharField(
@@ -129,7 +143,13 @@ class Order(models.Model):
 
     # --- Поля заказа (Менеджер) ---
     final_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Итоговая стоимость")
-    final_area = models.PositiveIntegerField(null=True, blank=True, verbose_name="Итоговый метраж / объём")
+    final_area = models.CharField(
+        max_length=100,
+        null=True, 
+        blank=True, 
+        verbose_name="Фактический объём работы",
+        help_text="Например: 50 м², 3 комнаты, 5 окон"
+    )
 
     senior_cleaner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -143,6 +163,18 @@ class Order(models.Model):
 
     manager_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий менеджера")
     status_manager = models.CharField(max_length=20, choices=ManagerStatus.choices, null=True, blank=True, verbose_name="Статус (менеджер)")
+    
+    # --- Поля старшего клинера ---
+    status_senior_cleaner = models.CharField(
+        max_length=20, 
+        choices=SeniorCleanerStatus.choices, 
+        default=SeniorCleanerStatus.ASSIGNED,
+        null=True, 
+        blank=True, 
+        verbose_name="Статус (старший клинер)"
+    )
+    senior_cleaner_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий старшего клинера")
+    decline_reason = models.TextField(blank=True, null=True, verbose_name="Причина отказа")
     
     # --- Отслеживание работы ---
     work_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа начата")

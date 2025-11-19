@@ -105,4 +105,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Telegram Bot Settings
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8254676585:AAGQqe2Eysph3nduFsdFtDkW85INFDqvd6Y')
+
 from core.project_settings.ckeditor import *

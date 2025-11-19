@@ -121,7 +121,7 @@
             </button>
             {% endif %}
             
-            {% if order.status_manager != 'IN_PROGRESS' and order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
+            {% if order.status_manager and order.status_manager != 'ASSIGNED' and order.status_manager != 'IN_PROGRESS' and order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
             <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
                 {% csrf_token %}
                 <input type="hidden" name="status_manager" value="IN_PROGRESS">
@@ -132,7 +132,7 @@
             </form>
             {% endif %}
             
-            {% if order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
+            {% if order.status_manager and order.status_manager != 'ASSIGNED' and order.status_manager != 'COMPLETED' and order.status_manager != 'PENDING_REVIEW' %}
             <form method="post" action="{% url 'orders:order_manager_update' order.pk %}" class="d-inline">
                 {% csrf_token %}
                 <input type="hidden" name="status_manager" value="COMPLETED">

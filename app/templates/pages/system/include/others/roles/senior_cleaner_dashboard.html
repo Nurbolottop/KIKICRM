@@ -3,7 +3,7 @@
 {% if user.role == "SENIOR_CLEANER" %}
 <!-- Заказы -->
 <li class="sidebar-layout">
-  <a href="./orders.html" class="svg-icon">
+  <a href="{% url 'orders:order_list' %}" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -16,7 +16,7 @@
 
 <!-- Календарь -->
 <li class="sidebar-layout">
-  <a href="./calendar.html" class="svg-icon">
+  <a href="#" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -29,7 +29,7 @@
 
 <!-- Чат -->
 <li class="sidebar-layout">
-  <a href="./chat.html" class="svg-icon">
+  <a href="#" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -42,7 +42,7 @@
 
 <!-- Задачи -->
 <li class="sidebar-layout">
-  <a href="./tasks.html" class="svg-icon">
+  <a href="{% url 'orders:order_list' %}" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -55,7 +55,7 @@
 
 <!-- Профиль -->
 <li class="sidebar-layout">
-  <a href="./profile.html" class="svg-icon">
+  <a href="#" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

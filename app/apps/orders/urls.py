@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_senior_cleaner
 
 app_name = "orders"
 
@@ -16,4 +17,11 @@ urlpatterns = [
     path("<int:order_id>/task/create/", views.task_create, name="task_create"),
     path("task/<int:pk>/update/", views.task_update, name="task_update"),
     path("task/<int:pk>/delete/", views.task_delete, name="task_delete"),
+    
+    # Старший клинер
+    path("<int:pk>/senior-accept/", views_senior_cleaner.senior_cleaner_accept_order, name="senior_accept_order"),
+    path("<int:pk>/senior-decline/", views_senior_cleaner.senior_cleaner_decline_order, name="senior_decline_order"),
+    path("<int:pk>/senior-start/", views_senior_cleaner.senior_cleaner_start_work, name="senior_start_work"),
+    path("<int:pk>/senior-finish/", views_senior_cleaner.senior_cleaner_finish_work, name="senior_finish_work"),
+    path("task/<int:pk>/assign-cleaner/", views_senior_cleaner.task_assign_cleaner, name="task_assign_cleaner"),
 ]
