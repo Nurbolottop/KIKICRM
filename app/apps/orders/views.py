@@ -2,7 +2,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
-from decimal import Decimal, InvalidOperation
 from apps.orders import models as orders_models
 from apps.clients import models as clients_models
 from apps.cms import models as cms_models
@@ -90,7 +89,16 @@ def order_detail(request, pk):
             messages.error(request, "У вас нет доступа к этому заказу")
             return redirect("orders:order_list")
     
-    return render(request, "pages/system/others/orders/order-view.html", locals())
+    # Список описаний шаблонов задач услуги для подсветки доп. задач
+    template_descriptions = []
+    if order.service and hasattr(order.service, 'task_templates'):
+        template_descriptions = list(order.service.task_templates.values_list('description', flat=True))
+    context = {
+        'settings': settings,
+        'order': order,
+        'template_descriptions': template_descriptions,
+    }
+    return render(request, "pages/system/others/orders/order-view.html", context)
 
 
 @login_required
@@ -119,24 +127,24 @@ def order_create(request):
             operator=request.user,
         )
 
-        # Автоматически создаем задачи из шаблонов выбранной услуги при создании заказа
-        if order.service and hasattr(order.service, 'task_templates'):
-            task_templates = order.service.task_templates.all()
-            for template in task_templates:
-                orders_models.Task.objects.create(
-                    order=order,
-                    description=template.description,
-                    status='IN_PROGRESS'
-                )
-            if task_templates.exists():
-                messages.info(request, f"Автоматически добавлено {task_templates.count()} задач(и) из шаблона")
-
         # Если статус выбран на форме — сохранить его, иначе оставить значение по умолчанию модели
         form_status = request.POST.get("status_operator")
         if form_status:
             order.status_operator = form_status
             order.save(update_fields=["status_operator"])
 
+        # Автодобавление задач из шаблонов услуги сразу при создании
+        if order.service and hasattr(order.service, 'task_templates'):
+            existing_desc = set()
+            for t in order.tasks.all():
+                existing_desc.add(t.description)
+            for template in order.service.task_templates.all():
+                if template.description not in existing_desc:
+                    orders_models.Task.objects.create(
+                        order=order,
+                        description=template.description,
+                        status='IN_PROGRESS'
+                    )
         messages.success(request, f"Заказ {order.code} успешно создан")
         return redirect("customer_view", pk=order.client.pk)
 
@@ -193,40 +201,45 @@ def order_update(request, pk):
             order.senior_cleaner = None
         
         order.save()
+
+        # Если услуга изменилась у оператора — подтянуть задачи из шаблонов (без дублей)
+        if service_changed and order.service and hasattr(order.service, 'task_templates'):
+            existing_desc = set(order.tasks.values_list('description', flat=True))
+            new_count = 0
+            for template in order.service.task_templates.all():
+                if template.description not in existing_desc:
+                    orders_models.Task.objects.create(
+                        order=order,
+                        description=template.description,
+                        status='IN_PROGRESS'
+                    )
+                    new_count += 1
+            if new_count:
+                messages.info(request, f"Добавлено {new_count} задач(и) из шаблонов услуги")
         
         # Назначение обычных клинеров (ManyToMany)
         cleaner_ids = request.POST.getlist("cleaners")
         order.cleaners.set(cleaner_ids)
-
-        # Если менеджер заполнил ключевые поля (есть старший и хотя бы один клинер),
-        # а статус ещё не финальный — считаем заказ назначенным автоматически.
-        terminal_statuses = ['PENDING_REVIEW', 'COMPLETED', 'DECLINED']
-        if order.status_manager not in terminal_statuses:
-            if order.senior_cleaner_id and order.cleaners.exists():
-                if order.status_manager != 'IN_PROGRESS':
-                    order.status_manager = 'ASSIGNED'
-                    order.save(update_fields=["status_manager"]) 
+        
+        # Если назначены клинеры и статус был ASSIGNED, автоматически переводим в IN_PROGRESS
+        if (senior_cleaner_id or cleaner_ids) and order.status_manager == 'ASSIGNED':
+            order.status_manager = 'IN_PROGRESS'
+            order.save(update_fields=["status_manager"])
         
         messages.success(request, f"Заказ {order.code} обновлён")
         return redirect("orders:order_detail", pk=order.pk)
 
-    # GET: если задач ещё нет, а у услуги есть шаблоны — создать их автоматически
-    if not order.tasks.exists() and order.service and hasattr(order.service, 'task_templates'):
-        task_templates = order.service.task_templates.all()
-        for template in task_templates:
-            orders_models.Task.objects.create(
-                order=order,
-                description=template.description,
-                status='IN_PROGRESS'
-            )
-        if task_templates.exists():
-            messages.info(request, f"Автоматически добавлено {task_templates.count()} задач(и) из шаблона")
+    # Список описаний шаблонов задач услуги для подсветки доп. задач
+    template_descriptions = []
+    if order.service and hasattr(order.service, 'task_templates'):
+        template_descriptions = list(order.service.task_templates.values_list('description', flat=True))
 
     context = {
         'settings': settings,
         'order': order,
         'senior_cleaners': senior_cleaners,
         'cleaners': cleaners,
+        'template_descriptions': template_descriptions,
     }
     return render(request, "pages/system/others/orders/edit/order-manager-edit.html", context)
 
@@ -242,9 +255,10 @@ def order_operator_update(request, pk):
         order.category = request.POST.get("category", order.category)
         
         service_id = request.POST.get("service")
-        if service_id:
-            previous_service_id = order.service_id
+        service_changed = False
+        if service_id and str(order.service_id) != str(service_id):
             order.service_id = service_id
+            service_changed = True
             
         order.address = request.POST.get("address", order.address)
         order.property_type = request.POST.get("property_type") or None
@@ -278,17 +292,21 @@ def order_send_to_manager(request, pk):
     order.status_manager = orders_models.Order.ManagerStatus.ASSIGNED
     order.save()
     
-    # Автоматически создаем задачи из шаблонов для выбранной услуги (только если задач ещё нет)
-    if not order.tasks.exists() and order.service and hasattr(order.service, 'task_templates'):
+    # Автоматически создаем задачи из шаблонов для выбранной услуги (без дублей)
+    if order.service and hasattr(order.service, 'task_templates'):
         task_templates = order.service.task_templates.all()
+        existing_desc = set(order.tasks.values_list('description', flat=True))
+        added = 0
         for template in task_templates:
-            orders_models.Task.objects.create(
-                order=order,
-                description=template.description,
-                status='IN_PROGRESS'
-            )
-        if task_templates.exists():
-            messages.info(request, f"Автоматически добавлено {task_templates.count()} задач(и) из шаблона")
+            if template.description not in existing_desc:
+                orders_models.Task.objects.create(
+                    order=order,
+                    description=template.description,
+                    status='IN_PROGRESS'
+                )
+                added += 1
+        if added:
+            messages.info(request, f"Автоматически добавлено {added} задач(и) из шаблона")
     
     messages.success(request, f"Заказ {order.code} успешно передан менеджеру")
     return redirect("orders:order_detail", pk=order.pk)
@@ -300,14 +318,10 @@ def task_create(request, order_id):
     order = get_object_or_404(orders_models.Order, pk=order_id)
 
     if request.method == "POST":
-        description = request.POST.get("description", "").strip()
-        # Все задачи, созданные вручную из этой формы, считаем дополнительными
-        if description and not description.startswith('[EXTRA]'):
-            description = f"[EXTRA] {description}"
         orders_models.Task.objects.create(
             order=order,
             cleaner_id=request.POST.get("cleaner"),
-            description=description,
+            description=request.POST.get("description"),
         )
         messages.success(request, "Задача добавлена")
         return redirect("orders:order_manager_update", pk=order.pk)
