@@ -27,6 +27,30 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ("code", "created_at", "updated_at")
     inlines = [TaskInline]
 
+    actions = [
+        "revert_to_in_progress",
+    ]
+
+    def revert_to_in_progress(self, request, queryset):
+        """Отменить отправку на проверку: вернуть заказ в работу.
+        - Меняет статус менеджера на IN_PROGRESS
+        - Очищает отметку о завершении работы (work_finished_at)
+        - Если есть статус старшего клинера, возвращает его в IN_PROGRESS
+        """
+        updated = 0
+        for order in queryset:
+            if order.status_manager == Order.ManagerStatus.PENDING_REVIEW:
+                order.status_manager = Order.ManagerStatus.IN_PROGRESS
+                # Вернуть процесс в работу
+                order.work_finished_at = None
+                # Если поле статуса старшего клинера существует — вернуть тоже в работу
+                if hasattr(order, "status_senior_cleaner") and order.status_senior_cleaner:
+                    order.status_senior_cleaner = Order.SeniorCleanerStatus.IN_PROGRESS
+                order.save()
+                updated += 1
+        self.message_user(request, f"Возвращено в работу: {updated} заказ(ов)")
+    revert_to_in_progress.short_description = "Отменить отправку на проверку (вернуть в работу)"
+
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):

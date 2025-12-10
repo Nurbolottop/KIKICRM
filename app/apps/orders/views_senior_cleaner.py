@@ -82,3 +82,49 @@ def task_assign_cleaner(request, pk):
             messages.info(request, f"Клинер снят с задачи: {task.description}")
     
     return redirect("orders:order_detail", pk=task.order.pk)
+
+
+@login_required
+def task_submit_for_review(request, pk):
+    """Клинер отправляет свою задачу на проверку"""
+    task = get_object_or_404(orders_models.Task, pk=pk)
+    order = task.order
+    if request.method == "POST":
+        # Разрешаем только исполнителю задачи или обычному клинеру, назначенному на неё
+        if request.user.role == 'CLEANER' and task.cleaner_id == request.user.id:
+            task.status = 'PENDING_REVIEW'
+            task.save(update_fields=["status"])
+            messages.success(request, f"Задача отправлена на проверку: {task.description}")
+        else:
+            messages.error(request, "Вы не можете отправить на проверку эту задачу")
+    return redirect("orders:order_detail", pk=order.pk)
+
+
+@login_required
+def task_approve(request, pk):
+    """Старший клинер принимает задачу как выполненную"""
+    task = get_object_or_404(orders_models.Task, pk=pk)
+    order = task.order
+    if request.method == "POST":
+        if request.user.role == 'SENIOR_CLEANER' and order.senior_cleaner_id == request.user.id:
+            task.status = 'DONE'
+            task.save(update_fields=["status"])
+            messages.success(request, f"Задача принята: {task.description}")
+        else:
+            messages.error(request, "Вы не можете подтвердить эту задачу")
+    return redirect("orders:order_detail", pk=order.pk)
+
+
+@login_required
+def task_return_to_work(request, pk):
+    """Старший клинер возвращает задачу на доработку"""
+    task = get_object_or_404(orders_models.Task, pk=pk)
+    order = task.order
+    if request.method == "POST":
+        if request.user.role == 'SENIOR_CLEANER' and order.senior_cleaner_id == request.user.id:
+            task.status = 'IN_PROGRESS'
+            task.save(update_fields=["status"])
+            messages.info(request, f"Задача возвращена на доработку: {task.description}")
+        else:
+            messages.error(request, "Вы не можете вернуть эту задачу")
+    return redirect("orders:order_detail", pk=order.pk)

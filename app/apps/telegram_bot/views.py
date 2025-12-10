@@ -102,11 +102,21 @@ def start_handler(message):
 <i>Если у вас нет учетных данных, обратитесь в IT отдел.</i>
 """
         
+        # Основное меню
         bot.send_message(
             message.chat.id,
             welcome_text,
             reply_markup=markup
         )
+
+        # Кнопка открытия Mini App (Telegram WebApp)
+        try:
+            webapp_url = getattr(settings, 'WEBAPP_BASE_URL', '').rstrip('/') + '/tg/app'
+            open_kb = types.InlineKeyboardMarkup()
+            open_kb.add(types.InlineKeyboardButton(text='Open', web_app=types.WebAppInfo(webapp_url)))
+            bot.send_message(message.chat.id, 'Откройте Mini App для работы с задачами:', reply_markup=open_kb)
+        except Exception:
+            pass
         
         logger.info(f"Пользователь {message.from_user.id} {'создан' if created else 'обновлен'}")
         
@@ -251,210 +261,5 @@ def profile_handler(message):
             message.chat.id,
             "❌ Произошла ошибка. Попробуйте позже."
         )
-
-
-# Обработчик текстовых сообщений с кнопок
-@bot.message_handler(func=lambda message: message.text in [
-    '📊 Статистика', '📝 Заказы', '👤 Профиль', 'ℹ️ Помощь',
-    '📋 Мои заказы', '🆕 Новые заказы', '⏰ Текущий заказ', '✅ Завершенные',
-    '🔐 Войти в систему', '🚪 Выйти'
-])
-def button_handler(message):
-    """Обработчик нажатий на кнопки меню"""
-    try:
-        telegram_user = TelegramUser.objects.filter(id_user=message.from_user.id).first()
-        
-        if not telegram_user:
-            bot.send_message(message.chat.id, "❌ Пользователь не найден. Используйте /start")
-            return
-        
-        # Обработчики авторизации
-        if message.text == '🔐 Войти в систему':
-            auth_handlers.handle_login_request(bot, message, telegram_user)
-            return
-        elif message.text == '🚪 Выйти':
-            auth_handlers.handle_logout(bot, message, telegram_user)
-            return
-        
-        # Проверка авторизации для остальных функций
-        if not auth_handlers.is_authenticated(telegram_user):
-            bot.send_message(
-                message.chat.id,
-                "❌ Для доступа к этой функции необходимо авторизоваться.\n\nИспользуйте кнопку '🔐 Войти в систему'",
-                reply_markup=auth_handlers.get_auth_keyboard()
-            )
-            return
-        
-        # Обработчики для клинеров
-        if message.text == '📋 Мои заказы':
-            cleaner_handlers.handle_my_orders(bot, message, telegram_user)
-        elif message.text == '🆕 Новые заказы':
-            cleaner_handlers.handle_new_orders(bot, message, telegram_user)
-        elif message.text == '⏰ Текущий заказ':
-            cleaner_handlers.handle_current_order(bot, message, telegram_user)
-        elif message.text == '✅ Завершенные':
-            cleaner_handlers.handle_completed_orders(bot, message, telegram_user)
-        # Общие обработчики
-        elif message.text == '📊 Статистика':
-            if telegram_user.user and telegram_user.user.role in [User.Role.CLEANER, User.Role.SENIOR_CLEANER]:
-                cleaner_handlers.handle_cleaner_stats(bot, message, telegram_user)
-            else:
-                stats_handler(message)
-        elif message.text == '📝 Заказы':
-            if telegram_user.user and telegram_user.user.role in [User.Role.CLEANER, User.Role.SENIOR_CLEANER]:
-                cleaner_handlers.handle_my_orders(bot, message, telegram_user)
-            else:
-                orders_handler(message)
-        elif message.text == '👤 Профиль':
-            if telegram_user.user and telegram_user.user.role in [User.Role.CLEANER, User.Role.SENIOR_CLEANER]:
-                cleaner_handlers.handle_cleaner_profile(bot, message, telegram_user)
-            else:
-                profile_handler(message)
-        elif message.text == 'ℹ️ Помощь':
-            help_handler(message)
-            
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике кнопок: {e}")
-        bot.send_message(
-            message.chat.id,
-            "❌ Произошла ошибка. Попробуйте позже."
-        )
-
-
-# Обработчик всех остальных текстовых сообщений
-@bot.message_handler(content_types=['text'])
-def text_handler(message):
-    """Обработчик всех текстовых сообщений"""
-    try:
-        response_text = f"""
-💬 <b>Получено сообщение:</b> "{message.text}"
-
-Я обработал ваше сообщение. Для просмотра доступных команд используйте /help
-
-<i>Автоматические ответы на сообщения будут добавлены в следующих версиях.</i>
-"""
-        
-        bot.send_message(message.chat.id, response_text)
-        logger.info(f"Пользователь {message.from_user.id} отправил сообщение: {message.text}")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике текста: {e}")
-        bot.send_message(
-            message.chat.id,
-            "❌ Произошла ошибка. Попробуйте позже."
-        )
-
-
-# Обработчик фото
-@bot.message_handler(content_types=['photo'])
-def photo_handler(message):
-    """Обработчик фотографий"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "📷 Фото получено! Функция обработки фотографий будет добавлена позже."
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил фото")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике фото: {e}")
-
-
-# Обработчик документов
-@bot.message_handler(content_types=['document'])
-def document_handler(message):
-    """Обработчик документов"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "📄 Документ получен! Функция обработки документов будет добавлена позже."
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил документ")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике документов: {e}")
-
-
-# Обработчик голосовых сообщений
-@bot.message_handler(content_types=['voice'])
-def voice_handler(message):
-    """Обработчик голосовых сообщений"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "🎤 Голосовое сообщение получено! Функция обработки голоса будет добавлена позже."
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил голосовое сообщение")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике голоса: {e}")
-
-
-# Обработчик стикеров
-@bot.message_handler(content_types=['sticker'])
-def sticker_handler(message):
-    """Обработчик стикеров"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "😊 Стикер получен!"
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил стикер")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике стикеров: {e}")
-
-
-# Обработчик видео
-@bot.message_handler(content_types=['video'])
-def video_handler(message):
-    """Обработчик видео"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "🎥 Видео получено! Функция обработки видео будет добавлена позже."
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил видео")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике видео: {e}")
-
-
-# Обработчик локации
-@bot.message_handler(content_types=['location'])
-def location_handler(message):
-    """Обработчик геолокации"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            f"📍 Локация получена!\nШирота: {message.location.latitude}\nДолгота: {message.location.longitude}"
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил локацию")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике локации: {e}")
-
-
-# Обработчик контактов
-@bot.message_handler(content_types=['contact'])
-def contact_handler(message):
-    """Обработчик контактов"""
-    try:
-        bot.send_message(
-            message.chat.id,
-            "📞 Контакт получен! Спасибо за предоставленную информацию."
-        )
-        logger.info(f"Пользователь {message.from_user.id} отправил контакт")
-        
-    except Exception as e:
-        logger.error(f"Ошибка в обработчике контактов: {e}")
-
-
-# Обработчик callback-кнопок
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query_handler(call):
-    """Обработчик всех callback-запросов"""
-    callback_handlers.handle_callback_query(bot, call)
-
 
 logger.info("Telegram бот инициализирован успешно")

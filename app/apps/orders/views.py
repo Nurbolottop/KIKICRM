@@ -366,6 +366,34 @@ def order_start_work(request, pk):
     if request.user.role not in ['SENIOR_CLEANER', 'MANAGER', 'FOUNDER']:
         messages.error(request, "У вас нет прав для этого действия")
         return redirect("orders:order_detail", pk=pk)
+
+
+@login_required
+def order_revert_to_work(request, pk):
+    """Вернуть заказ с проверки обратно в работу.
+    Доступно для MANAGER, FOUNDER, SENIOR_CLEANER.
+    """
+    from django.utils import timezone  # noqa: F401 (может пригодиться в будущем)
+
+    order = get_object_or_404(orders_models.Order, pk=pk)
+
+    if request.user.role not in ['MANAGER', 'FOUNDER', 'SENIOR_CLEANER']:
+        messages.error(request, "У вас нет прав для этого действия")
+        return redirect("orders:order_detail", pk=pk)
+
+    if request.method == "POST":
+        if order.status_manager == 'PENDING_REVIEW':
+            order.status_manager = 'IN_PROGRESS'
+            order.work_finished_at = None
+            if hasattr(order, 'status_senior_cleaner') and order.status_senior_cleaner:
+                order.status_senior_cleaner = 'IN_PROGRESS'
+            order.save()
+            messages.success(request, f"Заказ {order.code} возвращён в работу")
+        else:
+            messages.info(request, "Заказ не находится на проверке")
+        return redirect("orders:order_detail", pk=pk)
+
+    return redirect("orders:order_detail", pk=pk)
     
     if request.user.role == 'SENIOR_CLEANER' and request.user != order.senior_cleaner:
         messages.error(request, "Только назначенный старший клинер может начать работу")

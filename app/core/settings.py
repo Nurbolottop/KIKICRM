@@ -27,6 +27,7 @@ LOGOUT_REDIRECT_URL = '/users/login/'
 
 CSRF_TRUSTED_ORIGINS = [
     'https://crm.cleaningkiki.kg',
+    'https://webapp.cleaningkiki.kg',
 ]
 
 SESSION_COOKIE_SECURE = True
@@ -107,5 +108,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Telegram Bot Settings
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8254676585:AAGQqe2Eysph3nduFsdFtDkW85INFDqvd6Y')
+
+# Telegram Mini App base URL
+WEBAPP_BASE_URL = os.getenv('WEBAPP_BASE_URL', 'https://webapp.cleaningkiki.kg')
 
 from core.project_settings.ckeditor import *

@@ -222,7 +222,11 @@ class Task(models.Model):
     description = models.CharField(max_length=255, verbose_name="Описание задачи")
     status = models.CharField(
         max_length=20,
-        choices=[("IN_PROGRESS", "В работе"), ("DONE", "Готово")],
+        choices=[
+            ("IN_PROGRESS", "В работе"),
+            ("PENDING_REVIEW", "На проверке"),
+            ("DONE", "Готово"),
+        ],
         default="IN_PROGRESS",
         verbose_name="Статус задачи"
     )

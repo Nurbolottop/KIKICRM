@@ -80,12 +80,15 @@
         {% if order.tasks.all %}
             <div class="list-group mb-3">
                 {% for task in order.tasks.all %}
-                <div class="list-group-item">
+                <div class="list-group-item {% if template_descriptions and task.description not in template_descriptions %}border-start border-4 border-success{% else %}border-start border-4 border-secondary{% endif %}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="badge bg-light text-dark border">{{ forloop.counter }}</span>
+                                <span class="badge {% if template_descriptions and task.description not in template_descriptions %}bg-success text-white{% else %}bg-light text-dark border{% endif %}">{{ forloop.counter }}</span>
                                 <h6 class="mb-0">{{ task.description }}</h6>
+                                {% if template_descriptions and task.description not in template_descriptions %}
+                                    <span class="badge bg-success ms-1">Доп. услуга</span>
+                                {% endif %}
                             </div>
                             <div class="mb-2">
                                 <small class="text-muted me-2">Исполнитель:</small>
@@ -94,6 +97,11 @@
                                         {% csrf_token %}
                                         <select name="cleaner" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
                                             <option value="">Не назначен</option>
+                                            {% if order.senior_cleaner %}
+                                                <option value="{{ order.senior_cleaner.id }}" {% if task.cleaner and task.cleaner.id == order.senior_cleaner.id %}selected{% endif %}>
+                                                    {{ order.senior_cleaner.full_name }} (я)
+                                                </option>
+                                            {% endif %}
                                             {% for cleaner in order.cleaners.all %}
                                                 <option value="{{ cleaner.id }}" {% if task.cleaner and task.cleaner.id == cleaner.id %}selected{% endif %}>
                                                     {{ cleaner.full_name }}
