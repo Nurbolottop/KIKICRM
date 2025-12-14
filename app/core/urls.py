@@ -16,8 +16,6 @@ urlpatterns = [
     path('clients/', include('apps.clients.urls')),
     # заказы
     path('orders/', include(('apps.orders.urls', 'orders'), namespace='orders')),
-    # Telegram Mini App (WebApp)
-    path('tg/', include('apps.telegram_bot.webapp_urls')),
 ]
 
 if settings.DEBUG:

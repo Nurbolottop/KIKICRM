@@ -109,14 +109,7 @@ def start_handler(message):
             reply_markup=markup
         )
 
-        # Кнопка открытия Mini App (Telegram WebApp)
-        try:
-            webapp_url = getattr(settings, 'WEBAPP_BASE_URL', '').rstrip('/') + '/tg/app'
-            open_kb = types.InlineKeyboardMarkup()
-            open_kb.add(types.InlineKeyboardButton(text='Open', web_app=types.WebAppInfo(webapp_url)))
-            bot.send_message(message.chat.id, 'Откройте Mini App для работы с задачами:', reply_markup=open_kb)
-        except Exception:
-            pass
+        # Кнопка Mini App удалена по требованиям: интерфейсы клинеров отключены
         
         logger.info(f"Пользователь {message.from_user.id} {'создан' if created else 'обновлен'}")
         
