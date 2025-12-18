@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
+from django.http import JsonResponse
 from apps.orders import models as orders_models
 from apps.clients import models as clients_models
 from apps.cms import models as cms_models
@@ -12,13 +13,6 @@ def order_list(request):
     settings = cms_models.Settings.objects.first()
     orders = orders_models.Order.objects.all()
     
-    # Фильтрация по роли пользователя
-    if request.user.role == "SENIOR_CLEANER":
-        # Старший клинер видит только свои заказы
-        orders = orders.filter(senior_cleaner=request.user)
-    elif request.user.role == "CLEANER":
-        # Клинер видит только заказы, где он назначен исполнителем
-        orders = orders.filter(cleaners=request.user)
     
     # Фильтрация по поисковому запросу
     search_query = request.GET.get('q', '')
@@ -74,21 +68,6 @@ def order_list(request):
 def order_detail(request, pk):
     settings = cms_models.Settings.objects.first()
     order = get_object_or_404(orders_models.Order, pk=pk)
-    
-    # Проверка доступа для старшего клинера
-    if request.user.role == "SENIOR_CLEANER":
-        # Старший клинер видит заказ только если он назначен на него
-        if order.senior_cleaner != request.user:
-            messages.error(request, "У вас нет доступа к этому заказу")
-            return redirect("orders:order_list")
-    
-    # Проверка доступа для обычного клинера
-    if request.user.role == "CLEANER":
-        # Клинер видит заказ только если он в списке исполнителей
-        if not order.cleaners.filter(id=request.user.id).exists():
-            messages.error(request, "У вас нет доступа к этому заказу")
-            return redirect("orders:order_list")
-    
     # Список описаний шаблонов задач услуги для подсветки доп. задач
     template_descriptions = []
     if order.service and hasattr(order.service, 'task_templates'):
@@ -156,22 +135,11 @@ def order_create(request):
 @login_required
 def order_update(request, pk):
     """Редактирование заказа менеджером"""
-    from apps.users.models import User
     
     settings = cms_models.Settings.objects.first()
     order = get_object_or_404(orders_models.Order, pk=pk)
     
-    # Получаем списки клинеров для выбора
-    # Старшие клинеры: все активные
-    senior_cleaners = User.objects.filter(
-        role='SENIOR_CLEANER', 
-        is_active=True
-    )
-    # Обычные клинеры: все активные (исключаем старших клинеров)
-    cleaners = User.objects.filter(
-        role='CLEANER', 
-        is_active=True
-    )
+    # Списки клинеров удалены
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -193,23 +161,8 @@ def order_update(request, pk):
         order.status_manager = request.POST.get("status_manager") or order.status_manager
         order.deadline = request.POST.get("deadline") or order.deadline
         
-        # Назначение старшего клинера
-        senior_cleaner_id = request.POST.get("senior_cleaner")
-        if senior_cleaner_id:
-            order.senior_cleaner_id = senior_cleaner_id
-        else:
-            order.senior_cleaner = None
-        
         order.save()
         
-        # Назначение обычных клинеров (ManyToMany)
-        cleaner_ids = request.POST.getlist("cleaners")
-        order.cleaners.set(cleaner_ids)
-        
-        # Если назначены клинеры и статус был ASSIGNED, автоматически переводим в IN_PROGRESS
-        if (senior_cleaner_id or cleaner_ids) and order.status_manager == 'ASSIGNED':
-            order.status_manager = 'IN_PROGRESS'
-            order.save(update_fields=["status_manager"])
         
         messages.success(request, f"Заказ {order.code} обновлён")
         return redirect("orders:order_detail", pk=order.pk)
@@ -222,8 +175,6 @@ def order_update(request, pk):
     context = {
         'settings': settings,
         'order': order,
-        'senior_cleaners': senior_cleaners,
-        'cleaners': cleaners,
         'template_descriptions': template_descriptions,
     }
     return render(request, "pages/system/others/orders/edit/order-manager-edit.html", context)
@@ -242,7 +193,7 @@ def order_operator_update(request, pk):
         service_id = request.POST.get("service")
         service_changed = False
         if service_id and str(order.service_id) != str(service_id):
-            order.service_id = service_id
+            order.service_id = service_id                     
             service_changed = True
             
         order.address = request.POST.get("address", order.address)
@@ -305,7 +256,6 @@ def task_create(request, order_id):
     if request.method == "POST":
         orders_models.Task.objects.create(
             order=order,
-            cleaner_id=request.POST.get("cleaner"),
             description=request.POST.get("description"),
         )
         messages.success(request, "Задача добавлена")
@@ -356,87 +306,115 @@ def task_delete(request, pk):
 
 
 @login_required
-def order_start_work(request, pk):
-    """Старший клинер начинает работу"""
-    from django.utils import timezone
-    
-    order = get_object_or_404(orders_models.Order, pk=pk)
-    
-    # Проверка прав: только старший клинер или менеджер
-    if request.user.role not in ['SENIOR_CLEANER', 'MANAGER', 'FOUNDER']:
-        messages.error(request, "У вас нет прав для этого действия")
-        return redirect("orders:order_detail", pk=pk)
-
-
-@login_required
 def order_revert_to_work(request, pk):
-    """Вернуть заказ с проверки обратно в работу.
-    Доступно для MANAGER, FOUNDER, SENIOR_CLEANER.
-    """
+    """Вернуть заказ с проверки обратно в работу. Доступно для MANAGER, FOUNDER."""
     from django.utils import timezone  # noqa: F401 (может пригодиться в будущем)
 
     order = get_object_or_404(orders_models.Order, pk=pk)
 
-    if request.user.role not in ['MANAGER', 'FOUNDER', 'SENIOR_CLEANER']:
+    if request.user.role not in ['MANAGER', 'FOUNDER']:
         messages.error(request, "У вас нет прав для этого действия")
         return redirect("orders:order_detail", pk=pk)
-
     if request.method == "POST":
         if order.status_manager == 'PENDING_REVIEW':
             order.status_manager = 'IN_PROGRESS'
             order.work_finished_at = None
-            if hasattr(order, 'status_senior_cleaner') and order.status_senior_cleaner:
-                order.status_senior_cleaner = 'IN_PROGRESS'
             order.save()
             messages.success(request, f"Заказ {order.code} возвращён в работу")
         else:
             messages.info(request, "Заказ не находится на проверке")
         return redirect("orders:order_detail", pk=pk)
+    
+    return redirect("orders:order_detail", pk=pk)
+@login_required
+def order_calendar_events(request):
+    status = request.GET.get("status", "all").lower()
 
-    return redirect("orders:order_detail", pk=pk)
-    
-    if request.user.role == 'SENIOR_CLEANER' and request.user != order.senior_cleaner:
-        messages.error(request, "Только назначенный старший клинер может начать работу")
-        return redirect("orders:order_detail", pk=pk)
-    
-    if request.method == "POST":
-        order.work_started_at = timezone.now()
-        if order.status_manager == 'ASSIGNED':
-            order.status_manager = 'IN_PROGRESS'
-        order.save()
-        
-        messages.success(request, f"Работа по заказу {order.code} начата")
-        return redirect("orders:order_detail", pk=pk)
-    
-    return redirect("orders:order_detail", pk=pk)
+    qs = orders_models.Order.objects.select_related("client", "service")
+
+    if status == "completed":
+        qs = qs.filter(status_manager=orders_models.Order.ManagerStatus.COMPLETED)
+    elif status == "declined":
+        qs = qs.filter(
+            models.Q(status_manager=orders_models.Order.ManagerStatus.DECLINED)
+            | models.Q(status_operator=orders_models.Order.OperatorStatus.DECLINED)
+        )
+    elif status == "active":
+        qs = qs.filter(
+            models.Q(status_manager__in=[
+                orders_models.Order.ManagerStatus.ASSIGNED,
+                orders_models.Order.ManagerStatus.IN_PROGRESS,
+                orders_models.Order.ManagerStatus.PENDING_REVIEW,
+            ])
+            | models.Q(status_manager__isnull=True)
+        ).exclude(
+            models.Q(status_manager=orders_models.Order.ManagerStatus.COMPLETED)
+            | models.Q(status_manager=orders_models.Order.ManagerStatus.DECLINED)
+            | models.Q(status_operator=orders_models.Order.OperatorStatus.DECLINED)
+        )
+
+    events = []
+    for order in qs:
+        if order.status_manager == orders_models.Order.ManagerStatus.COMPLETED:
+            category = "completed"
+        elif (
+            order.status_manager == orders_models.Order.ManagerStatus.DECLINED
+            or order.status_operator == orders_models.Order.OperatorStatus.DECLINED
+        ):
+            category = "declined"
+        else:
+            category = "active"
+
+        title_parts = [order.code]
+        if order.client:
+            title_parts.append(str(order.client))
+        if order.service:
+            title_parts.append(order.service.title)
+
+        events.append(
+            {
+                "id": order.id,
+                "title": " | ".join(title_parts),
+                "start": order.date_time.isoformat() if order.date_time else None,
+                "end": order.deadline.isoformat() if order.deadline else None,
+                "extendedProps": {
+                    "code": order.code,
+                    "status_manager": order.status_manager,
+                    "status_operator": order.status_operator,
+                    "category": category,
+                    "address": order.address,
+                },
+            }
+        )
+
+    return JsonResponse(events, safe=False)
 
 
 @login_required
+def order_calendar_page(request):
+    settings = cms_models.Settings.objects.first()
+    return render(request, "pages/system/others/orders/order_calendar.html", {"settings": settings})
+
+@login_required
 def order_finish_work(request, pk):
-    """Старший клинер завершает работу и отправляет на проверку"""
+    """Менеджер/Основатель завершает работу и отправляет заказ на проверку"""
     from django.utils import timezone
-    
+
     order = get_object_or_404(orders_models.Order, pk=pk)
-    
-    # Проверка прав
-    if request.user.role not in ['SENIOR_CLEANER', 'MANAGER', 'FOUNDER']:
+
+    # Только менеджер или основатель
+    if request.user.role not in ['MANAGER', 'FOUNDER']:
         messages.error(request, "У вас нет прав для этого действия")
         return redirect("orders:order_detail", pk=pk)
-    
-    if request.user.role == 'SENIOR_CLEANER' and request.user != order.senior_cleaner:
-        messages.error(request, "Только назначенный старший клинер может завершить работу")
-        return redirect("orders:order_detail", pk=pk)
-    
+
     if request.method == "POST":
         order.work_finished_at = timezone.now()
-        order.status_manager = 'PENDING_REVIEW'  # На проверку менеджеру
+        order.status_manager = orders_models.Order.ManagerStatus.PENDING_REVIEW
         order.save()
-        
-        messages.success(request, f"Работа по заказу {order.code} завершена и отправлена на проверку менеджеру")
+        messages.success(request, f"Работа по заказу {order.code} завершена и отправлена на проверку")
         return redirect("orders:order_detail", pk=pk)
-    
-    return redirect("orders:order_detail", pk=pk)
 
+    return redirect("orders:order_detail", pk=pk)
 
 @login_required
 def order_quality_check(request, pk):

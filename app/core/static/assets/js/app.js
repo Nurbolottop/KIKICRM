@@ -436,7 +436,7 @@ Index Of Script
 
     // calender 1 js
     var calendar1;
-    if (jQuery('#calendar1').length) {
+    if (!window.KIKI_DISABLE_DEMO_CALENDAR && jQuery('#calendar1').length) {
         var calendarEl = document.getElementById('calendar1');
 
             calendar1 = new FullCalendar.Calendar(calendarEl, {

@@ -10,11 +10,13 @@ urlpatterns = [
     path("<int:pk>/manager-edit/", views.order_update, name="order_manager_update"),
     path("<int:pk>/operator-edit/", views.order_operator_update, name="order_operator_update"),
     path("<int:pk>/send-to-manager/", views.order_send_to_manager, name="order_send_to_manager"),
-    path("<int:pk>/start-work/", views.order_start_work, name="order_start_work"),
     path("<int:pk>/finish-work/", views.order_finish_work, name="order_finish_work"),
     path("<int:pk>/quality-check/", views.order_quality_check, name="order_quality_check"),
     path("<int:pk>/revert-to-work/", views.order_revert_to_work, name="order_revert_to_work"),
     path("<int:order_id>/task/create/", views.task_create, name="task_create"),
     path("task/<int:pk>/update/", views.task_update, name="task_update"),
     path("task/<int:pk>/delete/", views.task_delete, name="task_delete"),
+    # Calendar
+    path("calendar/", views.order_calendar_page, name="order_calendar_page"),
+    path("calendar/events/", views.order_calendar_events, name="order_calendar_events"),
 ]

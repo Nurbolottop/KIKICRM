@@ -18,13 +18,7 @@ class Order(models.Model):
         COMPLETED = "COMPLETED", "Завершён"
         DECLINED = "DECLINED", "Отклонено"
     
-    class SeniorCleanerStatus(models.TextChoices):
-        ASSIGNED = "ASSIGNED", "Назначен"
-        ACCEPTED = "ACCEPTED", "Принят"
-        IN_PROGRESS = "IN_PROGRESS", "В работе"
-        PENDING_REVIEW = "PENDING_REVIEW", "На проверке менеджера"
-        COMPLETED = "COMPLETED", "Завершён"
-        DECLINED = "DECLINED", "Отказался"
+    # Статусы старшего клинера удалены
 
     class Priority(models.TextChoices):
         NORMAL = "NORMAL", "Обычный"
@@ -151,30 +145,13 @@ class Order(models.Model):
         help_text="Например: 50 м², 3 комнаты, 5 окон"
     )
 
-    senior_cleaner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="orders_senior", verbose_name="Старший клинер"
-    )
-    cleaners = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, related_name="orders_cleaners",
-        blank=True, verbose_name="Клинеры"
-    )
+    # Поля для старшего клинера и клинеров удалены
     deadline = models.DateTimeField(null=True, blank=True, verbose_name="Крайний срок выполнения")
 
     manager_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий менеджера")
     status_manager = models.CharField(max_length=20, choices=ManagerStatus.choices, null=True, blank=True, verbose_name="Статус (менеджер)")
     
-    # --- Поля старшего клинера ---
-    status_senior_cleaner = models.CharField(
-        max_length=20, 
-        choices=SeniorCleanerStatus.choices, 
-        default=SeniorCleanerStatus.ASSIGNED,
-        null=True, 
-        blank=True, 
-        verbose_name="Статус (старший клинер)"
-    )
-    senior_cleaner_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий старшего клинера")
-    decline_reason = models.TextField(blank=True, null=True, verbose_name="Причина отказа")
+    # Поля старшего клинера удалены
     
     # --- Отслеживание работы ---
     work_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа начата")
@@ -214,17 +191,12 @@ class Order(models.Model):
 
 class Task(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tasks", verbose_name="Заказ")
-    cleaner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, verbose_name="Исполнитель"
-    )
 
     description = models.CharField(max_length=255, verbose_name="Описание задачи")
     status = models.CharField(
         max_length=20,
         choices=[
             ("IN_PROGRESS", "В работе"),
-            ("PENDING_REVIEW", "На проверке"),
             ("DONE", "Готово"),
         ],
         default="IN_PROGRESS",

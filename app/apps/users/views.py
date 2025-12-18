@@ -22,4 +22,4 @@ def login_view(request):
         else:
             messages.error(request, 'Неверный логин или пароль')
 
-    return render(request, 'pages/users/forms/auth-signin.html', {"settings": settings})
+    return render(request, 'pages/users/auth-signin.html', {"settings": settings})

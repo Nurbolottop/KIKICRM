@@ -79,7 +79,6 @@ class Client(models.Model):
         
     @whatsapp.setter
     def whatsapp(self, value):
-        """Set the WhatsApp number with validation"""
         if value:
             validate_phone_number(value)  # Validate before setting
             self._whatsapp_number = value

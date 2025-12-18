@@ -16,8 +16,6 @@ class User(AbstractUser):
         SMM = 'SMM', 'СММ-менеджер'
         OPERATOR = 'OPERATOR', 'Оператор'
         MANAGER = 'MANAGER', 'Менеджер'
-        SENIOR_CLEANER = 'SENIOR_CLEANER', 'Старший клинер'
-        CLEANER = 'CLEANER', 'Клинер'
         CANDIDATE = 'CANDIDATE', 'Кандидат'
 
     class Status(models.TextChoices):
@@ -38,9 +36,7 @@ class User(AbstractUser):
         max_length=50, choices=Status.choices, default=Status.CANDIDATE, verbose_name="Статус сотрудника"
     )
     
-    # Статус работы клинера
-    is_on_shift = models.BooleanField(default=False, verbose_name="На смене")
-    is_available = models.BooleanField(default=True, verbose_name="Свободен")
+    # Поля статуса смены для клинеров удалены
     
     avatar = ResizedImageField(
         force_format="WEBP", quality=100, upload_to='users_avatars/', blank=True, null=True,

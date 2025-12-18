@@ -5,7 +5,7 @@ from .models import Order, Task
 class TaskInline(admin.TabularInline):
     model = Task
     extra = 1
-    fields = ("description", "cleaner", "status", "photo_before", "photo_after", "comment")
+    fields = ("description", "status", "photo_before", "photo_after", "comment")
     show_change_link = True
 
 
@@ -20,7 +20,7 @@ class OrderAdmin(admin.ModelAdmin):
         ("Основная информация", {"fields": ("code", "client", "category", "status_operator", "status_manager")}),
         ("Детали заказа", {"fields": ("service", "address", "date_time", "estimated_cost", "estimated_area", "final_cost", "final_area", "notes")}),
         ("Маркетинг", {"fields": ("channel", "source")}),
-        ("Сотрудники", {"fields": ("operator", "senior_cleaner", "cleaners", "deadline", "manager_comment")}),
+        ("Сотрудники", {"fields": ("operator", "deadline", "manager_comment")}),
         ("Служебное", {"fields": ("created_at", "updated_at")}),
     )
 
@@ -35,7 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
         """Отменить отправку на проверку: вернуть заказ в работу.
         - Меняет статус менеджера на IN_PROGRESS
         - Очищает отметку о завершении работы (work_finished_at)
-        - Если есть статус старшего клинера, возвращает его в IN_PROGRESS
+        - Поле статуса старшего клинера удалено
         """
         updated = 0
         for order in queryset:
@@ -43,9 +43,6 @@ class OrderAdmin(admin.ModelAdmin):
                 order.status_manager = Order.ManagerStatus.IN_PROGRESS
                 # Вернуть процесс в работу
                 order.work_finished_at = None
-                # Если поле статуса старшего клинера существует — вернуть тоже в работу
-                if hasattr(order, "status_senior_cleaner") and order.status_senior_cleaner:
-                    order.status_senior_cleaner = Order.SeniorCleanerStatus.IN_PROGRESS
                 order.save()
                 updated += 1
         self.message_user(request, f"Возвращено в работу: {updated} заказ(ов)")
@@ -54,7 +51,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("description", "order", "cleaner", "status")
-    list_filter = ("status", "cleaner")
-    search_fields = ("description", "order__code", "cleaner__full_name")
+    list_display = ("description", "order", "status")
+    list_filter = ("status",)
+    search_fields = ("description", "order__code")
     ordering = ("status", "id")

@@ -3,7 +3,7 @@
 {% if user.role == "FOUNDER" %}
 <!-- Клиенты -->
 <li class="sidebar-layout">
-  <a href="./customer.html" class="svg-icon">
+  <a href="{% url 'customer' %}" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -16,7 +16,7 @@
 
 <!-- Заказы -->
 <li class="sidebar-layout">
-  <a href="./orders.html" class="svg-icon">
+  <a href="{% url 'orders:order_list' %}" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -68,7 +68,7 @@
 
 <!-- Календарь -->
 <li class="sidebar-layout">
-  <a href="./calendar.html" class="svg-icon">
+  <a href="{% url 'orders:order_calendar_page' %}" class="svg-icon">
     <i class="">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
