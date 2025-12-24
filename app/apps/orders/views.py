@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from apps.orders import models as orders_models
 from apps.clients import models as clients_models
 from apps.cms import models as cms_models
+from apps.users.models import User
 
 
 @login_required
@@ -98,6 +99,11 @@ def order_create(request):
             property_type=request.POST.get("property_type") or None,
             date_time=request.POST.get("date_time"),
             estimated_cost=request.POST.get("estimated_cost") or None,
+            estimated_rooms=request.POST.get("estimated_rooms") or None,
+            estimated_sqm=request.POST.get("estimated_sqm") or None,
+            windows_count=request.POST.get("windows_count") or None,
+            bathrooms_count=request.POST.get("bathrooms_count") or None,
+            after_repair=bool(request.POST.get("after_repair")),
             estimated_area=request.POST.get("estimated_area") or None,
             notes=request.POST.get("notes"),
             channel=request.POST.get("channel"),
@@ -138,8 +144,13 @@ def order_update(request, pk):
     
     settings = cms_models.Settings.objects.first()
     order = get_object_or_404(orders_models.Order, pk=pk)
-    
-    # Списки клинеров удалены
+
+    if request.user.role not in [User.Role.MANAGER, User.Role.FOUNDER]:
+        messages.error(request, "У вас нет прав для редактирования заказа")
+        return redirect("orders:order_detail", pk=order.pk)
+
+    senior_cleaner_users = User.objects.filter(role=User.Role.SENIOR_CLEANER, status=User.Status.ACTIVE).order_by('full_name')
+    cleaner_users = User.objects.filter(role=User.Role.CLEANER, status=User.Status.ACTIVE).order_by('full_name')
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -154,6 +165,14 @@ def order_update(request, pk):
             return redirect("orders:order_detail", pk=order.pk)
         
         # Полное редактирование заказа
+        senior_cleaner_id = request.POST.get("senior_cleaner")
+        if senior_cleaner_id:
+            order.senior_cleaner_id = senior_cleaner_id
+        else:
+            order.senior_cleaner = None
+
+        cleaner_ids = request.POST.getlist("cleaners")
+
         # Обновляем финансовые данные
         order.final_cost = request.POST.get("final_cost") or order.final_cost
         order.final_area = request.POST.get("final_area") or order.final_area
@@ -162,6 +181,9 @@ def order_update(request, pk):
         order.deadline = request.POST.get("deadline") or order.deadline
         
         order.save()
+
+        if cleaner_ids is not None:
+            order.cleaners.set(cleaner_ids)
         
         
         messages.success(request, f"Заказ {order.code} обновлён")
@@ -176,6 +198,8 @@ def order_update(request, pk):
         'settings': settings,
         'order': order,
         'template_descriptions': template_descriptions,
+        'senior_cleaner_users': senior_cleaner_users,
+        'cleaner_users': cleaner_users,
     }
     return render(request, "pages/system/others/orders/edit/order-manager-edit.html", context)
 
@@ -193,13 +217,18 @@ def order_operator_update(request, pk):
         service_id = request.POST.get("service")
         service_changed = False
         if service_id and str(order.service_id) != str(service_id):
-            order.service_id = service_id                     
+            order.service_id = service_id 
             service_changed = True
             
         order.address = request.POST.get("address", order.address)
         order.property_type = request.POST.get("property_type") or None
         order.date_time = request.POST.get("date_time", order.date_time)
         order.estimated_cost = request.POST.get("estimated_cost") or order.estimated_cost
+        order.estimated_rooms = request.POST.get("estimated_rooms") or order.estimated_rooms
+        order.estimated_sqm = request.POST.get("estimated_sqm") or order.estimated_sqm
+        order.windows_count = request.POST.get("windows_count") or order.windows_count
+        order.bathrooms_count = request.POST.get("bathrooms_count") or order.bathrooms_count
+        order.after_repair = bool(request.POST.get("after_repair"))
         order.estimated_area = request.POST.get("estimated_area") or order.estimated_area
         order.notes = request.POST.get("notes", order.notes)
         order.channel = request.POST.get("channel", order.channel)
@@ -259,7 +288,7 @@ def task_create(request, order_id):
             description=request.POST.get("description"),
         )
         messages.success(request, "Задача добавлена")
-        return redirect("orders:order_manager_update", pk=order.pk)
+        return redirect("orders:order_detail", pk=order.pk)
 
     return render(request, "pages/system/others/orders/task-form.html", locals())
 

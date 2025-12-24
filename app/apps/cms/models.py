@@ -1,6 +1,5 @@
 from django.db import models
 from django_resized.forms import ResizedImageField
-from ckeditor_uploader.fields import RichTextUploadingField
 
 # Create your models here.
 class Settings(models.Model):
@@ -63,21 +62,6 @@ class Services(models.Model):
     title = models.CharField(
         max_length=100,
         verbose_name='Название услуги'
-    )
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name='Цена'
-    )
-    description = RichTextUploadingField(
-        verbose_name='Описание Услуги'
-    )
-    image = ResizedImageField(
-        force_format="WEBP", 
-        quality=100, 
-        upload_to='services/', 
-        verbose_name="Изображение услуги",
-        null=True, blank=True
     )
     order = models.IntegerField(
         verbose_name='Порядок',

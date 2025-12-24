@@ -73,7 +73,6 @@
                     {% for task in order.tasks.all %}
                     <div class="list-group-item {% if template_descriptions and task.description not in template_descriptions %}border-start border-4 border-success{% else %}border-start border-4 border-secondary{% endif %}">
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="badge {% if template_descriptions and task.description not in template_descriptions %}bg-success text-white{% else %}bg-light text-dark border{% endif %}">{{ forloop.counter }}</span>
                             <strong>{{ task.description }}</strong>
                         </div>
                         <div>

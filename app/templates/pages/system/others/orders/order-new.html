@@ -55,7 +55,7 @@
                       <select class="form-select" name="service" id="service" required>
                         <option value="" disabled selected>Выберите услугу</option>
                         {% for s in services %}
-                          <option value="{{ s.id }}">{{ s.title }}{% if s.price %} — {{ s.price }}{% endif %}</option>
+                          <option value="{{ s.id }}">{{ s.title }}</option>
                         {% endfor %}
                       </select>
                     </div>
@@ -123,6 +123,33 @@
                     <div class="col-md-6">
                       <label for="estimated_cost" class="form-label fw-bold">Предварительная стоимость</label>
                       <input type="number" step="0.01" class="form-control" name="estimated_cost" id="estimated_cost">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label for="estimated_rooms" class="form-label fw-bold">Комнаты</label>
+                      <input type="number" class="form-control" name="estimated_rooms" id="estimated_rooms" min="0" placeholder="Напр. 3">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label for="estimated_sqm" class="form-label fw-bold">Площадь (м²)</label>
+                      <input type="number" class="form-control" name="estimated_sqm" id="estimated_sqm" min="0" placeholder="Напр. 50">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label for="windows_count" class="form-label fw-bold">Окна</label>
+                      <input type="number" class="form-control" name="windows_count" id="windows_count" min="0" placeholder="Напр. 5">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label for="bathrooms_count" class="form-label fw-bold">Санузлы</label>
+                      <input type="number" class="form-control" name="bathrooms_count" id="bathrooms_count" min="0" placeholder="Напр. 1">
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-end">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="after_repair" id="after_repair">
+                        <label class="form-check-label fw-bold" for="after_repair">После ремонта</label>
+                      </div>
                     </div>
               
                     <!-- Объём работы -->

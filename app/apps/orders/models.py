@@ -90,6 +90,11 @@ class Order(models.Model):
     date_time = models.DateTimeField(verbose_name="Дата и время уборки")
 
     estimated_cost = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительная стоимость")
+    estimated_rooms = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Комнаты (предв.)")
+    estimated_sqm = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Площадь м² (предв.)")
+    windows_count = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Окна (кол-во)")
+    bathrooms_count = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Санузлы (кол-во)")
+    after_repair = models.BooleanField(default=False, verbose_name="После ремонта")
     estimated_area = models.CharField(
         max_length=100,
         null=True, 
@@ -145,7 +150,20 @@ class Order(models.Model):
         help_text="Например: 50 м², 3 комнаты, 5 окон"
     )
 
-    # Поля для старшего клинера и клинеров удалены
+    senior_cleaner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders_senior_cleaner",
+        verbose_name="Старший клинер",
+    )
+    cleaners = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="orders_cleaners",
+        verbose_name="Клинеры",
+    )
     deadline = models.DateTimeField(null=True, blank=True, verbose_name="Крайний срок выполнения")
 
     manager_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий менеджера")
@@ -191,6 +209,15 @@ class Order(models.Model):
 
 class Task(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tasks", verbose_name="Заказ")
+
+    cleaner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks_cleaner",
+        verbose_name="Клинер",
+    )
 
     description = models.CharField(max_length=255, verbose_name="Описание задачи")
     status = models.CharField(

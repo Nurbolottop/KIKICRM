@@ -16,6 +16,8 @@ class User(AbstractUser):
         SMM = 'SMM', 'СММ-менеджер'
         OPERATOR = 'OPERATOR', 'Оператор'
         MANAGER = 'MANAGER', 'Менеджер'
+        SENIOR_CLEANER = 'SENIOR_CLEANER', 'Старший клинер'
+        CLEANER = 'CLEANER', 'Клинер'
         CANDIDATE = 'CANDIDATE', 'Кандидат'
 
     class Status(models.TextChoices):

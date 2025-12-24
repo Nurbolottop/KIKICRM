@@ -28,12 +28,19 @@
                     <h4 class="fw-bold">
                       Заказ №{{ order.code }} — {{ order.service.title }}
                     </h4>
-                    {% if user.role == "OPERATOR" %}
-                    <a class="btn btn-primary btn-sm" href="{% url 'orders:order_operator_update' order.id %}">
-                      <i class="bi bi-pencil-square me-1"></i>
-                      Редактировать заказ
-                    </a>
-                    {% endif %}
+                    <div class="d-flex gap-2">
+                      {% if user.role == "OPERATOR" %}
+                      <a class="btn btn-primary btn-sm" href="{% url 'orders:order_operator_update' order.id %}">
+                        <i class="bi bi-pencil-square me-1"></i>
+                        Изменить
+                      </a>
+                      {% elif user.role == "MANAGER" or user.role == "FOUNDER" %}
+                      <a class="btn btn-primary btn-sm" href="{% url 'orders:order_manager_update' order.id %}">
+                        <i class="bi bi-pencil-square me-1"></i>
+                        Изменить
+                      </a>
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -310,6 +317,29 @@
               
               <!-- Вторая строка: Панель действий по ролям -->
               <div class="row g-3 mt-2">
+                <div class="col-12">
+                  {% if user.role == "MANAGER" or user.role == "FOUNDER" %}
+                  <div class="card border mb-3">
+                    <div class="card-header bg-light border-bottom">
+                      <h6 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-success"></i>Добавить задачу</h6>
+                    </div>
+                    <div class="card-body">
+                      <form method="post" action="{% url 'orders:task_create' order.id %}" class="row g-2 align-items-end">
+                        {% csrf_token %}
+                        <div class="col-md-9">
+                          <label for="new_task_description" class="form-label fw-semibold mb-1">Описание</label>
+                          <input type="text" class="form-control" name="description" id="new_task_description" required>
+                        </div>
+                        <div class="col-md-3 d-grid">
+                          <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-lg me-1"></i>Добавить
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
                 <div class="col-12">
                   {% if user.role == "FOUNDER" %}
                     {% include 'pages/system/others/orders/roles/founder_order.html' %}
