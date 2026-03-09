@@ -40,6 +40,19 @@
   </a>
 </li>
 
+<!-- Инвентарь (только просмотр остатков) -->
+<li class="sidebar-layout">
+  <a href="{% url 'inventory:stock_list' %}" class="svg-icon">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    </i>
+    <span class="ms-2">Инвентарь (остатки)</span>
+  </a>
+</li>
+
 <!-- Календарь -->
 <li class="sidebar-layout">
   <a href="{% url 'orders:order_calendar_page' %}" class="svg-icon">

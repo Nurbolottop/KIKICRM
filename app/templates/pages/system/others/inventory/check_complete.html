@@ -1,0 +1,86 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <div class="wrapper">
+      {% include 'pages/system/include/others/dashboard.html' %}
+      {% include 'pages/system/include/others/header.html' %}
+      
+      <div class="content-page">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-12 mb-4 mt-1">
+              <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <h4 class="fw-bold">Завершение инвентаризации</h4>
+                <a href="{% url 'inventory:check_detail' check.pk %}" class="btn btn-outline-secondary">Назад</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header bg-warning">
+                  <h5>Подтверждение завершения: {{ check.name }}</h5>
+                </div>
+                <div class="card-body">
+                  <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-info">
+                      <strong>Внимание:</strong> При завершении будут автоматически созданы корректировки остатков для всех позиций с расхождениями.
+                    </div>
+                    
+                    <h6 class="mt-4">Расхождения ({{ discrepancies|length }} позиций):</h6>
+                    
+                    {% if discrepancies %}
+                    <div class="table-responsive mb-4">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Товар</th>
+                            <th>Ожидалось</th>
+                            <th>Фактически</th>
+                            <th>Расхождение</th>
+                            <th>Действие</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for item in discrepancies %}
+                          <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.expected_quantity }}</td>
+                            <td>{{ item.actual_quantity }}</td>
+                            <td>{% if item.discrepancy > 0 %}+{% endif %}{{ item.discrepancy }}</td>
+                            <td>
+                              {% if item.discrepancy > 0 %}
+                              <span class="badge bg-success">Приход</span>
+                              {% else %}
+                              <span class="badge bg-danger">Списание</span>
+                              {% endif %}
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                      Расхождений не обнаружено. Все остатки совпадают с фактическими.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-success">Подтвердить завершение</button>
+                      <a href="{% url 'inventory:check_detail' check.pk %}" class="btn btn-outline-secondary">Отмена</a>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        {% include 'pages/system/include/others/footer.html' %}
+      </div>
+    </div>
+{% endblock %}

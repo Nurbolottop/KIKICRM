@@ -52,6 +52,48 @@
   </a>
 </li>
 
+<!-- Инвентарь -->
+<li class="sidebar-layout">
+  <a href="#inventory-submenu" class="svg-icon collapsed" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    </i>
+    <span class="ms-2">Инвентарь</span>
+    <i class="las la-angle-right iq-arrow-right arrow-active"></i>
+    <i class="las la-angle-down iq-arrow-right arrow-hover"></i>
+  </a>
+  <ul id="inventory-submenu" class="iq-submenu collapse" data-bs-parent="#iq-sidebar-toggle">
+    <li class="sidebar-layout">
+      <a href="{% url 'inventory:stock_list' %}">
+        <span>Остатки</span>
+      </a>
+    </li>
+    <li class="sidebar-layout">
+      <a href="{% url 'inventory:product_list' %}">
+        <span>Товары</span>
+      </a>
+    </li>
+    <li class="sidebar-layout">
+      <a href="{% url 'inventory:movement_history' %}">
+        <span>Движения</span>
+      </a>
+    </li>
+    <li class="sidebar-layout">
+      <a href="{% url 'inventory:check_list' %}">
+        <span>Инвентаризации</span>
+      </a>
+    </li>
+    <li class="sidebar-layout">
+      <a href="{% url 'inventory:writeoff_list' %}">
+        <span>Списания</span>
+      </a>
+    </li>
+  </ul>
+</li>
+
 <!-- Финансы -->
 <li class="sidebar-layout">
   <a href="./finance.html" class="svg-icon">

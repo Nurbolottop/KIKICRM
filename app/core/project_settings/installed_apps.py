@@ -21,4 +21,5 @@ INSTALLED_APPS = [
     'apps.telegram_bot',
     'apps.users',
     'apps.clients',
+    'apps.inventory',
 ]

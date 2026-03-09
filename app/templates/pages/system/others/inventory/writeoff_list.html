@@ -1,0 +1,101 @@
+{% extends 'pages/system/include/others/homepage.html' %}
+{% load static %}
+{% block content %}
+    <div class="wrapper">
+      {% include 'pages/system/include/others/dashboard.html' %}
+      {% include 'pages/system/include/others/header.html' %}
+      
+      <div class="content-page">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-12 mb-4 mt-1">
+              <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <h4 class="fw-bold">Списания</h4>
+                <div class="d-flex gap-2">
+                  {% if can_create %}
+                  <a href="{% url 'inventory:writeoff_create' %}" class="btn btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                    </svg>
+                    Списать товар
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Фильтры -->
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                      <select name="reason" class="form-select">
+                        <option value="">Все причины</option>
+                        {% for value, label in reason_choices %}
+                        <option value="{{ value }}" {% if request.GET.reason == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <input type="date" name="date_from" class="form-control" placeholder="С" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                      <input type="date" name="date_to" class="form-control" placeholder="По" value="{{ request.GET.date_to }}">
+                    </div>
+                    <div class="col-md-3">
+                      <button type="submit" class="btn btn-primary w-100">Фильтр</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Таблица -->
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>Дата</th>
+                          <th>Товар</th>
+                          <th>Количество</th>
+                          <th>Причина</th>
+                          <th>Примечание</th>
+                          <th>Кем списано</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for wo in write_offs %}
+                        <tr>
+                          <td>{{ wo.created_at|date:"d.m.Y H:i" }}</td>
+                          <td>{{ wo.product.name }}</td>
+                          <td class="text-danger">-{{ wo.quantity }} {{ wo.product.get_unit_display }}</td>
+                          <td>{{ wo.get_reason_display }}</td>
+                          <td>{{ wo.reason_other|default:wo.notes|default:"-"|truncatechars:50 }}</td>
+                          <td>{{ wo.created_by.full_name|default:wo.created_by.username }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                          <td colspan="6" class="text-center">Нет списаний</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        {% include 'pages/system/include/others/footer.html' %}
+      </div>
+    </div>
+{% endblock %}

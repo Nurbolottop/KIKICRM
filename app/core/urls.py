@@ -16,6 +16,8 @@ urlpatterns = [
     path('clients/', include('apps.clients.urls')),
     # заказы
     path('orders/', include(('apps.orders.urls', 'orders'), namespace='orders')),
+    # инвентарь
+    path('inventory/', include(('apps.inventory.urls', 'inventory'), namespace='inventory')),
 ]
 
 if settings.DEBUG:
