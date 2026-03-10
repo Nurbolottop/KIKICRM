@@ -366,9 +366,8 @@
                                       {% else %}
                                         <span class="badge bg-secondary">{{ order.get_status_operator_display }}</span>
                                       {% endif %}
-                                    {% if not order.status_manager and not order.status_operator %}
+                                    {% elif not order.status_manager %}
                                       <span class="badge bg-light text-dark">—</span>
-                                    {% endif %}
                                     {% endif %}
                                   </p>
                                 </td>
