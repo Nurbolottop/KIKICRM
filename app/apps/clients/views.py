@@ -57,6 +57,9 @@ def customer_add(request):
     error_message = None
     if request.method == "POST":
         try:
+            print(f"POST data: {request.POST}")
+            print(f"FILES: {request.FILES}")
+            
             client = clients_models.Client(
                 first_name=request.POST.get("first_name"),
                 last_name=request.POST.get("last_name"),
@@ -75,8 +78,9 @@ def customer_add(request):
                 created_by=request.user,
                 updated_by=request.user,
             )
-            client.full_clean()  # Validate the model
+            print(f"Client object created, saving...")
             client.save()
+            print(f"Client saved successfully with ID: {client.pk}")
             
             # Create note if notes field is filled
             notes_text = (request.POST.get("notes") or "").strip()
@@ -91,8 +95,15 @@ def customer_add(request):
                 return redirect("customer_add")
             return redirect("customer")
         except ValidationError as e:
-            error_message = "Ошибка валидации: " + ", ".join([msg for messages in e.message_dict.values() for msg in messages])
+            print(f"ValidationError: {e}")
+            if hasattr(e, 'message_dict'):
+                error_message = "Ошибка валидации: " + ", ".join([msg for messages in e.message_dict.values() for msg in messages])
+            else:
+                error_message = f"Ошибка валидации: {str(e)}"
         except Exception as e:
+            import traceback
+            print(f"Exception: {e}")
+            print(traceback.format_exc())
             error_message = f"Ошибка при сохранении: {str(e)}"
     return render(request, "pages/system/others/customer/customer-add.html", locals())
 
