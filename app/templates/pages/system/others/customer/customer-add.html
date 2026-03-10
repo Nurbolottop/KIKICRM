@@ -113,6 +113,14 @@
                 </div>
                 <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                     {% csrf_token %}
+                    
+                    {% if error_message %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error_message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+                    
                     <div class="row g-4">
                         <!-- Left Column - Photo and Basic Info -->
                         <div class="col-lg-4">
