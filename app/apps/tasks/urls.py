@@ -1,0 +1,22 @@
+"""
+URLs для приложения задач (Task Checklist System).
+"""
+from django.urls import path
+from . import views
+
+app_name = 'tasks'
+
+urlpatterns = [
+    # API endpoints для управления задачами
+    path('api/task/<int:task_id>/assign/', views.assign_task_to_employee, name='assign_task'),
+    path('api/task/<int:task_id>/start/', views.start_task, name='start_task'),
+    path('api/task/<int:task_id>/complete/', views.complete_task, name='complete_task'),
+    path('api/task/<int:task_id>/skip/', views.skip_task, name='skip_task'),
+    path('api/task/<int:task_id>/reset/', views.reset_task, name='reset_task'),
+    
+    # API для статистики
+    path('api/order/<int:order_id>/task-stats/', views.get_task_stats, name='order_task_stats'),
+    
+    # Страница моих задач (для Cleaner Panel)
+    path('my-tasks/', views.my_tasks, name='my_tasks'),
+]

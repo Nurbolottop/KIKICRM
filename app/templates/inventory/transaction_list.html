@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load permissions_tags %}
+
+{% block title %}Операции со складом - CRM KIKI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Операции со складом</h1>
+        {% if request.user|can_manage_inventory_transactions %}
+        <a href="{% url 'inventory_transaction_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Новая операция
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <select name="type" class="form-select">
+                        <option value="">Все типы операций</option>
+                        {% for value, label in transaction_types %}
+                        <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <select name="item" class="form-select">
+                        <option value="">Все товары</option>
+                        {% for item in items %}
+                        <option value="{{ item.id }}" {% if item_filter == item.id|stringformat:"s" %}selected{% endif %}>
+                            {{ item.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="bi bi-search"></i> Фильтр
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Товар</th>
+                            <th>Тип операции</th>
+                            <th>Количество</th>
+                            <th>Заказ</th>
+                            <th>Сотрудник</th>
+                            <th>Комментарий</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trans in transactions %}
+                        <tr>
+                            <td>{{ trans.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'inventory_detail' trans.item.id %}">{{ trans.item.name }}</a>
+                                <br>
+                                <small class="text-muted">{{ trans.item.category.name }}</small>
+                            </td>
+                            <td>
+                                {% if trans.transaction_type == 'IN' %}
+                                <span class="badge bg-success">Приход</span>
+                                {% elif trans.transaction_type == 'OUT' %}
+                                <span class="badge bg-danger">Списание</span>
+                                {% else %}
+                                <span class="badge bg-warning">Корректировка</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ trans.get_quantity_change }}</strong> {{ trans.item.unit }}
+                            </td>
+                            <td>
+                                {% if trans.order %}
+                                <a href="{% url 'order_detail' trans.order.id %}">{{ trans.order.order_code }}</a>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if trans.employee %}
+                                {{ trans.employee.user.full_name }}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td>{{ trans.comment|truncatewords:15 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Первая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-list-ul" style="font-size: 4rem; color: #ccc;"></i>
+                <p class="text-muted mt-3">Операции не найдены</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

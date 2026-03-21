@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Загрузить фото - {{ order.order_code }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">📷 Загрузить фото</h2>
+            <p class="text-muted">Заказ: <strong>{{ order.order_code }}</strong> | Клиент: {{ order.client.name }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Новое фото</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.photo.id_for_label }}" class="form-label">Фото *</label>
+                            {{ form.photo }}
+                            <div class="form-text">Выберите фото с вашего устройства</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.photo_type.id_for_label }}" class="form-label">Тип фото *</label>
+                            {{ form.photo_type }}
+                            <div class="form-text">"До" — фото до начала работы, "После" — фото после завершения</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.comment.id_for_label }}" class="form-label">Комментарий</label>
+                            {{ form.comment }}
+                            <div class="form-text">Опционально: описание фото</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Загрузить</button>
+                            <a href="{% url 'cleaner_order_detail' order.id %}" class="btn btn-outline-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Подсказка</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>📸 Фото "До":</strong></p>
+                    <ul class="small text-muted">
+                        <li>Снимите общий план помещения</li>
+                        <li>Покажите загрязненные зоны</li>
+                        <li>Убедитесь, что фото четкие</li>
+                    </ul>
+
+                    <p class="mb-2"><strong>✨ Фото "После":</strong></p>
+                    <ul class="small text-muted">
+                        <li>Те же ракурсы, что и "до"</li>
+                        <li>Покажите результат работы</li>
+                        <li>Хорошее освещение</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

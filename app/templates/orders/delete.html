@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление заказа - CRM KIKI{% endblock %}
+{% block page_title %}Удаление заказа{% endblock %}
+
+{% block content %}
+<div class="order-delete-container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Подтверждение удаления</h5>
+                </div>
+                <div class="card-body">
+                    <p>Вы действительно хотите удалить заказ <strong>{{ order.order_code }}</strong>?</p>
+                    <p class="text-muted">
+                        Клиент: {{ order.client.name }}<br>
+                        Услуга: {{ order.service.name }}<br>
+                        Дата: {{ order.scheduled_date|date:"d.m.Y" }}
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

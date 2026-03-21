@@ -1,132 +1,213 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from apps.clients import models as clients_models
-from django.utils.timezone import now, timedelta
-from apps.cms import models as cms_models
-from apps.orders import models as orders_models
-from django.db.models import Sum, Case, When, F, Value
-from django.db.models.functions import Coalesce
-
-# ✅ список всех клиентов
-@login_required
-def customer_list(request):
-    settings = cms_models.Settings.objects.first()
-    clients = clients_models.Client.objects.all().order_by("-updated_at")
-    return render(request, "pages/system/others/customer/customer.html", locals())
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.db.models import Q, Count, Sum
+from django.utils import timezone
+from django.http import JsonResponse
+from django.views import View
+from datetime import timedelta
+from .models import Client, ClientNote
+from .forms import ClientForm
 
 
-# ✅ просмотр клиента
-@login_required
-def customer_view(request, pk):
-    settings = cms_models.Settings.objects.first()
-    client = get_object_or_404(clients_models.Client, pk=pk)
-    # Calculate order statistics for this client
-    orders_qs = orders_models.Order.objects.filter(client=client)
-    # Total spent: prefer final_cost, fallback to estimated_cost
-    total_agg = orders_qs.aggregate(
-        total=Sum(
-            Case(
-                When(final_cost__isnull=False, then=F("final_cost")),
-                default=F("estimated_cost"),
-                output_field=orders_models.Order._meta.get_field("final_cost").__class__(),
+class ClientListView(LoginRequiredMixin, ListView):
+    """Список клиентов с поиском и пагинацией."""
+    model = Client
+    template_name = 'clients/list.html'
+    context_object_name = 'clients'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = super().get_queryset().order_by('-created_at')
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(phone__icontains=search)
             )
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.common.permissions import can_create_clients, can_delete_clients
+
+        context['can_create_clients'] = can_create_clients(self.request.user)
+        context['can_delete_clients'] = can_delete_clients(self.request.user)
+        context['search'] = self.request.GET.get('search', '')
+        return context
+
+
+class ClientAddNoteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        text = (request.POST.get('text') or '').strip()
+        if not text:
+            return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
+
+        client = Client.objects.filter(pk=pk).first()
+        if not client:
+            return JsonResponse({'ok': False, 'error': 'not_found'}, status=404)
+
+        note = ClientNote.objects.create(
+            client=client,
+            author=request.user,
+            text=text,
         )
-    )
-    client.orders_count = orders_qs.count()
-    client.total_spent = total_agg.get("total") or 0
-    client.first_order_date = orders_qs.order_by("date_time").values_list("date_time", flat=True).first()
-    client.last_order_date = orders_qs.order_by("-date_time").values_list("date_time", flat=True).first()
-    # Handle add note POST from the customer view page
-    if request.method == "POST":
-        note_text = (request.POST.get("note_text") or "").strip()
-        if note_text:
-            clients_models.ClientNote.objects.create(
-                client=client,
-                text=note_text,
-                created_by=request.user,
-            )
-        return redirect("customer_view", pk=client.pk)
-    return render(request, "pages/system/others/customer/customer-view.html", locals())
 
-
-# ✅ добавление клиента
-@login_required
-def customer_add(request):
-    settings = cms_models.Settings.objects.first()
-    if request.method == "POST":
-        client = clients_models.Client(
-            first_name=request.POST.get("first_name"),
-            last_name=request.POST.get("last_name"),
-            middle_name=request.POST.get("middle_name"),
-            phone=request.POST.get("phone"),
-            email=request.POST.get("email"),
-            whatsapp=request.POST.get("whatsapp"),
-            telegram_id=request.POST.get("telegram_id"),
-            address=request.POST.get("address"),
-            organization=request.POST.get("organization"),
-            birth_date=request.POST.get("birth_date") or None,
-            gender=request.POST.get("gender"),
-            category=request.POST.get("category"),
-            source=request.POST.get("source"),
-            photo=request.FILES.get("photo"),
-            created_by=request.user,
-            updated_by=request.user,
+        author_name = request.user.get_full_name() if hasattr(request.user, 'get_full_name') else str(request.user)
+        return JsonResponse(
+            {
+                'ok': True,
+                'note': {
+                    'author': author_name or str(request.user),
+                    'date': note.created_at.isoformat(),
+                    'text': note.text,
+                },
+            }
         )
-        client.save()
-        return redirect("customer")
-    return render(request, "pages/system/others/customer/customer-add.html", locals())
 
 
-# ✅ редактирование клиента
-@login_required
-def customer_edit(request, pk):
-    settings = cms_models.Settings.objects.first()
-    client = get_object_or_404(clients_models.Client, pk=pk)
-    notes = clients_models.ClientNote.objects.filter(client=client).order_by('-created_at')
-
-    if request.method == "POST":
-        client.first_name = request.POST.get("first_name")
-        client.last_name = request.POST.get("last_name")
-        client.middle_name = request.POST.get("middle_name")
-        client.phone = request.POST.get("phone")
-        client.email = request.POST.get("email")
-        client.whatsapp = request.POST.get("whatsapp")
-        client.address = request.POST.get("address")
-        client.organization = request.POST.get("organization")
-        client.birth_date = request.POST.get("birth_date") or None
-        client.gender = request.POST.get("gender")
-        client.category = request.POST.get("category")
-        client.source = request.POST.get("source")
-        if request.FILES.get("photo"):
-            client.photo = request.FILES.get("photo")
-        client.updated_by = request.user
-        client.save()
-
-        new_note_text = request.POST.get("new_note")
-        if new_note_text:
-            clients_models.ClientNote.objects.create(
-                client=client,
-                text=new_note_text,
-                created_by=request.user
-            )
-
-        return redirect("customer_view", pk=client.pk)
-    return render(request, "pages/system/others/customer/customer-edit.html", locals())
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
-# ✅ клиенты, которых меняли за последние 7 дней
-@login_required
-def customer_delete(request, pk):
-    """Удаление клиента"""
-    client = get_object_or_404(clients_models.Client, pk=pk)
-    if request.method == 'POST':
-        client.delete()
-        return redirect('customer')
-    return redirect('customer_edit', pk=pk)
+class ClientCreateView(LoginRequiredMixin, CreateView):
+    """Создание нового клиента."""
+    model = Client
+    form_class = ClientForm
+    template_name = 'clients/form.html'
+    success_url = reverse_lazy('clients_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Только OPERATOR и FOUNDER могут создавать клиентов
+        if not self._can_create(request.user):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied('У вас нет прав на создание клиентов.')
+        return super().dispatch(request, *args, **kwargs)
+
+    def _can_create(self, user):
+        # OPERATOR, FOUNDER и SUPER_ADMIN могут создавать
+        if hasattr(user, 'role'):
+            return user.role in ['OPERATOR', 'FOUNDER', 'SUPER_ADMIN']
+        return user.is_superuser
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        if 'save_and_add_another' in self.request.POST:
+            return reverse('clients_create')
+        return super().get_success_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Добавление нового клиента'
+        context['button_text'] = 'Сохранить'
+        context['is_create'] = True
+        return context
 
 
-def recent_updates(request):
-    settings = cms_models.Settings.objects.first()
-    seven_days_ago = now() - timedelta(days=7)
-    clients = clients_models.Client.objects.filter(updated_at__gte=seven_days_ago).select_related("updated_by")
-    return render(request, "pages/system/others/customer/recent_updates.html", locals())
+class ClientDetailView(LoginRequiredMixin, DetailView):
+    """Детальная страница клиента."""
+    model = Client
+    template_name = 'clients/detail.html'
+    context_object_name = 'client'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        client = self.object
+
+        # Статистика клиента
+        orders = client.orders.all()
+        context['total_orders'] = orders.count()
+        total_amount = orders.aggregate(total=Sum('price'))['total']
+        context['total_amount'] = total_amount if total_amount else 0
+
+        # Debug: выводим в консоль для проверки
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Client {client.id} stats: orders={context['total_orders']}, amount={context['total_amount']}")
+
+        # Первый и последний заказ
+        first_order = orders.order_by('created_at').first()
+        last_order = orders.order_by('-created_at').first()
+        context['first_order_date'] = first_order.created_at if first_order else None
+        context['last_order_date'] = last_order.created_at if last_order else None
+
+        # Список заказов
+        context['orders'] = orders.order_by('-created_at')[:10]
+
+        # Права на создание заказа (только OPERATOR/FOUNDER/SUPER_ADMIN, НЕ MANAGER)
+        from ..common.permissions import can_create_orders, can_edit_clients
+        context['can_create_orders'] = can_create_orders(self.request.user)
+        context['can_edit_clients'] = can_edit_clients(self.request.user)
+
+        # Комментарии/заметки
+        notes = [
+            {
+                'date': client.created_at,
+                'text': 'Клиент создан',
+                'author': client.created_by,
+            }
+        ] if client.created_by else []
+
+        notes.extend(
+            {
+                'date': note.created_at,
+                'text': note.text,
+                'author': note.author,
+            }
+            for note in client.notes_list.select_related('author').all()
+        )
+
+        context['notes_list'] = sorted(
+            notes,
+            key=lambda x: x['date'] or timezone.now(),
+            reverse=True,
+        )
+
+        # История активности
+        context['history'] = [
+            {'date': client.created_at, 'action': 'Клиент создан', 'icon': 'user-plus'},
+        ]
+
+        return context
+
+
+class ClientUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование клиента."""
+    model = Client
+    form_class = ClientForm
+    template_name = 'clients/form.html'
+    success_url = reverse_lazy('clients_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        from apps.common.permissions import can_edit_clients
+        from django.core.exceptions import PermissionDenied
+
+        if not can_edit_clients(request.user):
+            raise PermissionDenied('У вас нет прав на редактирование клиентов.')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редактирование клиента'
+        context['button_text'] = 'Сохранить'
+        return context
+
+
+class ClientDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление клиента."""
+    model = Client
+    template_name = 'clients/delete.html'
+    success_url = reverse_lazy('clients_list')
+    context_object_name = 'client'
+
+    def dispatch(self, request, *args, **kwargs):
+        from apps.common.permissions import can_delete_clients
+        from django.core.exceptions import PermissionDenied
+
+        if not can_delete_clients(request.user):
+            raise PermissionDenied('У вас нет прав на удаление клиентов.')
+        return super().dispatch(request, *args, **kwargs)

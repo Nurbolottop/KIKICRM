@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CRM KIKI{% endblock %}
+{% block page_title %}{{ title }}{% block extra_js %}
+<script>
+// Показать/скрыть поле сотрудника в зависимости от флага общего расхода
+$(document).ready(function() {
+    const isGeneralCheckbox = $('#{{ form.is_general.id_for_label }}');
+    const employeeField = $('#employee-field');
+    
+    function toggleEmployeeField() {
+        if (isGeneralCheckbox.is(':checked')) {
+            employeeField.hide();
+            // Очистить поле сотрудника при выборе общего расхода
+            $('#{{ form.employee.id_for_label }}').val('');
+        } else {
+            employeeField.show();
+        }
+    }
+    
+    // Инициализация
+    toggleEmployeeField();
+    
+    // Обработка изменения
+    isGeneralCheckbox.on('change', toggleEmployeeField);
+});
+</script>
+{% endblock %}
+
+{% endblock %}{% block content %}
+<div class="expense-form-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-receipt"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Общий расход -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_general }}
+                                <label class="form-check-label" for="{{ form.is_general.id_for_label }}">
+                                    <strong>Общий расход компании</strong>
+                                    <small class="text-muted d-block">Аренда, химия, коммунальные услуги и т.д.</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Сотрудник (только для личных расходов) -->
+                        <div class="row" id="employee-field">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.employee.id_for_label }}" class="form-label">Сотрудник</label>
+                                {{ form.employee }}
+                                {% if form.employee.errors %}
+                                <div class="text-danger">{{ form.employee.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Заказ (опционально)</label>
+                                {{ form.order }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="text-danger">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма (сом)</label>
+                                {{ form.amount }}
+                                {% if form.amount.errors %}
+                                <div class="text-danger">{{ form.amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.expense_date.id_for_label }}" class="form-label">Дата расхода</label>
+                                {{ form.expense_date }}
+                                {% if form.expense_date.errors %}
+                                <div class="text-danger">{{ form.expense_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.photo.id_for_label }}" class="form-label">Фото чека</label>
+                                {{ form.photo }}
+                                <small class="form-text text-muted">Опционально</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                        </div>
+                        
+                        {% if expense.photo %}
+                        <div class="mb-3">
+                            <label class="form-label">Текущее фото чека</label>
+                            <div>
+                                <img src="{{ expense.photo.url }}" alt="Чек" class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> {{ button_text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

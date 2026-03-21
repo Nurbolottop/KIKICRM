@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CRM KIKI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ title }}</h1>
+        <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Общий расход -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_general }}
+                                <label class="form-check-label" for="{{ form.is_general.id_for_label }}">
+                                    <strong>Общий расход компании</strong>
+                                    <small class="text-muted d-block">Аренда, химия, коммунальные услуги и т.д.</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Информация о сотруднике -->
+                        <div class="row" id="employee-info">
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-secondary d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2"></i>
+                                    <div>
+                                        <strong>Сотрудник:</strong> {{ request.user.full_name }} (установится автоматически)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Заказ -->
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Заказ (опционально)</label>
+                                {{ form.order }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория *</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма (сом) *</label>
+                                {{ form.amount }}
+                                {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">{{ form.amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="bi bi-calendar-check me-2"></i>
+                                    <div>
+                                        <strong>Дата расхода:</strong> {% now "d.m.Y" %} (установится автоматически)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.photo.id_for_label }}" class="form-label">Фото чека</label>
+                                {{ form.photo }}
+                                <small class="form-text text-muted">Опционально</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if expense.photo %}
+                        <div class="mb-3">
+                            <label class="form-label">Текущее фото чека</label>
+                            <div>
+                                <img src="{{ expense.photo.url }}" alt="Чек" class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> {{ button_text }}
+                            </button>
+                            <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
+                                Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Показать/скрыть информацию о сотруднике в зависимости от флага общего расхода
+$(document).ready(function() {
+    const isGeneralCheckbox = $('#{{ form.is_general.id_for_label }}');
+    const employeeInfo = $('#employee-info');
+    
+    function toggleEmployeeInfo() {
+        if (isGeneralCheckbox.is(':checked')) {
+            employeeInfo.hide();
+        } else {
+            employeeInfo.show();
+        }
+    }
+    
+    // Инициализация
+    toggleEmployeeInfo();
+    
+    // Обработка изменения
+    isGeneralCheckbox.on('change', toggleEmployeeInfo);
+});
+</script>
+{% endblock %}
+{% endblock %}
+
+<style>
+.form-control, .form-select, textarea {
+    border-radius: 0.375rem;
+}
+</style>

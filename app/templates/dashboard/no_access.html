@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Доступ ограничен{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill fs-1 mb-3"></i>
+                <h4 class="alert-heading">Доступ ограничен</h4>
+                <p>{{ message }}</p>
+                <hr>
+                <a href="{{ cleaner_url }}" class="btn btn-primary">Панель клинера</a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary ms-2">Выйти</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

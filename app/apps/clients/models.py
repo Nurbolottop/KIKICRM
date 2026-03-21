@@ -1,197 +1,211 @@
-import random
-import string
+"""
+Модели для приложения Клиенты.
+"""
 from django.db import models
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-import re
+from django.core.validators import RegexValidator
+from django.utils.translation import gettext_lazy as _
 
-User = get_user_model()
+from apps.core.models import TimestampMixin
+from apps.core.utils import normalize_phone
 
-def validate_phone_number(value):
+
+class Client(TimestampMixin, models.Model):
     """
-    Валидация номера телефона для Казахстана и Кыргызстана.
+    Модель клиента.
     """
-    if not value:
-        return
 
-    digits = re.sub(r'\D', '', str(value))
+    class ClientCategory(models.TextChoices):
+        """Категории клиентов."""
+        INDIVIDUAL = 'individual', _('Физическое лицо')
+        COMPANY = 'company', _('Компания')
+        VIP = 'vip', _('VIP')
 
-    # Казахстан: 11 цифр, начинается с 7 или 8
-    is_kz = len(digits) == 11 and digits.startswith(('7', '8'))
-    # Кыргызстан: 10 цифр, начинается с 0, или 12 цифр с 996, или 9 цифр без 0
-    is_kg = (len(digits) == 10 and digits.startswith('0')) or \
-            (len(digits) == 12 and digits.startswith('996')) or \
-            (len(digits) == 9 and not digits.startswith('0'))
+    class ClientSource(models.TextChoices):
+        """Источники клиентов."""
+        WEBSITE = 'website', _('Сайт')
+        INSTAGRAM = 'instagram', _('Instagram')
+        REFERRAL = 'referral', _('Рекомендация')
+        OTHER = 'other', _('Другое')
 
-    if not (is_kz or is_kg):
-        raise ValidationError('Введите корректный номер телефона (Казахстан: 7/8... или Кыргызстан: 0...)')
+    class Gender(models.TextChoices):
+        """Пол клиента."""
+        MALE = 'male', _('Мужской')
+        FEMALE = 'female', _('Женский')
+        UNSPECIFIED = 'unspecified', _('Не указан')
 
-class Client(models.Model):
-    GENDER_CHOICES = [
-        ("male", "Мужской"),
-        ("female", "Женский"),
-        ("other", "Другое"),
-    ]
+    # Фотография
+    photo = models.ImageField(
+        _('Фотография'),
+        upload_to='clients/',
+        null=True,
+        blank=True
+    )
 
-    CATEGORY_CHOICES = [
-        ("new", "Новый"),
-        ("regular", "Постоянный"),
-        ("lost", "Потерянный"),
-        ("vip", "VIP"),
-        ("other", "Другой"),
-    ]
+    # Основная информация
+    last_name = models.CharField(
+        _('Фамилия'),
+        max_length=150,
+        blank=True
+    )
 
-    SOURCE_CHOICES = [
-        ("instagram", "Instagram"),
-        ("website", "Сайт"),
-        ("referral", "Сарафанное радио"),
-        ("other", "Другое"),
-    ]
+    first_name = models.CharField(
+        _('Имя'),
+        max_length=150,
+        blank=True
+    )
 
-    # 📁 Основные данные
-    client_id = models.CharField(
-        max_length=5, 
-        unique=True, 
+    middle_name = models.CharField(
+        _('Отчество'),
+        max_length=150,
+        blank=True
+    )
+
+    organization = models.CharField(
+        _('Организация'),
+        max_length=255,
+        blank=True
+    )
+
+    # Классификация
+    category = models.CharField(
+        _('Категория'),
+        max_length=20,
+        choices=ClientCategory.choices,
+        default=ClientCategory.INDIVIDUAL
+    )
+
+    source = models.CharField(
+        _('Источник'),
+        max_length=20,
+        choices=ClientSource.choices,
+        default=ClientSource.WEBSITE
+    )
+
+    gender = models.CharField(
+        _('Пол'),
+        max_length=15,
+        choices=Gender.choices,
+        default=Gender.UNSPECIFIED
+    )
+
+    # Контактные данные
+    phone = models.CharField(
+        _('Телефон'),
+        max_length=20,
+        validators=[
+            RegexValidator(
+                regex=r'^\+?[\d\s\-\(\)]+$',
+                message=_('Введите корректный номер телефона')
+            )
+        ]
+    )
+
+    phone_secondary = models.CharField(
+        _('Дополнительный телефон'),
+        max_length=20,
         blank=True,
-        verbose_name="ID клиента",
-        help_text="Уникальный 5-значный идентификатор клиента"
+        validators=[
+            RegexValidator(
+                regex=r'^\+?[\d\s\-\(\)]+$',
+                message=_('Введите корректный номер телефона')
+            )
+        ]
     )
-    photo = models.ImageField(upload_to="clients/photos/", blank=True, null=True, verbose_name="Фото")
-    first_name = models.CharField(max_length=100, verbose_name="Имя")
-    last_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Фамилия")
-    middle_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Отчество")
-    phone = models.CharField(max_length=20, verbose_name="Телефон", validators=[validate_phone_number])
-    email = models.EmailField(blank=True, null=True, verbose_name="Email")
-    
-    _whatsapp_number = models.CharField(
-        max_length=20, 
-        blank=True, 
-        null=True, 
-        verbose_name="WhatsApp номер",
-        help_text="Введите номер телефона в международном формате (например: 555123456 или 0555123456)",
-        db_column='whatsapp_number'  # Store the raw number in the database
+
+    whatsapp = models.CharField(
+        _('WhatsApp'),
+        max_length=20,
+        blank=True
     )
-    
-    @property
-    def whatsapp(self):
-        """Return the WhatsApp link"""
-        return self.get_whatsapp_link(self._whatsapp_number)
-        
-    @whatsapp.setter
-    def whatsapp(self, value):
-        if value:
-            validate_phone_number(value)  # Validate before setting
-            self._whatsapp_number = value
-        else:
-            self._whatsapp_number = None
-    telegram_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="Telegram ID")
-    address = models.CharField(max_length=255, blank=True, null=True, verbose_name="Адрес")
-    organization = models.CharField(max_length=255, blank=True, null=True, verbose_name="Организация")
-    birth_date = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True, verbose_name="Пол")
 
-    # 🔹 Классификация
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="new", verbose_name="Категория")
-    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="other", verbose_name="Канал привлечения")
+    email = models.EmailField(
+        _('Email'),
+        blank=True
+    )
 
-    # 🔹 Аналитика заказов
-    orders_count = models.PositiveIntegerField(default=0, verbose_name="Количество заказов")
-    first_order_date = models.DateField(blank=True, null=True, verbose_name="Дата первого заказа")
-    last_order_date = models.DateField(blank=True, null=True, verbose_name="Дата последнего заказа")
-    total_spent = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Общая сумма заказов")
+    # Дополнительная информация
+    birth_date = models.DateField(
+        _('Дата рождения'),
+        null=True,
+        blank=True
+    )
 
-    # 🔹 Служебные поля
+    address = models.CharField(
+        _('Адрес'),
+        max_length=255,
+        blank=True
+    )
+
+    notes = models.TextField(
+        _('Примечания'),
+        blank=True
+    )
+
     created_by = models.ForeignKey(
-        User,
+        'accounts.User',
         on_delete=models.SET_NULL,
         null=True,
-        related_name="clients_created",
-        verbose_name="Кем добавлен"
+        blank=True,
+        related_name='created_clients',
+        verbose_name=_('Кем создан')
     )
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="clients_updated",
-        verbose_name="Кем изменен"
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Когда добавлен")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Когда изменен")
 
-    def get_whatsapp_link(self, phone_number):
-        """Конвертирует номер телефона в ссылку WhatsApp"""
-        if not phone_number:
-            return ''
-            
-        # Удаляем все нецифровые символы
-        digits = re.sub(r'\D', '', str(phone_number))
-        
-        # Обрабатываем казахстанские номера
-        if digits.startswith('7') and len(digits) == 11:
-            return f'https://wa.me/{digits}'
-            
-        # Обрабатываем кыргызские номера
-        if digits.startswith('996') and len(digits) == 12:
-            return f'https://wa.me/{digits}'
-            
-        # Если формат не распознан, возвращаем как есть (на случай будущих изменений)
-        return f'https://wa.me/{digits}'
+    class Meta:
+        verbose_name = _('Клиент')
+        verbose_name_plural = _('Клиенты')
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name or ''} ({self.phone})"
+        full_name = self.get_full_name()
+        if self.organization:
+            return f"{full_name} ({self.organization})"
+        return full_name
 
-    @property
-    def whatsapp_link(self):
-        """Генерирует ссылку для WhatsApp"""
-        if self.whatsapp:
-            return f"https://wa.me/{self.whatsapp.replace('+','').replace(' ','')}"
-        return None
-
-    def generate_unique_client_id(self):
-        """Generate a unique 5-character alphanumeric ID"""
-        while True:
-            # Generate a random 5-character string (uppercase letters and digits)
-            client_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-            # Check if this ID already exists
-            if not Client.objects.filter(client_id=client_id).exists():
-                return client_id
-
-    def _clean_phone_number(self, number):
-        if not number:
-            return None
-        digits = re.sub(r'\D', '', str(number))
-        # KZ: 87... -> 77...
-        if len(digits) == 11 and digits.startswith('8'):
-            return '7' + digits[1:]
-        # KG: 0555... -> 555...
-        if len(digits) == 10 and digits.startswith('0'):
-            return digits[1:]
-        # KG: 996555... -> 555...
-        if len(digits) == 12 and digits.startswith('996'):
-            return digits[3:]
-        return digits
+    def get_full_name(self):
+        """Возвращает полное имя клиента."""
+        parts = [self.last_name, self.first_name, self.middle_name]
+        return ' '.join(filter(None, parts))
 
     def save(self, *args, **kwargs):
-        # Generate a client ID if this is a new client
-        if not self.client_id:
-            self.client_id = self.generate_unique_client_id()
-        
-        # Clean phone numbers before saving
-        self.phone = self._clean_phone_number(self.phone)
-        if self._whatsapp_number:
-            self._whatsapp_number = self._clean_phone_number(self._whatsapp_number)
-
+        # Нормализация телефона
+        if self.phone:
+            self.phone = normalize_phone(self.phone)
+        if self.phone_secondary:
+            self.phone_secondary = normalize_phone(self.phone_secondary)
+        if self.whatsapp:
+            self.whatsapp = normalize_phone(self.whatsapp)
         super().save(*args, **kwargs)
 
-    class Meta: 
-        verbose_name = "Клиент"
-        verbose_name_plural = "Клиенты"
+    def get_avatar_url(self):
+        """Возвращает URL аватара клиента."""
+        if self.photo:
+            return self.photo.url
+        # Возвращаем дефолтный аватар на основе пола
+        if self.gender == self.Gender.MALE:
+            return '/static/images/man-icon.png'
+        elif self.gender == self.Gender.FEMALE:
+            return '/static/images/girl-icon.png'
+        return '/static/images/other-icon.png'
 
-class ClientNote(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="notes")
-    text = models.TextField(verbose_name="Заметка")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Кем добавлена")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Когда добавлена")
 
-    def __str__(self):
-        return f"Заметка для {self.client} ({self.created_at:%d.%m.%Y})"
+class ClientNote(TimestampMixin, models.Model):
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.CASCADE,
+        related_name='notes_list',
+        verbose_name=_('Клиент')
+    )
+    author = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='client_notes',
+        verbose_name=_('Автор')
+    )
+    text = models.TextField(_('Текст заметки'))
+
+    class Meta:
+        verbose_name = _('Заметка клиента')
+        verbose_name_plural = _('Заметки клиентов')
+        ordering = ['-created_at']

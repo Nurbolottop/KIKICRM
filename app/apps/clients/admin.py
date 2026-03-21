@@ -1,29 +1,56 @@
 from django.contrib import admin
-from .models import Client, ClientNote
-
-
-class ClientNoteInline(admin.TabularInline):  # или StackedInline
-    model = ClientNote
-    extra = 1  # сколько пустых строк показывать для добавления
-    fields = ("text", "created_by", "created_at")
-    readonly_fields = ("created_by", "created_at")
-
-    def save_model(self, request, obj, form, change):
-        if not obj.pk:
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+from .models import Client
 
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ("first_name", "last_name", "phone", "orders_count", "total_spent", "updated_by", "updated_at")
-    exclude = ("created_by", "updated_by")  
-    readonly_fields = ("orders_count", "first_order_date", "last_order_date", "total_spent","telegram_id")  
+    """Админ-панель для модели Client."""
 
-    inlines = [ClientNoteInline]
+    list_display = [
+        'id',
+        'get_full_name',
+        'phone',
+        'source',
+        'category',
+        'created_at'
+    ]
+    list_filter = [
+        'source',
+        'category',
+        'gender',
+        'created_at'
+    ]
+    search_fields = [
+        'first_name',
+        'last_name',
+        'middle_name',
+        'phone',
+        'phone_secondary',
+        'email'
+    ]
+    ordering = ['-created_at']
 
-    def save_model(self, request, obj, form, change):
-        if not obj.pk:
-            obj.created_by = request.user
-        obj.updated_by = request.user
-        super().save_model(request, obj, form, change)
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('photo', 'last_name', 'first_name', 'middle_name', 'organization')
+        }),
+        ('Классификация', {
+            'fields': ('category', 'source', 'gender')
+        }),
+        ('Контактные данные', {
+            'fields': ('phone', 'phone_secondary', 'whatsapp', 'email', 'birth_date', 'address')
+        }),
+        ('Дополнительно', {
+            'fields': ('notes',)
+        }),
+        ('Системные', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['created_at', 'updated_at']
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+    get_full_name.short_description = 'Имя'

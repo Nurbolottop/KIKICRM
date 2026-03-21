@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Услуги - CRM KIKI{% endblock %}
+{% block page_title %}Услуги{% endblock %}
+
+{% block content %}
+<div class="services-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Услуги</h2>
+            <p class="text-muted mb-0">{{ services|length }} услуг в каталоге</p>
+        </div>
+        <a href="{% url 'service_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Добавить услугу
+        </a>
+    </div>
+    
+    {% if services %}
+    <div class="row g-4">
+        {% for service in services %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card service-card h-100 {% if not service.is_active %}opacity-75{% endif %}">
+                <!-- Image -->
+                <div class="service-image-wrapper">
+                    {% if service.image %}
+                    <img src="{{ service.image.url }}" class="service-image" alt="{{ service.name }}">
+                    {% else %}
+                    <div class="service-image-placeholder">
+                        <i class="bi bi-basket"></i>
+                    </div>
+                    {% endif %}
+                    {% if not service.is_active %}
+                    <span class="badge bg-secondary service-status">Неактивна</span>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title mb-2">{{ service.name }}</h5>
+                    <p class="card-text text-muted service-description">
+                        {% if service.description %}
+                            {{ service.description|truncatewords:15 }}
+                        {% else %}
+                            Нет описания
+                        {% endif %}
+                    </p>
+                    <div class="service-price">{{ service.price|floatformat:0 }} сом</div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'service_detail' service.id %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-eye"></i> Подробнее
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">«</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">‹</a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} из {{ paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">›</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ paginator.num_pages }}">»</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="bi bi-basket" style="font-size: 64px; color: #dee2e6;"></i>
+        </div>
+        <h5 class="text-muted">Пока нет услуг</h5>
+        <p class="text-muted">Добавьте первую услугу, чтобы начать работу</p>
+        <a href="{% url 'service_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Добавить услугу
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.service-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.service-image-wrapper {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+.service-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.service-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 48px;
+}
+
+.service-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.service-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.service-price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+</style>
+{% endblock %}

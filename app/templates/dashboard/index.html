@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - KIKI CRM{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-2">📊 Dashboard</h2>
+            <p class="text-muted mb-0">
+                Роль: <span class="badge bg-primary">{{ user_role_display }}</span>
+                {% if is_full_access %}
+                    <span class="badge bg-success">Полный доступ</span>
+                {% else %}
+                    <span class="badge bg-info">Ограниченный доступ</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">📊 Графики</h5>
+        </div>
+        <div class="col-lg-8 mb-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Заказы (14 дней)</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 280px;">
+                        <canvas id="chartOrders"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Статусы заказов</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 280px;">
+                        <canvas id="chartOrdersStatus"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Выручка (завершённые заказы, 14 дней)</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 260px;">
+                        <canvas id="chartRevenue"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">📈 Основные показатели</h5>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-primary">{{ main_metrics.total_clients }}</h3>
+                    <small class="text-muted">Клиентов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-success">{{ main_metrics.total_orders }}</h3>
+                    <small class="text-muted">Заказов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ main_metrics.total_services }}</h3>
+                    <small class="text-muted">Услуг</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-warning">{{ main_metrics.total_employees }}</h3>
+                    <small class="text-muted">Сотрудников</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h3 class="mb-0 text-warning">{{ main_metrics.active_orders }}</h3>
+                    <small class="text-muted">Активных заказов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h3 class="mb-0 text-success">{{ main_metrics.completed_orders }}</h3>
+                    <small class="text-muted">Завершенных</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h3 class="mb-0 text-danger">{{ main_metrics.pending_expenses_count }}</h3>
+                    <small class="text-muted">Ожид. расходов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ main_metrics.low_stock_items_count }}</h3>
+                    <small class="text-muted">Низких остатков</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today Metrics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">📅 Сегодня</h5>
+        </div>
+        <div class="col-md-2 mb-2">
+            <div class="card text-center bg-light">
+                <div class="card-body py-3">
+                    <h4 class="mb-0">{{ today_metrics.orders_today }}</h4>
+                    <small class="text-muted">Заказов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-2">
+            <div class="card text-center bg-light">
+                <div class="card-body py-3">
+                    <h4 class="mb-0">{{ today_metrics.completed_today }}</h4>
+                    <small class="text-muted">Завершено</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-2">
+            <div class="card text-center bg-light">
+                <div class="card-body py-3">
+                    <h4 class="mb-0">{{ today_metrics.expenses_today_sum|floatformat:0 }} сом</h4>
+                    <small class="text-muted">Расходы</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-2">
+            <div class="card text-center bg-light">
+                <div class="card-body py-3">
+                    <h4 class="mb-0">{{ today_metrics.active_cleaners_today }}</h4>
+                    <small class="text-muted">Клинеров</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-2">
+            <div class="card text-center bg-light">
+                <div class="card-body py-3">
+                    <h4 class="mb-0">{{ today_metrics.new_clients_today }}</h4>
+                    <small class="text-muted">Новых клиентов</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if is_full_access %}
+    <!-- Financial Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">💰 Финансовая сводка</h5>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td>Сумма всех заказов:</td>
+                            <td class="text-end"><strong>{{ financial_metrics.orders_total_amount|floatformat:0 }} сом</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Завершенные заказы:</td>
+                            <td class="text-end text-success"><strong>{{ financial_metrics.completed_orders_amount|floatformat:0 }} сом</strong></td>
+                        </tr>
+                        <tr class="table-danger">
+                            <td>Одобренные расходы:</td>
+                            <td class="text-end text-danger"><strong>-{{ financial_metrics.approved_expenses_total|floatformat:0 }} сом</strong></td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td>Ожидающие расходы:</td>
+                            <td class="text-end text-warning"><strong>{{ financial_metrics.pending_expenses_total|floatformat:0 }} сом</strong></td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>Оценочная прибыль:</td>
+                            <td class="text-end text-success"><strong>{{ financial_metrics.estimated_gross_profit|floatformat:0 }} сом</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Analytics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">📊 Финансовая аналитика</h5>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h4 class="mb-0 text-success">{{ financial_summary.orders_today_sum|floatformat:0 }} сом</h4>
+                    <small class="text-muted">Доход сегодня</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h4 class="mb-0 text-primary">{{ financial_summary.orders_month_sum|floatformat:0 }} сом</h4>
+                    <small class="text-muted">Доход за месяц</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h4 class="mb-0 text-danger">{{ financial_summary.expenses_month_sum|floatformat:0 }} сом</h4>
+                    <small class="text-muted">Расходы за месяц</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h4 class="mb-0 text-info">{{ financial_summary.avg_order|floatformat:0 }} сом</h4>
+                    <small class="text-muted">Средний чек</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">{{ financial_summary.profit|floatformat:0 }} сом</h3>
+                    <p class="mb-0">Прибыль за месяц</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Two Column Layout for Operational Blocks -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-6">
+            <!-- Recent Orders -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📋 Последние заказы</h5>
+                    <a href="{% url 'orders_list' %}" class="btn btn-sm btn-outline-primary">Все</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_orders %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Код</th>
+                                <th>Клиент</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>{{ order.order_code }}</td>
+                                <td>{{ order.client.name }}</td>
+                                <td>
+                                    {% if order.status == 'NEW' %}
+                                        <span class="badge bg-secondary">Новый</span>
+                                    {% elif order.status == 'CONFIRMED' %}
+                                        <span class="badge bg-info">Подтвержден</span>
+                                    {% elif order.status == 'ASSIGNED' %}
+                                        <span class="badge bg-warning">Назначен</span>
+                                    {% elif order.status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-primary">В работе</span>
+                                    {% elif order.status == 'COMPLETED' %}
+                                        <span class="badge bg-success">Завершен</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет заказов</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if is_full_access %}
+            <!-- Recent Expenses -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">💸 Последние расходы</h5>
+                    <a href="{% url 'expenses_list' %}" class="btn btn-sm btn-outline-primary">Все</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_expenses %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Сотрудник</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>{{ expense.employee.user.full_name|default:"—" }}</td>
+                                <td>{{ expense.amount|floatformat:0 }} сом</td>
+                                <td>
+                                    {% if expense.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Ожидание</span>
+                                    {% elif expense.status == 'APPROVED' %}
+                                        <span class="badge bg-success">Одобрено</span>
+                                    {% elif expense.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">Отклонено</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет расходов</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-6">
+            {% if is_full_access %}
+            <!-- Low Stock Items -->
+            {% if low_stock_items %}
+            <div class="card mb-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">⚠️ Низкие остатки склада</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Товар</th>
+                                <th>Категория</th>
+                                <th>Остаток</th>
+                                <th>Мин.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                            <tr class="{% if item.quantity <= 0 %}table-danger{% else %}table-warning{% endif %}">
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.category.name }}</td>
+                                <td>
+                                    <strong{% if item.quantity <= 0 %} class="text-danger"{% endif %}>
+                                        {{ item.quantity }} {{ item.unit }}
+                                    </strong>
+                                </td>
+                                <td class="text-muted">{{ item.min_quantity }} {{ item.unit }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Active Orders in Progress -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🔄 Активные заказы</h5>
+                    <a href="{% url 'orders_list' %}" class="btn btn-sm btn-outline-primary">Все</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if active_orders %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Код</th>
+                                <th>Клиент</th>
+                                <th>Назначено</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in active_orders %}
+                            <tr>
+                                <td>{{ order.order_code }}</td>
+                                <td>{{ order.client.name }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ order.employee_count }} чел.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет активных заказов</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cleaner Performance -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🧹 Работа клинеров (Топ 10)</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if cleaner_performance %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Клинер</th>
+                                <th class="text-center">Назначено</th>
+                                <th class="text-center">Завершено</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perf in cleaner_performance %}
+                            <tr>
+                                <td>{{ perf.employee.user.full_name }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ perf.assigned_orders_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ perf.finished_orders_count }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет данных</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Clients by Source -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📢 Клиенты по источникам</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if clients_by_source %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Источник</th>
+                                <th class="text-end">Количество</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source in clients_by_source %}
+                            <tr>
+                                <td>{{ source.source }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ source.count }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет данных</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Problematic Cleaners -->
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">⚠️ Проблемные клинеры</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if problematic_cleaners %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th class="text-center">Отказы</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cleaner in problematic_cleaners %}
+                            <tr>
+                                <td>
+                                    {{ cleaner.employee__user__first_name }}
+                                    {{ cleaner.employee__user__last_name }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">{{ cleaner.refuses }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-3 text-muted text-center">Нет проблемных клинеров</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+{{ chart_orders_ts|json_script:"chart-orders-ts" }}
+{{ chart_revenue_ts|json_script:"chart-revenue-ts" }}
+{{ chart_orders_status|json_script:"chart-orders-status" }}
+
+<script>
+(function() {
+    const ordersTs = JSON.parse(document.getElementById('chart-orders-ts').textContent);
+    const revenueTs = JSON.parse(document.getElementById('chart-revenue-ts').textContent);
+    const ordersStatus = JSON.parse(document.getElementById('chart-orders-status').textContent);
+
+    const gridColor = 'rgba(0,0,0,0.06)';
+    const fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+
+    const ctxOrders = document.getElementById('chartOrders');
+    if (ctxOrders) {
+        new Chart(ctxOrders, {
+            type: 'line',
+            data: {
+                labels: ordersTs.labels,
+                datasets: [{
+                    label: 'Заказы',
+                    data: ordersTs.values,
+                    tension: 0.35,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { intersect: false, mode: 'index' },
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: fontFamily } } },
+                    y: { grid: { color: gridColor }, ticks: { precision: 0, font: { family: fontFamily } }, beginAtZero: true },
+                }
+            }
+        });
+    }
+
+    const ctxRevenue = document.getElementById('chartRevenue');
+    if (ctxRevenue) {
+        new Chart(ctxRevenue, {
+            type: 'bar',
+            data: {
+                labels: revenueTs.labels,
+                datasets: [{
+                    label: 'Выручка',
+                    data: revenueTs.values,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(23, 162, 184, 0.25)',
+                    borderColor: '#17a2b8',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { intersect: false, mode: 'index' },
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: fontFamily } } },
+                    y: { grid: { color: gridColor }, ticks: { font: { family: fontFamily } }, beginAtZero: true },
+                }
+            }
+        });
+    }
+
+    const ctxStatus = document.getElementById('chartOrdersStatus');
+    if (ctxStatus) {
+        new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ordersStatus.labels,
+                datasets: [{
+                    data: ordersStatus.values,
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.85)',
+                        'rgba(139, 92, 246, 0.85)',
+                        'rgba(23, 162, 184, 0.85)',
+                        'rgba(40, 167, 69, 0.85)',
+                        'rgba(255, 193, 7, 0.85)',
+                        'rgba(220, 53, 69, 0.85)',
+                    ],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: fontFamily } } },
+                },
+                cutout: '62%'
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

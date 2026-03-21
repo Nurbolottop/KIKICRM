@@ -1,0 +1,99 @@
+<aside class="crm-sidebar">
+    <div class="sidebar-header">
+        <a href="{% url 'dashboard' %}" class="sidebar-brand">
+            <i class="bi bi-stars"></i>
+            <span>CRM KIKI</span>
+        </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            <li class="nav-section">Управление</li>
+            
+            <li class="nav-item">
+                <a href="{% url 'clients_list' %}" class="nav-link {% if '/clients/' in request.path %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Клиенты</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="{% url 'services_list' %}" class="nav-link {% if '/services/' in request.path %}active{% endif %}">
+                    <i class="bi bi-basket"></i>
+                    <span>Услуги</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="{% url 'orders_list' %}" class="nav-link {% if '/orders/' in request.path %}active{% endif %}">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Заказы</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="#" class="nav-link disabled">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Сотрудники</span>
+                </a>
+            </li>
+            
+            <li class="nav-section">Операции</li>
+            
+            {% if request.user.is_authenticated %}
+            <li class="nav-item">
+                <a href="{% url 'expenses_list' %}" class="nav-link {% if '/expenses/' in request.path %}active{% endif %}">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Расходы</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% if request.user.is_authenticated %}
+            <li class="nav-item">
+                <a href="{% url 'inventory_list' %}" class="nav-link {% if '/inventory/' in request.path %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Склад</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item">
+                <a href="#" class="nav-link disabled">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Отчеты</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="#" class="nav-link disabled">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Финансы</span>
+                </a>
+            </li>
+            
+            <li class="nav-section">Система</li>
+            
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">
+                    <i class="bi bi-check-square"></i>
+                    <span>Задачи</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">
+                    <i class="bi bi-bell"></i>
+                    <span>Уведомления</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>

@@ -1,0 +1,52 @@
+<header class="crm-header">
+    <div class="header-left">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+        </button>
+        <h1 class="page-title">{% block page_title %}CRM KIKI{% endblock %}</h1>
+    </div>
+    
+    <div class="header-right">
+        {% if user.is_authenticated %}
+        <div class="user-menu dropdown">
+            <button class="user-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle"></i>
+                <div class="user-info">
+                    <span class="user-name">{{ user.full_name|default:user.phone }}</span>
+                    <span class="role-badge 
+                        {% if user.role == 'ADMIN' or user.role == 'SUPER_ADMIN' %}role-admin
+                        {% elif user.role == 'MANAGER' %}role-manager
+                        {% elif user.role == 'OPERATOR' %}role-operator
+                        {% elif user.role == 'CLEANER' %}role-cleaner
+                        {% else %}role-default{% endif %}">
+                        <i class="bi 
+                            {% if user.role == 'ADMIN' or user.role == 'SUPER_ADMIN' %}bi-shield-lock
+                            {% elif user.role == 'MANAGER' %}bi-briefcase
+                            {% elif user.role == 'OPERATOR' %}bi-headset
+                            {% elif user.role == 'CLEANER' %}bi-brush
+                            {% else %}bi-person{% endif %}">
+                        </i>
+                        {{ user.get_role_display|default:"Пользователь" }}
+                    </span>
+                </div>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Профиль</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-box-arrow-right"></i> Выйти
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-box-arrow-in-right"></i> Войти
+        </a>
+        {% endif %}
+    </div>
+</header>

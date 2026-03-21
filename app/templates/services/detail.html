@@ -1,0 +1,610 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ service.name }} - CRM KIKI{% endblock %}
+{% block page_title %}{{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="service-detail-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'services_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" id="viewBtn" onclick="toggleEditMode()">
+                <i class="bi bi-eye"></i> Просмотр
+            </button>
+            <a href="{% url 'service_delete' service.id %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- View Mode -->
+    <div id="viewMode" class="d-none">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-md-6">
+                <!-- Image -->
+                <div class="card mb-4">
+                    <div class="card-body p-0">
+                        {% if service.image %}
+                        <img src="{{ service.image.url }}" class="service-detail-image" alt="{{ service.name }}">
+                        {% else %}
+                        <div class="service-detail-placeholder">
+                            <i class="bi bi-basket"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="col-md-6">
+                <!-- Info -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">{{ service.name }}</h4>
+                        
+                        {% if service.is_active %}
+                        <span class="badge bg-success mb-3">Активна</span>
+                        {% else %}
+                        <span class="badge bg-secondary mb-3">Неактивна</span>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small">Цена</label>
+                            <div class="h4 text-primary">{{ service.price|floatformat:0 }} сом</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small">Дедлайн услуги</label>
+                            <div class="h6 mb-0">{{ service.service_deadline_hours|default:0 }} ч</div>
+                        </div>
+                        
+                        {% if service.description %}
+                        <div class="mb-3">
+                            <label class="text-muted small">Описание</label>
+                            <p class="mb-0">{{ service.description|linebreaks }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Checklist - Full width with two columns inside -->
+        {% if service.checklist %}
+        <div class="card mt-2">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-door-open"></i> Чеклист по комнатам</h5>
+            </div>
+            <div class="card-body">
+                <div class="rooms-two-columns">
+                    {% for room in service.checklist %}
+                    <div class="room-item card mb-3 border-0 bg-light">
+                        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                            <span class="fw-medium">
+                                <i class="bi bi-door-open text-primary me-2"></i>{{ room.name|default:"Комната" }}
+                            </span>
+                            {% if room.payment %}
+                            <span class="badge bg-success">{{ room.payment }} сом клинеру</span>
+                            {% endif %}
+                        </div>
+                        {% if room.deadline_hours %}
+                        <div class="px-3 pt-2 text-muted small">
+                            Дедлайн: {{ room.deadline_hours }} ч
+                        </div>
+                        {% endif %}
+                        {% if room.tasks %}
+                        <ul class="list-group list-group-flush">
+                            {% for task in room.tasks %}
+                            <li class="list-group-item py-2 border-0 bg-transparent d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>{{ task }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Edit Mode (shown by default) -->
+    <div id="editMode">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Редактирование услуги</h5>
+            </div>
+            <div class="card-body">
+                <form id="editForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Название</label>
+                            <input type="text" name="name" id="editName" class="form-control" value="{{ service.name }}">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Цена (сом)</label>
+                            <input type="number" name="price" id="editPrice" class="form-control" step="0.01" value="{{ service.price|default:0 }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Оплата ст. клинеру (сом)</label>
+                            <input type="number" name="senior_cleaner_salary" id="editSeniorCleanerSalary" class="form-control" step="0.01" value="{{ service.senior_cleaner_salary|default:0 }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Общий дедлайн (авто), ч</label>
+                            <input type="number" id="editTotalDeadlineHours" class="form-control" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Дедлайн услуги, ч</label>
+                            <input type="number" name="service_deadline_hours" id="editServiceDeadlineHours" class="form-control" step="0.5" min="0" value="{{ service.service_deadline_hours|default:0 }}">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Описание</label>
+                            <textarea name="description" id="editDescription" class="form-control" rows="4">{{ service.description }}</textarea>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Фото услуги</label>
+                            <input type="file" name="image" id="editImage" class="form-control" accept="image/*">
+                            {% if service.image %}
+                            <div class="form-text">Текущее: {{ service.image.name }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Checklist Edit -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label mb-0">Чеклист по комнатам</label>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="addEditRoomBlock()">
+                                    <i class="bi bi-plus-lg"></i> Добавить комнату
+                                </button>
+                            </div>
+                            <div id="editRoomsContainer" data-room-count="{% if service.checklist %}{{ service.checklist|length }}{% else %}0{% endif %}">
+                                {% for room in service.checklist %}
+                                <div class="room-block card mb-3 border" data-room-index="{{ forloop.counter0 }}">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-door-open"></i>
+                                            <input type="text" 
+                                                   name="room_name_{{ forloop.counter0 }}" 
+                                                   class="form-control form-control-sm" 
+                                                   style="width: 200px;"
+                                                   value="{{ room.name|default:'' }}" 
+                                                   placeholder="Название комнаты">
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-muted small">Дедлайн (ч):</span>
+                                            <input type="number" 
+                                                   name="room_deadline_hours_{{ forloop.counter0 }}" 
+                                                   class="form-control form-control-sm" 
+                                                   style="width: 190px;"
+                                                   min="0"
+                                                   step="0.5"
+                                                   value="{{ room.deadline_hours|default:'' }}"
+                                                   placeholder="например 2">
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-muted small">Оплата клинеру:</span>
+                                            <input type="number" 
+                                                   name="room_payment_{{ forloop.counter0 }}" 
+                                                   class="form-control form-control-sm" 
+                                                   style="width: 100px;"
+                                                   value="{{ room.payment|default:'' }}" 
+                                                   placeholder="сом">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEditRoomBlock(this)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group input-group-sm mb-2">
+                                            <input type="text" 
+                                                   class="form-control room-task-input" 
+                                                   placeholder="Введите задачу и нажмите Добавить">
+                                            <button type="button" class="btn btn-outline-primary" onclick="addEditRoomTask(this)">
+                                                <i class="bi bi-plus-lg"></i> Добавить задачу
+                                            </button>
+                                        </div>
+                                        <ul class="list-group list-group-flush room-tasks-list">
+                                            {% for task in room.tasks %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                                <span>{{ task }}</span>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEditRoomTask(this)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                                <input type="hidden" name="room_{{ forloop.parentloop.counter0 }}_task[]" value="{{ task }}">
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="checklist_data" id="editChecklistData" value="">
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" id="editIsActive" class="form-check-input" {% if service.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="editIsActive">Активна</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleEditMode()">
+                            <i class="bi bi-x-lg"></i> Отмена
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveService()">
+                            <i class="bi bi-check-lg"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function saveService() {
+    const form = document.getElementById('editForm');
+    const formData = new FormData(form);
+    
+    // Prepare checklist data as JSON
+    const rooms = [];
+    const roomBlocks = document.querySelectorAll('#editRoomsContainer .room-block');
+    
+    roomBlocks.forEach(block => {
+        const roomIndex = block.dataset.roomIndex;
+        const nameInput = block.querySelector(`[name="room_name_${roomIndex}"]`);
+        const deadlineHoursInput = block.querySelector(`[name="room_deadline_hours_${roomIndex}"]`);
+        const paymentInput = block.querySelector(`[name="room_payment_${roomIndex}"]`);
+        const taskInputs = block.querySelectorAll(`[name="room_${roomIndex}_task[]"]`);
+        
+        const tasks = [];
+        taskInputs.forEach(input => tasks.push(input.value));
+        
+        if (nameInput.value || tasks.length > 0) {
+            rooms.push({
+                name: nameInput.value || `Комната ${roomIndex + 1}`,
+                deadline_hours: (deadlineHoursInput && deadlineHoursInput.value !== '') ? parseFloat(deadlineHoursInput.value) : null,
+                payment: parseFloat(paymentInput.value) || 0,
+                tasks: tasks
+            });
+        }
+    });
+    
+    formData.set('checklist_data', JSON.stringify(rooms));
+    
+    // Debug: log what we're sending
+    console.log('Saving service...');
+    console.log('Rooms:', rooms);
+    console.log('URL:', "{% url 'service_ajax_update' service.id %}");
+    
+    fetch("{% url 'service_ajax_update' service.id %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(r => {
+        console.log('Response status:', r.status);
+        if (!r.ok) {
+            return r.text().then(text => { throw new Error(`HTTP ${r.status}: ${text}`); });
+        }
+        return r.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.ok) {
+            window.location.reload();
+        } else {
+            alert('Ошибка сохранения: ' + (data.error || 'неизвестная ошибка'));
+        }
+    })
+    .catch(err => {
+        console.error('Save error:', err);
+        alert('Ошибка сохранения: ' + err.message);
+    });
+}
+
+let _editTotalDeadlineTimer = null;
+function scheduleEditTotalDeadlineUpdate() {
+    if (_editTotalDeadlineTimer) {
+        clearTimeout(_editTotalDeadlineTimer);
+    }
+    _editTotalDeadlineTimer = setTimeout(updateEditTotalDeadlineFromServer, 250);
+}
+
+function updateEditTotalDeadlineFromServer() {
+    const form = document.getElementById('editForm');
+    const totalEl = document.getElementById('editTotalDeadlineHours');
+    if (!form || !totalEl) return;
+
+    const rooms = [];
+    const roomBlocks = document.querySelectorAll('#editRoomsContainer .room-block');
+    roomBlocks.forEach(block => {
+        const roomIndex = block.dataset.roomIndex;
+        const nameInput = block.querySelector(`[name="room_name_${roomIndex}"]`);
+        const deadlineHoursInput = block.querySelector(`[name="room_deadline_hours_${roomIndex}"]`);
+        const paymentInput = block.querySelector(`[name="room_payment_${roomIndex}"]`);
+        const taskInputs = block.querySelectorAll(`[name="room_${roomIndex}_task[]"]`);
+
+        const tasks = [];
+        taskInputs.forEach(input => tasks.push(input.value));
+
+        if ((nameInput && nameInput.value) || tasks.length > 0) {
+            rooms.push({
+                name: nameInput ? (nameInput.value || `Комната ${roomIndex + 1}`) : `Комната ${roomIndex + 1}`,
+                deadline_hours: (deadlineHoursInput && deadlineHoursInput.value !== '') ? parseFloat(deadlineHoursInput.value) : null,
+                payment: paymentInput ? (parseFloat(paymentInput.value) || 0) : 0,
+                tasks: tasks
+            });
+        }
+    });
+
+    const csrf = form.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    fetch('{% url "service_checklist_total_deadline" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-CSRFToken': csrf || ''
+        },
+        body: new URLSearchParams({
+            checklist_data: JSON.stringify(rooms)
+        })
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+        if (!data || !data.ok) return;
+        const val = parseFloat(data.total_deadline_hours);
+        totalEl.value = Number.isNaN(val) ? 0 : val;
+    })
+    .catch(() => {});
+}
+
+let editRoomCounter = 0;
+const editRoomsContainerEl = document.getElementById('editRoomsContainer');
+if (editRoomsContainerEl) {
+    const rawCount = editRoomsContainerEl.getAttribute('data-room-count') || '0';
+    const parsed = parseInt(rawCount, 10);
+    editRoomCounter = Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function addEditRoomBlock() {
+    const container = document.getElementById('editRoomsContainer');
+    const roomIndex = editRoomCounter++;
+    
+    const roomBlock = document.createElement('div');
+    roomBlock.className = 'room-block card mb-3 border';
+    roomBlock.dataset.roomIndex = roomIndex;
+    
+    roomBlock.innerHTML = `
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-door-open"></i>
+                <input type="text" 
+                       name="room_name_${roomIndex}" 
+                       class="form-control form-control-sm" 
+                       style="width: 200px;"
+                       placeholder="Название комнаты">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Дедлайн (ч):</span>
+                <input type="number" 
+                       name="room_deadline_hours_${roomIndex}" 
+                       class="form-control form-control-sm" 
+                       style="width: 190px;"
+                       min="0"
+                       step="0.5"
+                       placeholder="например 2">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Оплата клинеру:</span>
+                <input type="number" 
+                       name="room_payment_${roomIndex}" 
+                       class="form-control form-control-sm" 
+                       style="width: 100px;"
+                       placeholder="сом">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEditRoomBlock(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="input-group input-group-sm mb-2">
+                <input type="text" 
+                       class="form-control room-task-input" 
+                       placeholder="Введите задачу и нажмите Добавить">
+                <button type="button" class="btn btn-outline-primary" onclick="addEditRoomTask(this)">
+                    <i class="bi bi-plus-lg"></i> Добавить задачу
+                </button>
+            </div>
+            <ul class="list-group list-group-flush room-tasks-list">
+            </ul>
+        </div>
+    `;
+    
+    container.appendChild(roomBlock);
+    scheduleEditTotalDeadlineUpdate();
+}
+
+function removeEditRoomBlock(btn) {
+    btn.closest('.room-block').remove();
+    scheduleEditTotalDeadlineUpdate();
+}
+
+function addEditRoomTask(btn) {
+    const roomBlock = btn.closest('.room-block');
+    const input = roomBlock.querySelector('.room-task-input');
+    const taskList = roomBlock.querySelector('.room-tasks-list');
+    const roomIndex = roomBlock.dataset.roomIndex;
+    const value = input.value.trim();
+    
+    if (!value) return;
+    
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+    li.innerHTML = `
+        <span>${escapeHtml(value)}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEditRoomTask(this)">
+            <i class="bi bi-trash"></i>
+        </button>
+        <input type="hidden" name="room_${roomIndex}_task[]" value="${escapeHtml(value)}">
+    `;
+    
+    taskList.appendChild(li);
+    input.value = '';
+    input.focus();
+    scheduleEditTotalDeadlineUpdate();
+}
+
+function removeEditRoomTask(btn) {
+    btn.closest('li').remove();
+    scheduleEditTotalDeadlineUpdate();
+}
+
+document.addEventListener('input', function(e) {
+    if (e.target && e.target.name && e.target.name.startsWith('room_deadline_hours_')) {
+        scheduleEditTotalDeadlineUpdate();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Принудительно устанавливаем числовые значения через JS, чтобы избежать
+    // проблемы с русской локалью (Django рендерит Decimal как '500,00' с запятой,
+    // браузер отвергает это для type="number" и очищает поле).
+    var _numFields = [
+        { id: 'editPrice',               raw: '{{ service.price|default:0 }}' },
+        { id: 'editServiceDeadlineHours', raw: '{{ service.service_deadline_hours|default:0 }}' },
+        { id: 'editSeniorCleanerSalary',  raw: '{{ service.senior_cleaner_salary|default:0 }}' },
+    ];
+    _numFields.forEach(function(f) {
+        var el = document.getElementById(f.id);
+        if (!el) return;
+        var v = parseFloat(String(f.raw).replace(',', '.'));
+        el.value = isNaN(v) ? 0 : v;
+    });
+
+    scheduleEditTotalDeadlineUpdate();
+});
+
+// Enter key for room tasks
+document.addEventListener('keypress', function(e) {
+    if (e.target.classList.contains('room-task-input') && e.key === 'Enter') {
+        e.preventDefault();
+        const btn = e.target.closest('.input-group').querySelector('button[onclick="addEditRoomTask(this)"]');
+        if (btn) addEditRoomTask(btn);
+    }
+});
+
+function addEditChecklistItem() {
+    const input = document.getElementById('editChecklistInput');
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) return;
+    
+    const list = document.getElementById('editChecklistList');
+    if (!list) return;
+    
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `
+        <span>${escapeHtml(value)}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('li').remove()">
+            <i class="bi bi-trash"></i>
+        </button>
+        <input type="hidden" name="checklist[]" value="${escapeHtml(value)}">
+    `;
+    list.appendChild(li);
+    input.value = '';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function toggleEditMode() {
+    const viewMode = document.getElementById('viewMode');
+    const editMode = document.getElementById('editMode');
+    const viewBtn = document.getElementById('viewBtn');
+    
+    if (viewMode.classList.contains('d-none')) {
+        viewMode.classList.remove('d-none');
+        editMode.classList.add('d-none');
+        viewBtn.textContent = '';
+        viewBtn.innerHTML = '<i class="bi bi-pencil"></i> Редактировать';
+        viewBtn.classList.remove('btn-outline-secondary');
+        viewBtn.classList.add('btn-primary');
+    } else {
+        viewMode.classList.add('d-none');
+        editMode.classList.remove('d-none');
+        viewBtn.innerHTML = '<i class="bi bi-eye"></i> Просмотр';
+        viewBtn.classList.remove('btn-primary');
+        viewBtn.classList.add('btn-outline-secondary');
+    }
+}
+</script>
+
+<style>
+.service-detail-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.service-detail-placeholder {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 64px;
+    border-radius: 8px;
+}
+
+.service-detail-container .card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+/* Two column checklist layout */
+.rooms-two-columns {
+    column-count: 2;
+    column-gap: 1.5rem;
+}
+
+.rooms-two-columns .room-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .rooms-two-columns {
+        column-count: 1;
+    }
+}
+</style>
+{% endblock %}

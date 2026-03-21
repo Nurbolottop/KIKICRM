@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои заказы | KIKI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --kiki-primary: #6c5ce7;
+        }
+        body {
+            background: #f5f6fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-bottom: 80px;
+        }
+        .page-header {
+            background: white;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 1rem;
+        }
+        .order-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: transform 0.2s;
+        }
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        .order-code {
+            background: #2d3436;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-new { background: #ffeaa7; color: #d63031; }
+        .status-confirmed { background: #dfe6e9; color: #2d3436; }
+        .status-inprogress { background: #74b9ff; color: white; }
+        .status-completed { background: #00b894; color: white; }
+        .status-cancelled { background: #ff7675; color: white; }
+        .order-service {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2d3436;
+            margin: 0.5rem 0;
+        }
+        .order-info {
+            color: #636e72;
+            font-size: 0.9rem;
+            margin: 0.25rem 0;
+        }
+        .order-info i {
+            width: 20px;
+            text-align: center;
+        }
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #b2bec3;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            padding: 0.75rem 0;
+            z-index: 1000;
+        }
+        .nav-item {
+            color: #b2bec3;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.75rem;
+            display: block;
+        }
+        .nav-item.active {
+            color: var(--kiki-primary);
+        }
+        .nav-item i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .filter-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 0.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #636e72;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+        .filter-tab i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+            transition: transform 0.3s ease;
+        }
+        .filter-tab:hover {
+            background: #f8f9fa;
+            color: var(--kiki-primary);
+        }
+        .filter-tab:hover i {
+            transform: scale(1.1);
+        }
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--kiki-primary) 0%, #5f4dd1 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+        .filter-tab.active i {
+            transform: scale(1.15);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="page-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check me-2 text-primary"></i>
+            Мои заказы
+        </h5>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="container mb-3">
+        <div class="filter-tabs">
+            <a href="?type=active" class="filter-tab {% if type_filter == 'active' %}active{% endif %}">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Актуальные</span>
+            </a>
+            <a href="?type=success" class="filter-tab {% if type_filter == 'success' %}active{% endif %}">
+                <i class="bi bi-check-circle"></i>
+                <span>Успешные</span>
+            </a>
+            <a href="?type=canceled" class="filter-tab {% if type_filter == 'canceled' %}active{% endif %}">
+                <i class="bi bi-x-circle"></i>
+                <span>Отмененные</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    <div class="container">
+        {% if orders %}
+            {% for oe in orders %}
+            <a href="{% url 'order_detail_cl' oe.order.id %}" class="order-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="order-code">{{ oe.order.order_code }}</span>
+                    {% if oe.order.status == 'NEW' %}
+                        <span class="order-status status-new">Новый</span>
+                    {% elif oe.order.status == 'CONFIRMED' %}
+                        <span class="order-status status-confirmed">Подтверждён</span>
+                    {% elif oe.order.status == 'IN_PROGRESS' %}
+                        <span class="order-status status-inprogress">В работе</span>
+                    {% elif oe.order.status == 'COMPLETED' %}
+                        <span class="order-status status-completed">Завершён</span>
+                    {% elif oe.order.status == 'CANCELLED' %}
+                        <span class="order-status status-cancelled">Отменён</span>
+                    {% endif %}
+                </div>
+                
+                <div class="order-service">{{ oe.order.service.name }}</div>
+                
+                <div class="order-info">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ oe.order.address|truncatechars:50 }}
+                </div>
+                
+                <div class="order-footer">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar3"></i>
+                        {{ oe.order.scheduled_date|date:"d.m.Y" }}
+                        <i class="bi bi-clock ms-2"></i>
+                        {{ oe.order.scheduled_time|time:"H:i" }}
+                    </small>
+                    <small class="text-muted">
+                        <i class="bi bi-person"></i>
+                        {{ oe.order.client.name|default:oe.order.client.phone|truncatechars:20 }}
+                    </small>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p>У вас пока нет заказов</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-6">
+                    <a href="{% url 'profile_cl' %}" class="nav-item">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Профиль</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="{% url 'orders_cl' %}" class="nav-item active">
+                        <i class="bi bi-list-check"></i>
+                        <span>Заказы</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>

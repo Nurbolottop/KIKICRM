@@ -1,341 +1,250 @@
+"""
+Модели для управления инвентарем.
+Складской учет: категории, товары, операции.
+"""
+from decimal import Decimal
 from django.db import models
-from django.db.models import F
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
-from django.utils import timezone
-
-User = get_user_model()
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
-class Product(models.Model):
-    """Товар/инвентарь для уборки"""
-    class Unit(models.TextChoices):
-        PIECE = "PIECE", "шт"
-        LITER = "LITER", "л"
-        ML = "ML", "мл"
-        KG = "KG", "кг"
-        GRAM = "GRAM", "г"
-        METER = "METER", "м"
-        CM = "CM", "см"
-        PACK = "PACK", "упаковка"
-        SET = "SET", "комплект"
-    
-    class Category(models.TextChoices):
-        CLEANING = "CLEANING", "Моющие средства"
-        DISINFECTANT = "DISINFECTANT", "Дезинфицирующие средства"
-        EQUIPMENT = "EQUIPMENT", "Оборудование"
-        TOOLS = "TOOLS", "Инструменты"
-        CONSUMABLES = "CONSUMABLES", "Расходники"
-        UNIFORM = "UNIFORM", "Униформа"
-        OTHER = "OTHER", "Прочее"
-    
-    name = models.CharField(max_length=200, verbose_name="Название")
-    category = models.CharField(
-        max_length=30,
-        choices=Category.choices,
-        default=Category.CLEANING,
-        verbose_name="Категория"
+class InventoryCategory(models.Model):
+    """Категория инвентаря."""
+
+    name = models.CharField(
+        'Название',
+        max_length=150,
+        unique=True,
+        help_text='Например: Химия, Инструменты, Расходники'
+    )
+    description = models.TextField(
+        'Описание',
+        blank=True,
+        help_text='Опциональное описание категории'
+    )
+    is_active = models.BooleanField(
+        'Активна',
+        default=True,
+        help_text='Неактивные категории не отображаются в списках'
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        'Дата обновления',
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = 'Категория инвентаря'
+        verbose_name_plural = 'Категории инвентаря'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def active_items_count(self):
+        """Возвращает количество активных товаров в категории."""
+        return self.items.filter(is_active=True).count()
+
+
+class InventoryItem(models.Model):
+    """Товар/материал на складе."""
+
+    name = models.CharField(
+        'Название',
+        max_length=200,
+        unique=True,
+        help_text='Название товара'
+    )
+    category = models.ForeignKey(
+        InventoryCategory,
+        on_delete=models.PROTECT,
+        related_name='items',
+        verbose_name='Категория'
     )
     unit = models.CharField(
-        max_length=20,
-        choices=Unit.choices,
-        default=Unit.PIECE,
-        verbose_name="Единица измерения"
+        'Единица измерения',
+        max_length=50,
+        default='шт',
+        help_text='шт, литр, мл, упаковка, кг'
     )
-    description = models.TextField(blank=True, null=True, verbose_name="Описание")
-    photo = models.ImageField(upload_to="inventory/products/", blank=True, null=True, verbose_name="Фото")
-    
-    # Для отслеживания минимального остатка
+    quantity = models.DecimalField(
+        'Текущее количество',
+        max_digits=15,
+        decimal_places=3,
+        default=0,
+        help_text='Текущий остаток на складе'
+    )
     min_quantity = models.DecimalField(
-        max_digits=10,
+        'Минимальный остаток',
+        max_digits=15,
+        decimal_places=3,
+        default=0,
+        help_text='Критический минимум для алертов'
+    )
+    price_per_unit = models.DecimalField(
+        'Цена за единицу',
+        max_digits=12,
         decimal_places=2,
         default=0,
-        verbose_name="Минимальный остаток"
+        help_text='Закупочная цена за единицу'
     )
-    
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
-    
-    def __str__(self):
-        return f"{self.name} ({self.get_unit_display()})"
-    
+    is_active = models.BooleanField(
+        'Активен',
+        default=True,
+        help_text='Неактивные товары скрыты из операций'
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        'Дата обновления',
+        auto_now=True
+    )
+
     class Meta:
-        verbose_name = "Товар"
-        verbose_name_plural = "Товары"
-        ordering = ["category", "name"]
+        verbose_name = 'Товар на складе'
+        verbose_name_plural = 'Товары на складе'
+        ordering = ['category', 'name']
 
-
-class Stock(models.Model):
-    """Остатки на складе"""
-    product = models.OneToOneField(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="stock",
-        verbose_name="Товар"
-    )
-    quantity = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        validators=[MinValueValidator(0)],
-        verbose_name="Количество"
-    )
-    last_updated = models.DateTimeField(auto_now=True, verbose_name="Последнее обновление")
-    
     def __str__(self):
-        return f"{self.product.name}: {self.quantity} {self.product.get_unit_display()}"
-    
-    @property
+        return f'{self.name} ({self.quantity} {self.unit})'
+
     def is_low_stock(self):
-        """Низкий остаток"""
-        return self.quantity <= self.product.min_quantity
-    
-    class Meta:
-        verbose_name = "Остаток"
-        verbose_name_plural = "Остатки"
+        """Проверка на низкий остаток."""
+        return self.quantity <= self.min_quantity
+
+    def get_stock_status(self):
+        """Возвращает статус запаса."""
+        if self.quantity <= 0:
+            return 'out', 'Нет на складе'
+        if self.is_low_stock():
+            return 'low', 'Низкий остаток'
+        return 'ok', 'В наличии'
+
+    def get_stock_value(self):
+        """Возвращает стоимость запаса."""
+        return self.quantity * self.price_per_unit
 
 
-class StockMovement(models.Model):
-    """Движение товаров (приход/расход)"""
-    class MovementType(models.TextChoices):
-        INCOMING = "INCOMING", "Приход"
-        OUTGOING = "OUTGOING", "Расход"
-    
-    class Reason(models.TextChoices):
-        PURCHASE = "PURCHASE", "Закупка"
-        RETURN = "RETURN", "Возврат"
-        ORDER_ISSUE = "ORDER_ISSUE", "Выдача на заказ"
-        WRITE_OFF = "WRITE_OFF", "Списание"
-        INVENTORY = "INVENTORY", "Инвентаризация"
-        ADJUSTMENT = "ADJUSTMENT", "Корректировка"
-    
-    product = models.ForeignKey(
-        Product,
+class TransactionType(models.TextChoices):
+    """Типы операций со складом."""
+    IN = 'IN', 'Приход'
+    OUT = 'OUT', 'Списание'
+    ADJUSTMENT = 'ADJUSTMENT', 'Корректировка'
+
+
+class InventoryTransaction(models.Model):
+    """Операция со складом (приход/списание/корректировка)."""
+
+    item = models.ForeignKey(
+        InventoryItem,
         on_delete=models.CASCADE,
-        related_name="movements",
-        verbose_name="Товар"
+        related_name='transactions',
+        verbose_name='Товар'
     )
-    movement_type = models.CharField(
+    transaction_type = models.CharField(
+        'Тип операции',
         max_length=20,
-        choices=MovementType.choices,
-        verbose_name="Тип движения"
-    )
-    reason = models.CharField(
-        max_length=20,
-        choices=Reason.choices,
-        verbose_name="Причина"
+        choices=TransactionType.choices,
+        default=TransactionType.IN
     )
     quantity = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        verbose_name="Количество"
+        'Количество',
+        max_digits=15,
+        decimal_places=3,
+        help_text='Для списания используйте положительное число'
     )
-    
-    # Связь с заказом (для выдачи на заказ)
     order = models.ForeignKey(
-        "orders.Order",
+        'orders.Order',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="stock_movements",
-        verbose_name="Заказ"
+        related_name='inventory_transactions',
+        verbose_name='Заказ',
+        help_text='Связанный заказ (для списаний)'
     )
-    
-    # Кто провёл операцию
-    created_by = models.ForeignKey(
-        User,
+    employee = models.ForeignKey(
+        'employees.Employee',
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name="Кем выполнено"
+        blank=True,
+        related_name='inventory_transactions',
+        verbose_name='Сотрудник',
+        help_text='Кто выполнил операцию или использовал товар'
     )
-    
-    notes = models.TextField(blank=True, null=True, verbose_name="Примечания")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата операции")
-    
+    comment = models.TextField(
+        'Комментарий',
+        blank=True,
+        help_text='Причина корректировки или детали операции'
+    )
+    created_at = models.DateTimeField(
+        'Дата операции',
+        auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = 'Операция со складом'
+        verbose_name_plural = 'Операции со складом'
+        ordering = ['-created_at']
+
     def __str__(self):
-        direction = "+" if self.movement_type == self.MovementType.INCOMING else "-"
-        return f"{self.product.name} {direction}{self.quantity} ({self.get_reason_display()}))"
-    
+        return f'{self.get_transaction_type_display()} — {self.item.name} ({self.quantity})'
+
+    def clean(self):
+        """Валидация перед сохранением."""
+        from django.core.exceptions import ValidationError
+
+        # Для списания проверяем достаточность остатка
+        if self.transaction_type == TransactionType.OUT:
+            if self.quantity > self.item.quantity:
+                raise ValidationError(
+                    f'Недостаточно товара на складе. '
+                    f'Доступно: {self.item.quantity} {self.item.unit}, '
+                    f'требуется: {self.quantity} {self.item.unit}'
+                )
+
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        
-        # Обновляем остаток
+        """Сохранение с автоматическим обновлением остатков."""
+        is_new = self._state.adding
+
+        # Для новых записей обновляем остаток
         if is_new:
-            stock, _ = Stock.objects.get_or_create(product=self.product)
-            if self.movement_type == self.MovementType.INCOMING:
-                stock.quantity += self.quantity
-            else:
-                stock.quantity -= self.quantity
-            stock.save()
-    
-    class Meta:
-        verbose_name = "Движение товара"
-        verbose_name_plural = "Движения товаров"
-        ordering = ["-created_at"]
+            self.clean()
 
-
-class InventoryCheck(models.Model):
-    """Инвентаризация"""
-    class Status(models.TextChoices):
-        IN_PROGRESS = "IN_PROGRESS", "В процессе"
-        COMPLETED = "COMPLETED", "Завершена"
-        CANCELLED = "CANCELLED", "Отменена"
-    
-    name = models.CharField(max_length=200, verbose_name="Название инвентаризации")
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.IN_PROGRESS,
-        verbose_name="Статус"
-    )
-    notes = models.TextField(blank=True, null=True, verbose_name="Примечания")
-    
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="inventory_checks_created",
-        verbose_name="Кем создана"
-    )
-    completed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="inventory_checks_completed",
-        verbose_name="Кем завершена"
-    )
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата завершения")
-    
-    def __str__(self):
-        return f"{self.name} ({self.get_status_display()})"
-    
-    def complete(self, user):
-        """Завершить инвентаризацию"""
-        self.status = self.Status.COMPLETED
-        self.completed_by = user
-        self.completed_at = timezone.now()
-        self.save()
-    
-    @property
-    def total_items(self):
-        return self.items.count()
-    
-    @property
-    def discrepancies_count(self):
-        return self.items.exclude(actual_quantity=F("expected_quantity")).count()
-    
-    class Meta:
-        verbose_name = "Инвентаризация"
-        verbose_name_plural = "Инвентаризации"
-        ordering = ["-created_at"]
-
-
-class InventoryCheckItem(models.Model):
-    """Позиция инвентаризации"""
-    inventory_check = models.ForeignKey(
-        InventoryCheck,
-        on_delete=models.CASCADE,
-        related_name="items",
-        verbose_name="Инвентаризация"
-    )
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        verbose_name="Товар"
-    )
-    expected_quantity = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        verbose_name="Ожидаемое количество"
-    )
-    actual_quantity = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        verbose_name="Фактическое количество"
-    )
-    notes = models.TextField(blank=True, null=True, verbose_name="Примечания")
-    
-    @property
-    def discrepancy(self):
-        return self.actual_quantity - self.expected_quantity
-    
-    def __str__(self):
-        return f"{self.product.name}: ожидалось {self.expected_quantity}, факт {self.actual_quantity}"
-    
-    class Meta:
-        verbose_name = "Позиция инвентаризации"
-        verbose_name_plural = "Позиции инвентаризации"
-        unique_together = ["inventory_check", "product"]
-
-
-class WriteOff(models.Model):
-    """Списание товара"""
-    class Reason(models.TextChoices):
-        EXPIRED = "EXPIRED", "Просроченный срок годности"
-        DAMAGED = "DAMAGED", "Повреждение"
-        DEFECT = "DEFECT", "Брак"
-        LOSS = "LOSS", "Утрата"
-        OTHER = "OTHER", "Иное"
-    
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="write_offs",
-        verbose_name="Товар"
-    )
-    quantity = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        verbose_name="Количество"
-    )
-    reason = models.CharField(
-        max_length=20,
-        choices=Reason.choices,
-        verbose_name="Причина списания"
-    )
-    reason_other = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Описание причины (если иное)"
-    )
-    notes = models.TextField(blank=True, null=True, verbose_name="Примечания")
-    
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Кем списано"
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата списания")
-    
-    def __str__(self):
-        return f"{self.product.name} -{self.quantity} ({self.get_reason_display()})"
-    
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
         super().save(*args, **kwargs)
-        
-        # Автоматически создаём движение и обновляем остаток
-        if is_new:
-            StockMovement.objects.create(
-                product=self.product,
-                movement_type=StockMovement.MovementType.OUTGOING,
-                reason=StockMovement.Reason.WRITE_OFF,
-                quantity=self.quantity,
-                created_by=self.created_by,
-                notes=f"Списание: {self.get_reason_display()}. {self.notes or ''}"
-            )
-    
-    class Meta:
-        verbose_name = "Списание"
-        verbose_name_plural = "Списания"
-        ordering = ["-created_at"]
+
+    def get_quantity_change(self):
+        """Возвращает изменение остатка (+/-) для отображения."""
+        if self.transaction_type == TransactionType.IN:
+            return f'+{self.quantity}'
+        elif self.transaction_type == TransactionType.OUT:
+            return f'-{self.quantity}'
+        else:
+            sign = '+' if self.quantity >= 0 else ''
+            return f'{sign}{self.quantity}'
+
+
+@receiver(post_save, sender=InventoryTransaction)
+def update_inventory_quantity(sender, instance, created, **kwargs):
+    """
+    Автоматически обновляет остаток товара после сохранения транзакции.
+    """
+    if created:
+        item = instance.item
+        quantity = instance.quantity
+
+        if instance.transaction_type == TransactionType.IN:
+            # Приход — увеличиваем остаток
+            item.quantity += quantity
+        elif instance.transaction_type == TransactionType.OUT:
+            # Списание — уменьшаем остаток
+            item.quantity -= quantity
+        elif instance.transaction_type == TransactionType.ADJUSTMENT:
+            # Корректировка — прибавляем значение (может быть отрицательным)
+            item.quantity += quantity
+
+        item.save(update_fields=['quantity', 'updated_at'])

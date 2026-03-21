@@ -1,0 +1,161 @@
+from django.db import models
+from django.conf import settings
+from django.utils import timezone
+
+
+class EmployeeStatus(models.TextChoices):
+    """Статусы сотрудника в системе."""
+    ACTIVE = 'ACTIVE', 'Активен'
+    INACTIVE = 'INACTIVE', 'Неактивен'
+    ON_LEAVE = 'ON_LEAVE', 'В отпуске'
+    FIRED = 'FIRED', 'Уволен'
+    CANDIDATE = 'CANDIDATE', 'Кандидат'
+
+
+class Employee(models.Model):
+    """Базовая модель сотрудника с привязкой к пользователю."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='employee',
+        verbose_name='Пользователь'
+    )
+    employee_code = models.CharField(
+        'Код сотрудника',
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text='Уникальный код сотрудника (можно назначить позже)'
+    )
+    phone_secondary = models.CharField(
+        'Дополнительный телефон',
+        max_length=20,
+        blank=True,
+        default='',
+        help_text='Второй номер телефона для связи'
+    )
+    avatar = models.ImageField(
+        'Аватар',
+        upload_to='employees/avatars/',
+        blank=True,
+        null=True
+    )
+    status = models.CharField(
+        'Статус',
+        max_length=20,
+        choices=EmployeeStatus.choices,
+        default=EmployeeStatus.CANDIDATE,
+        db_index=True
+    )
+    hire_date = models.DateField(
+        'Дата приема',
+        blank=True,
+        null=True
+    )
+    fire_date = models.DateField(
+        'Дата увольнения',
+        blank=True,
+        null=True
+    )
+    notes = models.TextField(
+        'Заметки',
+        blank=True,
+        default='',
+        help_text='Внутние заметки о сотруднике'
+    )
+
+    # Временные метки
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        'Дата обновления',
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        user_str = str(self.user) if self.user else 'Нет пользователя'
+        if self.employee_code:
+            return f'{user_str} [{self.employee_code}]'
+        return user_str
+
+    def get_user_full_name(self):
+        """Возвращает полное имя связанного пользователя."""
+        return self.user.full_name if self.user else ''
+
+    def get_user_phone(self):
+        """Возвращает телефон связанного пользователя."""
+        return self.user.phone if self.user else ''
+
+    def get_user_role(self):
+        """Возвращает роль связанного пользователя."""
+        return self.user.role if self.user else None
+
+    @property
+    def is_active_employee(self):
+        """Проверяет, является ли сотрудник активным."""
+        return self.status == EmployeeStatus.ACTIVE
+
+    @property
+    def can_work(self):
+        """Проверяет, может ли сотрудник выполнять работу."""
+        return self.status in [EmployeeStatus.ACTIVE, EmployeeStatus.ON_LEAVE]
+
+
+class EmployeeEarning(models.Model):
+    """Начисление сотруднику за выполненный заказ."""
+
+    employee = models.ForeignKey(
+        'employees.Employee',
+        on_delete=models.CASCADE,
+        related_name='earnings',
+        verbose_name='Сотрудник'
+    )
+    order = models.ForeignKey(
+        'orders.Order',
+        on_delete=models.CASCADE,
+        related_name='employee_earnings',
+        verbose_name='Заказ'
+    )
+    role_on_order = models.CharField(
+        'Роль в заказе',
+        max_length=100,
+        blank=True
+    )
+    amount = models.DecimalField(
+        'Сумма',
+        max_digits=10,
+        decimal_places=2
+    )
+    earned_at = models.DateTimeField(
+        'Дата начисления',
+        default=timezone.now,
+        db_index=True
+    )
+    is_paid = models.BooleanField(
+        'Оплачено',
+        default=False,
+        db_index=True
+    )
+    paid_at = models.DateTimeField(
+        'Дата оплаты',
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'Начисление сотруднику'
+        verbose_name_plural = 'Начисления сотрудникам'
+        ordering = ['-earned_at']
+        unique_together = ['employee', 'order']
+
+    def __str__(self):
+        return f'{self.employee} — {self.amount} сом (#{self.order.order_code or self.order.id})'

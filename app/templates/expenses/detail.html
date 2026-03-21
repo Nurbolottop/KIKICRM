@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Расход #{{ expense.id }} - CRM KIKI{% endblock %}
+{% block page_title %}Детали расхода{% endblock %}
+
+{% block content %}
+<div class="expense-detail-container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Расход #{{ expense.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="30%"><strong>Сотрудник:</strong></td>
+                            <td>{{ expense.employee.user.full_name }} ({{ expense.employee.user.phone }})</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Категория:</strong></td>
+                            <td><span class="badge bg-info">{{ expense.get_category_display }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Сумма:</strong></td>
+                            <td><strong class="text-primary">{{ expense.amount }} сом</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Дата расхода:</strong></td>
+                            <td>{{ expense.expense_date|date:"d.m.Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Заказ:</strong></td>
+                            <td>
+                                {% if expense.order %}
+                                <a href="{% url 'order_detail' expense.order.id %}">{{ expense.order.order_code }}</a>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Описание:</strong></td>
+                            <td>{{ expense.description|linebreaks|default:"<span class='text-muted'>—</span>" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Создано:</strong></td>
+                            <td>{{ expense.created_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                    </table>
+                    
+                    {% if expense.photo %}
+                    <hr>
+                    <h6>Фото чека:</h6>
+                    <img src="{{ expense.photo.url }}" alt="Чек" class="img-thumbnail" style="max-height: 400px;">
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                        <div>
+                            <a href="{% url 'expense_update' expense.id %}" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </a>
+                            <a href="{% url 'expense_delete' expense.id %}" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Удалить
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

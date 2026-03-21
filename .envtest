@@ -1,16 +1,20 @@
-# ========== ОБЩЕЕ ==========
-SECRET_KEY=django-insecure-v8idlx6j_bo*k1c)*p+5d1$k2qc0r3f123+im@_a!qkkp&srd@
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1,mydomain.com
+# Django Core
+SECRET_KEY=namex_super_secret_key_2026_very_safe_12345
+
+# Hosts & Security
+ALLOWED_HOSTS=namexdentalclinic.webtm.ru,127.0.0.1,localhost
+CSRF_TRUSTED_ORIGINS=https://namexdentalclinic.webtm.ru,http://dreliyardentalclinic.webtm.ru
+
+# Internationalization
 LANGUAGE_CODE=ru
 TIME_ZONE=Asia/Bishkek
 
-# === PROJECT NAME ===
-PROJECT_NAME=kikicrm
+# Project
+PROJECT_NAME=namex
 
-# === POSTGRES ===
-POSTGRES_DB=kikicrm
-POSTGRES_USER=kikicrm_user
-POSTGRES_PASSWORD=kikicrm1234
-POSTGRES_HOST=db_kikicrm
+# Database
+POSTGRES_DB=namex
+POSTGRES_USER=namex_user
+POSTGRES_PASSWORD=namex1234
+POSTGRES_HOST=db_namex
 POSTGRES_PORT=5432

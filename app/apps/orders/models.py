@@ -1,242 +1,617 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
-from apps.clients import models as clients_models
-from apps.cms import models as cms_models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-class Order(models.Model):
-    # --- Статусы ---
+from apps.common.models import TimeStampedModel
+
+
+class OrderStatus(models.TextChoices):
+    """Главный статус заказа (рассчитывается автоматически)."""
+    PROCESSING = 'PROCESSING', 'В обработке'
+    IN_WORK = 'IN_WORK', 'В работе'
+    ON_REVIEW = 'ON_REVIEW', 'На проверке'
+    CANCELLED = 'CANCELLED', 'Отклонён'
+    COMPLETED = 'COMPLETED', 'Успешно завершён'
+
+
+class Order(TimeStampedModel):
+    """Модель заказа в CRM KIKI."""
+
+    # Категория заказа
+    class OrderCategory(models.TextChoices):
+        """Категория заказа: новый или повторный."""
+        NEW = 'NEW', 'Новый заказ'
+        REPEAT = 'REPEAT', 'Повторный заказ'
+
+    # Тип помещения (с иконками как на скриншоте)
+    class PropertyType(models.TextChoices):
+        NOT_SPECIFIED = 'NOT_SPECIFIED', 'Не указан'
+        APARTMENT = 'APARTMENT', 'Квартира'
+        HOUSE = 'HOUSE', 'Дом'
+        LAND = 'LAND', 'Земельный участок'
+        BUSINESS = 'BUSINESS', 'Бизнес помещение'
+        OFFICE = 'OFFICE', 'Офис'
+        OTHER = 'OTHER', 'Другое'
+
+    # Статусы для оператора и менеджера
     class OperatorStatus(models.TextChoices):
-        IN_PROGRESS = "IN_PROGRESS", "В обработке"
-        ACCEPTED = "ACCEPTED", "Принято"
-        DECLINED = "DECLINED", "Отклонено оператором"
+        """Статус оператора."""
+        IN_PROGRESS = 'IN_PROGRESS', 'В обработке'
+        TRANSFERRED = 'TRANSFERRED', 'Передано'
+        REJECTED = 'REJECTED', 'Отклонено'
+        SUCCESS = 'SUCCESS', 'Успешно'
 
     class ManagerStatus(models.TextChoices):
-        ASSIGNED = "ASSIGNED", "Назначен"
-        IN_PROGRESS = "IN_PROGRESS", "В работе"
-        PENDING_REVIEW = "PENDING_REVIEW", "На проверке"
-        COMPLETED = "COMPLETED", "Завершён"
-        DECLINED = "DECLINED", "Отклонено"
-    
-    # Статусы старшего клинера удалены
+        """Статус менеджера."""
+        WAITING = 'WAITING', 'В ожидании'
+        IN_PROGRESS = 'IN_PROGRESS', 'В обработке'
+        PROCESS = 'PROCESS', 'В процессе'
+        REVIEW = 'REVIEW', 'В проверке'
+        DELIVERED = 'DELIVERED', 'Сдано'
+        REJECTED = 'REJECTED', 'Отклонено'
+
+    class SeniorCleanerStatus(models.TextChoices):
+        """Статус старшего клинера."""
+        WAITING = 'WAITING', 'В ожидании'
+        ACCEPTED = 'ACCEPTED', 'Принял'
+        WORKING = 'WORKING', 'В работе'
+        SENT_FOR_REVIEW = 'SENT_FOR_REVIEW', 'Отправлено на проверку'
+        REJECTED = 'REJECTED', 'Отклонено'
 
     class Priority(models.TextChoices):
-        NORMAL = "NORMAL", "Обычный"
-        URGENT = "URGENT", "Срочный"
-    
-    # Тип помещения
-    class PropertyType(models.TextChoices):
-        APARTMENT = "APARTMENT", "Квартира"
-        HOUSE = "HOUSE", "Дом"
-        LAND = "LAND", "Земельный участок"
-        BUSINESS = "BUSINESS", "Бизнес помещение"
-        OFFICE = "OFFICE", "Офис"
-        OTHER = "OTHER", "Другое"
+        LOW = 'LOW', 'Низкий'
+        NORMAL = 'NORMAL', 'Обычный'
+        HIGH = 'HIGH', 'Высокий'
+        URGENT = 'URGENT', 'Срочный'
 
-    # Канал привлечения (верхний уровень)
-    class Channel(models.TextChoices):
-        WEBSITE = "WEBSITE", "Сайт"
-        INSTAGRAM = "INSTAGRAM", "Instagram"
-        TELEGRAM = "TELEGRAM", "Telegram"
-        WHATSAPP = "WHATSAPP", "WhatsApp"
-        PHONE = "PHONE", "Звонок"
-        REFERRAL = "REFERRAL", "Рекомендация"
-        ADS = "ADS", "Реклама"
-        OTHER = "OTHER", "Другое"
+    # Канал привлечения
+    class LeadChannel(models.TextChoices):
+        PHONE = 'PHONE', 'Телефон'
+        WEBSITE = 'WEBSITE', 'Сайт'
+        INSTAGRAM = 'INSTAGRAM', 'Instagram'
+        TELEGRAM = 'TELEGRAM', 'Telegram'
+        WHATSAPP = 'WHATSAPP', 'WhatsApp'
+        REFERRAL = 'REFERRAL', 'Рекомендация'
+        OTHER = 'OTHER', 'Другое'
 
-    # Источник обращения (зависит от канала — ограничить на фронтенде)
-    class Source(models.TextChoices):
-        WEBSITE_FORM = "WEBSITE_FORM", "Форма на сайте"
-        WEBSITE_CHAT = "WEBSITE_CHAT", "Чат на сайте"
-        INSTAGRAM_DM = "INSTAGRAM_DM", "Instagram Direct"
-        INSTAGRAM_BIO = "INSTAGRAM_BIO", "Ссылка в профиле"
-        TELEGRAM_BOT = "TELEGRAM_BOT", "Telegram-бот"
-        TELEGRAM_DM = "TELEGRAM_DM", "Личные сообщения Telegram"
-        WHATSAPP_CHAT = "WHATSAPP_CHAT", "Чат WhatsApp"
-        PHONE_CALL = "PHONE_CALL", "Телефонный звонок"
-        REFERRAL_FRIEND = "REFERRAL_FRIEND", "Рекомендация (знакомые)"
-        REFERRAL_PARTNER = "REFERRAL_PARTNER", "Рекомендация (партнёры)"
-        GOOGLE_ADS = "GOOGLE_ADS", "Google Ads"
-        YANDEX_ADS = "YANDEX_ADS", "Яндекс Реклама"
-        SOCIAL_ADS = "SOCIAL_ADS", "Реклама в соцсетях"
-        OTHER = "OTHER", "Другое"
-
-    # --- Поля заказа (Оператор) ---
-    id = models.BigAutoField(primary_key=True)
-    code = models.CharField(max_length=20, unique=True, editable=False, verbose_name="Код заказа")
-
-    client = models.ForeignKey(clients_models.Client, on_delete=models.CASCADE, related_name="orders", verbose_name="Клиент")
-    category = models.CharField(
-        max_length=50,
-        choices=[("NEW", "Новый"), ("REPEATED", "Повторный")],
-        verbose_name="Категория заказа"
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.PROTECT,
+        related_name='orders',
+        verbose_name='Клиент'
     )
     service = models.ForeignKey(
-        cms_models.Services,
+        'services.Service',
         on_delete=models.PROTECT,
-        related_name="orders",
-        verbose_name="Услуга",
-        null=True,
+        related_name='orders',
+        verbose_name='Услуга',
         blank=True,
+        null=True
     )
-    address = models.TextField(verbose_name="Адрес выполнения")
-    property_type = models.CharField(
-        max_length=20,
-        choices=PropertyType.choices,
-        null=True,
-        blank=True,
-        verbose_name="Тип помещения"
-    )
-    date_time = models.DateTimeField(verbose_name="Дата и время уборки")
 
-    estimated_cost = models.PositiveIntegerField(null=True, blank=True, verbose_name="Предварительная стоимость")
-    estimated_rooms = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Комнаты (предв.)")
-    estimated_sqm = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Площадь м² (предв.)")
-    windows_count = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Окна (кол-во)")
-    bathrooms_count = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Санузлы (кол-во)")
-    after_repair = models.BooleanField(default=False, verbose_name="После ремонта")
-    estimated_area = models.CharField(
-        max_length=100,
-        null=True, 
-        blank=True, 
-        verbose_name="Объём работы",
-        help_text="Например: 50 м², 3 комнаты, 5 окон"
-    )
-    notes = models.TextField(blank=True, null=True, verbose_name="Заметки клиента")
-
-    channel = models.CharField(
-        max_length=20,
-        choices=Channel.choices,
-        null=True,
-        blank=True,
-        verbose_name="Канал привлечения",
-    )
-    source = models.CharField(
+    # Категория и тип
+    category = models.CharField(
+        'Категория заказа',
         max_length=30,
-        choices=Source.choices,
-        null=True,
-        blank=True,
-        verbose_name="Источник обращения",
+        choices=OrderCategory.choices,
+        default=OrderCategory.NEW
     )
-    contact_time = models.DateTimeField(
-    default=timezone.now,
-    verbose_name="Время обращения"
-)
-    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.NORMAL, verbose_name="Приоритет")
+    property_type = models.CharField(
+        'Тип помещения',
+        max_length=30,
+        choices=PropertyType.choices,
+        default=PropertyType.NOT_SPECIFIED
+    )
 
-    operator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="orders_operator", verbose_name="Оператор"
+    # Адрес и время
+    address = models.CharField(
+        'Адрес выполнения',
+        max_length=255
     )
-    status_operator = models.CharField(
+    scheduled_date = models.DateField(
+        'Дата уборки'
+    )
+    scheduled_time = models.TimeField(
+        'Время уборки'
+    )
+
+    # Параметры помещения
+    rooms_count = models.PositiveIntegerField(
+        'Количество комнат',
+        default=1
+    )
+    area = models.DecimalField(
+        'Площадь (м²)',
+        max_digits=6,
+        decimal_places=2,
+        default=0
+    )
+    windows_count = models.PositiveIntegerField(
+        'Количество окон',
+        default=0,
+        blank=True
+    )
+    bathrooms_count = models.PositiveIntegerField(
+        'Количество санузлов',
+        default=1
+    )
+
+    # Дополнительно
+    after_renovation = models.BooleanField(
+        'После ремонта',
+        default=False
+    )
+    work_scope = models.TextField(
+        'Объём работы',
+        blank=True,
+        help_text='Пример: 50м², 2 комнаты, кухня'
+    )
+
+    # Цена и статус
+    preliminary_price = models.DecimalField(
+        'Предварительная стоимость',
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        blank=True
+    )
+    price = models.DecimalField(
+        'Итоговая цена',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    status = models.CharField(
+        'Статус заказа',
+        max_length=20,
+        choices=OrderStatus.choices,
+        default=OrderStatus.PROCESSING,
+        db_index=True,
+        help_text='Главный статус (рассчитывается автоматически)'
+    )
+
+    # Статусы оператора и менеджера
+    operator_status = models.CharField(
+        'Статус оператора',
         max_length=20,
         choices=OperatorStatus.choices,
-        default=OperatorStatus.IN_PROGRESS,
+        default=OperatorStatus.IN_PROGRESS
+    )
+    manager_status = models.CharField(
+        'Статус менеджера',
+        max_length=20,
+        choices=ManagerStatus.choices,
+        default=ManagerStatus.WAITING
+    )
+    senior_cleaner_status = models.CharField(
+        'Статус старшего клинера',
+        max_length=20,
+        choices=SeniorCleanerStatus.choices,
+        default=SeniorCleanerStatus.WAITING
+    )
+    handed_to_manager = models.BooleanField(
+        'Передано менеджеру',
+        default=False,
+        help_text='Галочка - передано менеджеру, пусто - не передано'
+    )
+    handed_to_manager_at = models.DateTimeField(
+        'Дата передачи менеджеру',
         null=True,
+        blank=True
+    )
+
+    # Приоритет
+    priority = models.CharField(
+        'Приоритет',
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.NORMAL
+    )
+    lead_channel = models.CharField(
+        'Канал привлечения',
+        max_length=20,
+        choices=LeadChannel.choices,
+        default=LeadChannel.PHONE,
+        blank=True
+    )
+    
+    # Поле для оператора - сумма предоплаты
+    prepayment_amount = models.DecimalField(
+        'Сумма предоплаты',
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         blank=True,
-        verbose_name="Статус (оператор)"
+        help_text='Указывается оператором при создании заказа'
     )
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
-
-    # --- Поля заказа (Менеджер) ---
-    final_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Итоговая стоимость")
-    final_area = models.CharField(
-        max_length=100,
-        null=True, 
-        blank=True, 
-        verbose_name="Фактический объём работы",
-        help_text="Например: 50 м², 3 комнаты, 5 окон"
+    # Комментарий
+    comment = models.TextField(
+        'Заметки',
+        blank=True
     )
-
-    senior_cleaner = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="orders_senior_cleaner",
-        verbose_name="Старший клинер",
+        related_name='created_orders',
+        verbose_name='Кто создал'
     )
-    cleaners = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        blank=True,
-        related_name="orders_cleaners",
-        verbose_name="Клинеры",
-    )
-    deadline = models.DateTimeField(null=True, blank=True, verbose_name="Крайний срок выполнения")
-
-    manager_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий менеджера")
-    status_manager = models.CharField(max_length=20, choices=ManagerStatus.choices, null=True, blank=True, verbose_name="Статус (менеджер)")
-    
-    # Поля старшего клинера удалены
-    
-    # --- Отслеживание работы ---
-    work_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа начата")
-    work_finished_at = models.DateTimeField(null=True, blank=True, verbose_name="Работа завершена")
-    
-    # --- Оценка качества ---
-    quality_rating = models.PositiveSmallIntegerField(
-        null=True, blank=True,
-        verbose_name="Оценка качества (1-5)",
-        help_text="Оценка от 1 до 5 звёзд"
-    )
-    quality_comment = models.TextField(blank=True, null=True, verbose_name="Комментарий по качеству")
-    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата проверки")
-    reviewed_by = models.ForeignKey(
+    assigned_manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name="reviewed_orders",
-        verbose_name="Проверил (менеджер)"
+        null=True,
+        blank=True,
+        related_name='managed_orders',
+        verbose_name='Назначенный менеджер'
     )
+    
+    # Order Closing Workflow Fields
+    # Senior Cleaner marks as ready for review
+    ready_for_review_at = models.DateTimeField(
+        'Готов к проверке (дата)',
+        null=True,
+        blank=True,
+        help_text='Когда Senior Cleaner передал заказ менеджеру для проверки'
+    )
+    ready_for_review_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders_marked_ready',
+        verbose_name='Готов к проверке (кто)'
+    )
+    
+    # Manager closes order
+    manager_closed_at = models.DateTimeField(
+        'Закрыт менеджером (дата)',
+        null=True,
+        blank=True,
+        help_text='Когда менеджер закрыл заказ со своей стороны'
+    )
+    
+    # Operator closes order
+    operator_closed_at = models.DateTimeField(
+        'Закрыт оператором (дата)',
+        null=True,
+        blank=True,
+        help_text='Когда оператор закрыл заказ со своей стороны'
+    )
+    
+    # Transfer to Manager Workflow Fields
+    # Operator transfers order to manager for processing
+    transferred_to_manager = models.BooleanField(
+        'Передан менеджеру',
+        default=False,
+        help_text='Оператор передал заказ менеджеру для обработки'
+    )
+    transferred_to_manager_at = models.DateTimeField(
+        'Передан менеджеру (дата)',
+        null=True,
+        blank=True,
+        help_text='Когда оператор передал заказ менеджеру'
+    )
+    transferred_to_manager_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders_transferred_to_manager',
+        verbose_name='Передан менеджеру (кем)'
+    )
+    
+    order_code = models.CharField(
+        'Код заказа',
+        max_length=30,
+        unique=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-scheduled_date', '-scheduled_time']
 
     def __str__(self):
-        service_title = self.service.title if getattr(self, "service", None) else "—"
-        return f"{self.code} | {self.client} | {service_title}"
+        return f'{self.order_code} - {self.client.get_full_name()}'
 
     def save(self, *args, **kwargs):
-        if not self.code:
-            last_id = Order.objects.count() + 1
-            self.code = f"KIKI-{last_id:06d}"
+        """Генерация order_code и автоматический расчёт главного статуса."""
+        # Генерация order_code
+        if not self.order_code:
+            last_order = Order.objects.order_by('-id').first()
+            if last_order:
+                try:
+                    last_number = int(last_order.order_code.split('-')[1])
+                    new_number = last_number + 1
+                except (IndexError, ValueError):
+                    new_number = Order.objects.count() + 1
+            else:
+                new_number = 1
+            self.order_code = f'KIKI-{new_number:04d}'
+        
+        # Автоматический расчёт главного статуса
+        self._recalculate_main_status()
+        
         super().save(*args, **kwargs)
+    
+    def _recalculate_main_status(self):
+        """Пересчитывает главный статус заказа на основе внутренних статусов."""
+        # Если оператор отклонил - заказ отклонён
+        if self.operator_status == self.OperatorStatus.REJECTED:
+            self.status = OrderStatus.CANCELLED
+            return
+        
+        # Если оператор в обработке - заказ в обработке
+        if self.operator_status == self.OperatorStatus.IN_PROGRESS:
+            self.status = OrderStatus.PROCESSING
+            return
+        
+        # Если менеджер в обработке или процессе - заказ в работе
+        if self.manager_status in [
+            self.ManagerStatus.IN_PROGRESS,
+            self.ManagerStatus.PROCESS
+        ]:
+            self.status = OrderStatus.IN_WORK
+            return
+        
+        # Если менеджер в проверке - заказ на проверке
+        if self.manager_status == self.ManagerStatus.REVIEW:
+            self.status = OrderStatus.ON_REVIEW
+            return
+        
+        # Если менеджер сдал и оператор подтвердил - заказ завершён
+        if (self.manager_status == self.ManagerStatus.DELIVERED and 
+            self.operator_status == self.OperatorStatus.SUCCESS):
+            self.status = OrderStatus.COMPLETED
+            return
+
+    def get_operator_status_display_ru(self):
+        """Возвращает русское название статуса оператора."""
+        mapping = {
+            'IN_PROGRESS': 'В обработке',
+            'TRANSFERRED': 'Передано',
+            'REJECTED': 'Отклонено',
+            'SUCCESS': 'Успешно',
+            'PROCESSING': 'В обработке',  # fallback для старых данных
+        }
+        return mapping.get(self.operator_status, self.operator_status)
+
+    def get_manager_status_display_ru(self):
+        """Возвращает русское название статуса менеджера."""
+        mapping = {
+            'WAITING': 'В ожидании',
+            'PENDING': 'В ожидании',  # fallback для старых данных
+            'IN_PROGRESS': 'В обработке',
+            'PROCESS': 'В процессе',
+            'REVIEW': 'В проверке',
+            'DELIVERED': 'Сдано',
+            'REJECTED': 'Отклонено',
+        }
+        return mapping.get(self.manager_status, self.manager_status)
+
+    def get_senior_cleaner_status_display_ru(self):
+        """Возвращает русское название статуса старшего клинера."""
+        mapping = {
+            'WAITING': 'В ожидании',
+            'ACCEPTED': 'Принял',
+            'WORKING': 'В работе',
+            'SENT_FOR_REVIEW': 'Отправлено на проверку',
+            'REJECTED': 'Отклонено',
+        }
+        return mapping.get(self.senior_cleaner_status, self.senior_cleaner_status)
+
+
+class OrderEmployee(models.Model):
+    """Связующая модель для назначения сотрудников на заказ."""
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='order_employees',
+        verbose_name='Заказ'
+    )
+    employee = models.ForeignKey(
+        'employees.Employee',
+        on_delete=models.CASCADE,
+        related_name='employee_orders',
+        verbose_name='Сотрудник'
+    )
+    role_on_order = models.CharField(
+        'Роль в заказе',
+        max_length=100,
+        blank=True,
+        help_text='Например: cleaner, senior_cleaner, helper'
+    )
+    assigned_at = models.DateTimeField(
+        'Дата назначения',
+        auto_now_add=True
+    )
+    is_confirmed = models.BooleanField(
+        'Подтверждено',
+        default=False
+    )
+    confirmed_at = models.DateTimeField(
+        'Время подтверждения',
+        null=True,
+        blank=True
+    )
+    started_at = models.DateTimeField(
+        'Время начала работы',
+        null=True,
+        blank=True
+    )
+    finished_at = models.DateTimeField(
+        'Время завершения работы',
+        null=True,
+        blank=True
+    )
+    notes = models.TextField(
+        'Заметки',
+        blank=True,
+        help_text='Внутренние заметки сотрудника о заказе'
+    )
+    
+    # Refuse fields
+    refused_at = models.DateTimeField(
+        'Дата отказа',
+        null=True,
+        blank=True
+    )
+    
+    refuse_reason = models.TextField(
+        'Причина отказа',
+        blank=True
+    )
 
     class Meta:
-        verbose_name = "Заказ"
-        verbose_name_plural = "Заказы"
-        ordering = ["-created_at"]
+        verbose_name = 'Назначение сотрудника'
+        verbose_name_plural = 'Назначения сотрудников'
+        unique_together = ['order', 'employee']
+        ordering = ['-assigned_at']
+
+    def __str__(self):
+        return f'{self.order.order_code} - {self.employee}'
 
 
-class Task(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tasks", verbose_name="Заказ")
+class PhotoType(models.TextChoices):
+    """Типы фото заказа."""
+    BEFORE = 'BEFORE', 'До'
+    AFTER = 'AFTER', 'После'
 
-    cleaner = models.ForeignKey(
+
+class OrderPhoto(models.Model):
+    """Модель фотографий заказа (до/после)."""
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='photos',
+        verbose_name='Заказ'
+    )
+    uploaded_by = models.ForeignKey(
+        'employees.Employee',
+        on_delete=models.CASCADE,
+        related_name='uploaded_order_photos',
+        verbose_name='Загружено'
+    )
+    photo = models.ImageField(
+        'Фото',
+        upload_to='orders/photos/%Y/%m/%d/'
+    )
+    photo_type = models.CharField(
+        'Тип фото',
+        max_length=20,
+        choices=PhotoType.choices,
+        default=PhotoType.BEFORE
+    )
+    uploaded_at = models.DateTimeField(
+        'Время загрузки',
+        auto_now_add=True
+    )
+    comment = models.TextField(
+        'Комментарий',
+        blank=True,
+        help_text='Описание или комментарий к фото'
+    )
+
+    class Meta:
+        verbose_name = 'Фото заказа'
+        verbose_name_plural = 'Фотографии заказов'
+        ordering = ['-uploaded_at']
+
+
+class OrderAttachment(models.Model):
+    """Модель для прикрепления файлов к заказу."""
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        verbose_name='Заказ'
+    )
+    file = models.FileField(
+        'Файл',
+        upload_to='orders/attachments/%Y/%m/%d/'
+    )
+    filename = models.CharField(
+        'Имя файла',
+        max_length=255,
+        blank=True
+    )
+    uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="tasks_cleaner",
-        verbose_name="Клинер",
+        related_name='uploaded_attachments',
+        verbose_name='Кто загрузил'
     )
-
-    description = models.CharField(max_length=255, verbose_name="Описание задачи")
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("IN_PROGRESS", "В работе"),
-            ("DONE", "Готово"),
-        ],
-        default="IN_PROGRESS",
-        verbose_name="Статус задачи"
+    uploaded_at = models.DateTimeField(
+        'Дата загрузки',
+        auto_now_add=True
     )
-    photo_before = models.ImageField(upload_to="orders/tasks/", null=True, blank=True, verbose_name="Фото до")
-    photo_after = models.ImageField(upload_to="orders/tasks/", null=True, blank=True, verbose_name="Фото после")
-    comment = models.TextField(blank=True, null=True, verbose_name="Комментарий по задаче")
-
-    def __str__(self):
-        return f"{self.description} ({self.get_status_display()})"
+    comment = models.TextField(
+        'Комментарий',
+        blank=True,
+        help_text='Описание файла'
+    )
 
     class Meta:
-        verbose_name = "Задача"
-        verbose_name_plural = "Задачи"
-        ordering = ["status", "id"]
+        verbose_name = 'Вложение заказа'
+        verbose_name_plural = 'Вложения заказа'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f'{self.filename or self.file.name} - {self.order.order_code}'
+
+    def save(self, *args, **kwargs):
+        if not self.filename and self.file:
+            self.filename = self.file.name
+        super().save(*args, **kwargs)
+
+@receiver(post_save, sender=Order)
+def order_completed_notification(sender, instance, created, **kwargs):
+    """Отправляет уведомление при завершении заказа."""
+    if not created and instance.status == OrderStatus.COMPLETED:
+        # Проверяем что заказ только что стал COMPLETED
+        from apps.notifications.services.notification_service import NotificationService
+        try:
+            NotificationService.order_completed(instance)
+        except Exception:
+            pass  # Не блокируем сохранение заказа если Telegram недоступен
+
+
+class RefuseSettings(models.Model):
+    """Настройки для ограничения отказов клинеров."""
+
+    max_refuses = models.PositiveIntegerField(
+        "Максимум отказов",
+        default=3,
+        help_text="Максимальное количество отказов за период"
+    )
+
+    period_days = models.PositiveIntegerField(
+        "Период (дней)",
+        default=14,
+        help_text="Период в днях для подсчета отказов"
+    )
+
+    is_active = models.BooleanField(
+        "Активно",
+        default=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Refuse Settings"
+        verbose_name_plural = "Refuse Settings"
+
+    def __str__(self):
+        return f"{self.max_refuses} refuses / {self.period_days} days"

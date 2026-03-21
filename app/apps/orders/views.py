@@ -1,481 +1,868 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import models
-from django.http import JsonResponse
-from apps.orders import models as orders_models
-from apps.clients import models as clients_models
-from apps.cms import models as cms_models
-from apps.users.models import User
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.views import View
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+import logging
+from decimal import Decimal, InvalidOperation
+
+from apps.common.permissions import (
+    can_view_orders, can_create_orders, can_edit_orders, can_delete_orders,
+    can_assign_cleaners, PermissionRequiredMixin
+)
+from .models import Order, OrderEmployee, OrderPhoto, RefuseSettings, OrderStatus
+from .forms import OrderForm
+from apps.orders.services.order_status_service import OrderStatusChecker, OrderStatusService
+from apps.notifications.services.notification_service import NotificationService
 
 
-@login_required
-def order_list(request):
-    settings = cms_models.Settings.objects.first()
-    orders = orders_models.Order.objects.all()
+logger = logging.getLogger(__name__)
+
+
+class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """Список заказов с поиском, фильтрами и пагинацией."""
+    permission_key = 'orders.view'
+    model = Order
+    template_name = 'orders/list.html'
+    context_object_name = 'orders'
+    paginate_by = 20
     
+    def dispatch(self, request, *args, **kwargs):
+        if not can_view_orders(request.user):
+            raise PermissionDenied('У вас нет доступа к просмотру заказов.')
+        return super().dispatch(request, *args, **kwargs)
     
-    # Фильтрация по поисковому запросу
-    search_query = request.GET.get('q', '')
-    if search_query:
-        orders = orders.filter(
-            models.Q(code__icontains=search_query) |
-            models.Q(client__first_name__icontains=search_query) |
-            models.Q(client__last_name__icontains=search_query) |
-            models.Q(client__phone__icontains=search_query) |
-            models.Q(address__icontains=search_query)
-        )
-    
-    # Фильтрация по статусу оператора
-    status_operator = request.GET.get('status_operator', '')
-    if status_operator:
-        orders = orders.filter(status_operator=status_operator)
-    
-    # Фильтрация по статусу менеджера
-    status_manager = request.GET.get('status_manager', '')
-    if status_manager:
-        orders = orders.filter(status_manager=status_manager)
-    
-    # Фильтрация по приоритету
-    priority = request.GET.get('priority', '')
-    if priority:
-        orders = orders.filter(priority=priority)
-    
-    # Фильтрация по типу помещения
-    property_type = request.GET.get('property_type', '')
-    if property_type:
-        orders = orders.filter(property_type=property_type)
-    
-    # Фильтрация по услуге
-    service = request.GET.get('service', '')
-    if service:
-        orders = orders.filter(service_id=service)
-    
-    # Фильтрация по дате
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-    if date_from:
-        orders = orders.filter(date_time__gte=date_from)
-    if date_to:
-        orders = orders.filter(date_time__lte=date_to)
-    
-    # Получаем данные для фильтров
-    services = cms_models.Services.objects.all()
-    
-    return render(request, "pages/system/others/orders/order.html", locals())
-
-
-@login_required
-def order_detail(request, pk):
-    settings = cms_models.Settings.objects.first()
-    order = get_object_or_404(orders_models.Order, pk=pk)
-    # Список описаний шаблонов задач услуги для подсветки доп. задач
-    template_descriptions = []
-    if order.service and hasattr(order.service, 'task_templates'):
-        template_descriptions = list(order.service.task_templates.values_list('description', flat=True))
-    context = {
-        'settings': settings,
-        'order': order,
-        'template_descriptions': template_descriptions,
-    }
-    return render(request, "pages/system/others/orders/order-view.html", context)
-
-
-@login_required
-def order_create(request):
-    settings = cms_models.Settings.objects.first()
-    if request.method == "POST":
-        client_id = request.POST.get("client")
-        client = get_object_or_404(clients_models.Client, pk=client_id)
-
-        # Accept both new and legacy field names from the form
-        service_id = request.POST.get("service") or request.POST.get("service_type")
-
-        order = orders_models.Order.objects.create(
-            client=client,
-            category=request.POST.get("category"),
-            service_id=service_id,
-            address=request.POST.get("address"),
-            property_type=request.POST.get("property_type") or None,
-            date_time=request.POST.get("date_time"),
-            estimated_cost=request.POST.get("estimated_cost") or None,
-            estimated_rooms=request.POST.get("estimated_rooms") or None,
-            estimated_sqm=request.POST.get("estimated_sqm") or None,
-            windows_count=request.POST.get("windows_count") or None,
-            bathrooms_count=request.POST.get("bathrooms_count") or None,
-            after_repair=bool(request.POST.get("after_repair")),
-            estimated_area=request.POST.get("estimated_area") or None,
-            notes=request.POST.get("notes"),
-            channel=request.POST.get("channel"),
-            source=request.POST.get("source"),
-            priority=request.POST.get("priority"),
-            operator=request.user,
-        )
-
-        # Если статус выбран на форме — сохранить его, иначе оставить значение по умолчанию модели
-        form_status = request.POST.get("status_operator")
-        if form_status:
-            order.status_operator = form_status
-            order.save(update_fields=["status_operator"])
-
-        # Автодобавление задач из шаблонов услуги сразу при создании
-        if order.service and hasattr(order.service, 'task_templates'):
-            existing_desc = set()
-            for t in order.tasks.all():
-                existing_desc.add(t.description)
-            for template in order.service.task_templates.all():
-                if template.description not in existing_desc:
-                    orders_models.Task.objects.create(
-                        order=order,
-                        description=template.description,
-                        status='IN_PROGRESS'
-                    )
-        messages.success(request, f"Заказ {order.code} успешно создан")
-        return redirect("customer_view", pk=order.client.pk)
-
-    clients = clients_models.Client.objects.all()
-    services = cms_models.Services.objects.all()
-    return render(request, "pages/system/others/orders/order-new.html", locals())
-
-
-@login_required
-def order_update(request, pk):
-    """Редактирование заказа менеджером"""
-    
-    settings = cms_models.Settings.objects.first()
-    order = get_object_or_404(orders_models.Order, pk=pk)
-
-    if request.user.role not in [User.Role.MANAGER, User.Role.FOUNDER]:
-        messages.error(request, "У вас нет прав для редактирования заказа")
-        return redirect("orders:order_detail", pk=order.pk)
-
-    senior_cleaner_users = User.objects.filter(role=User.Role.SENIOR_CLEANER, status=User.Status.ACTIVE).order_by('full_name')
-    cleaner_users = User.objects.filter(role=User.Role.CLEANER, status=User.Status.ACTIVE).order_by('full_name')
-
-    if request.method == "POST":
-        action = request.POST.get("action")
+    def get_queryset(self):
+        queryset = Order.objects.select_related(
+            'client', 
+            'service', 
+            'created_by', 
+            'assigned_manager'
+        ).order_by('-scheduled_date', '-scheduled_time')
         
-        # Быстрые действия со статусом (из панели менеджера)
-        if action in ["quick_status", "quick_complete"]:
-            status = request.POST.get("status_manager")
-            if status:
-                order.status_manager = status
-                order.save(update_fields=["status_manager"])
-                messages.success(request, f"Статус заказа {order.code} изменён на {order.get_status_manager_display()}")
-            return redirect("orders:order_detail", pk=order.pk)
-        
-        # Полное редактирование заказа
-        senior_cleaner_id = request.POST.get("senior_cleaner")
-        if senior_cleaner_id:
-            order.senior_cleaner_id = senior_cleaner_id
+        user = self.request.user
+
+        list_type = (self.request.GET.get('type') or 'active').strip().lower()
+        if list_type not in ('active', 'success', 'canceled'):
+            list_type = 'active'
+
+        if list_type == 'success':
+            queryset = queryset.filter(status=OrderStatus.COMPLETED)
+        elif list_type == 'canceled':
+            queryset = queryset.filter(status=OrderStatus.CANCELLED)
         else:
-            order.senior_cleaner = None
-
-        cleaner_ids = request.POST.getlist("cleaners")
-
-        # Обновляем финансовые данные
-        order.final_cost = request.POST.get("final_cost") or order.final_cost
-        order.final_area = request.POST.get("final_area") or order.final_area
-        order.manager_comment = request.POST.get("manager_comment") or order.manager_comment
-        order.status_manager = request.POST.get("status_manager") or order.status_manager
-        order.deadline = request.POST.get("deadline") or order.deadline
+            queryset = queryset.exclude(status__in=[OrderStatus.COMPLETED, OrderStatus.CANCELLED])
         
-        order.save()
-
-        if cleaner_ids is not None:
-            order.cleaners.set(cleaner_ids)
+        # MANAGER видит только переданные заказы или назначенные ему
+        if self._is_manager(user) and not user.is_superuser:
+            queryset = queryset.filter(
+                Q(handed_to_manager=True) |
+                Q(assigned_manager=user)
+            )
         
+        # CLEANER и SENIOR_CLEANER видят только заказы, где они назначены
+        if hasattr(user, 'role') and user.role in ['CLEANER', 'SENIOR_CLEANER'] and not user.is_superuser:
+            from apps.employees.models import Employee
+            try:
+                employee = Employee.objects.get(user=user)
+                queryset = queryset.filter(order_employees__employee=employee)
+            except Employee.DoesNotExist:
+                queryset = queryset.none()
         
-        messages.success(request, f"Заказ {order.code} обновлён")
-        return redirect("orders:order_detail", pk=order.pk)
-
-    # Список описаний шаблонов задач услуги для подсветки доп. задач
-    template_descriptions = []
-    if order.service and hasattr(order.service, 'task_templates'):
-        template_descriptions = list(order.service.task_templates.values_list('description', flat=True))
-
-    context = {
-        'settings': settings,
-        'order': order,
-        'template_descriptions': template_descriptions,
-        'senior_cleaner_users': senior_cleaner_users,
-        'cleaner_users': cleaner_users,
-    }
-    return render(request, "pages/system/others/orders/edit/order-manager-edit.html", context)
-
-
-@login_required
-def order_operator_update(request, pk):
-    """Редактирование заказа оператором"""
-    settings = cms_models.Settings.objects.first()
-    order = get_object_or_404(orders_models.Order, pk=pk)
+        # Поиск
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(order_code__icontains=search) |
+                Q(client__first_name__icontains=search) |
+                Q(client__last_name__icontains=search) |
+                Q(client__phone__icontains=search)
+            )
+        
+        # Фильтр по статусу
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # Фильтр по услуге
+        service = self.request.GET.get('service')
+        if service:
+            queryset = queryset.filter(service_id=service)
+        
+        # Фильтр по дате
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(scheduled_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(scheduled_date__lte=date_to)
+        
+        return queryset
     
-    if request.method == "POST":
-        # Поля, которые может редактировать оператор
-        order.category = request.POST.get("category", order.category)
+    def _is_manager(self, user):
+        """Проверка является ли пользователь менеджером, админом или суперадмином."""
+        if hasattr(user, 'role'):
+            return user.role in ['MANAGER', 'ADMIN', 'SUPER_ADMIN']
+        return user.is_staff or user.is_superuser
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_create_orders'] = can_create_orders(self.request.user)
+        context['can_delete_orders'] = can_delete_orders(self.request.user)
+        context['type_filter'] = (self.request.GET.get('type') or 'active').strip().lower() or 'active'
+        context['search'] = self.request.GET.get('search', '')
+        context['status_filter'] = self.request.GET.get('status', '')
+        context['service_filter'] = self.request.GET.get('service', '')
+        context['date_from'] = self.request.GET.get('date_from', '')
+        context['date_to'] = self.request.GET.get('date_to', '')
+        context['status_choices'] = OrderStatus.choices
+        from apps.services.models import Service
+        context['services'] = Service.objects.filter(is_active=True)
+        return context
+
+
+class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    """Создание нового заказа."""
+    permission_key = 'orders.create'
+    model = Order
+    form_class = OrderForm
+    template_name = 'orders/form.html'
+    success_url = reverse_lazy('orders_list')
+
+    def _is_operator(self, user):
+        """Проверка является ли пользователь оператором."""
+        if hasattr(user, 'role'):
+            return user.role in ['OPERATOR']
+        return False
+
+    def _is_manager(self, user):
+        """Проверка является ли пользователь менеджером или админом."""
+        if hasattr(user, 'role'):
+            return user.role in ['MANAGER', 'ADMIN', 'SUPER_ADMIN']
+        return user.is_staff or user.is_superuser
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not can_create_orders(request.user):
+            raise PermissionDenied('У вас нет прав на создание заказов.')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_initial(self):
+        """Предзаполнение клиента и категории заказа из GET-параметра."""
+        initial = super().get_initial()
+        client_id = self.request.GET.get('client')
+        if client_id:
+            initial['client'] = client_id
+            # Определяем категорию заказа автоматически:
+            # если у клиента уже есть заказы — повторный, иначе — новый.
+            has_previous_orders = Order.objects.filter(client_id=client_id).exists()
+            initial['category'] = (
+                Order.OrderCategory.REPEAT
+                if has_previous_orders
+                else Order.OrderCategory.NEW
+            )
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Создание заказа'
+        context['button_text'] = 'Создать заказ'
+        context['is_create'] = True
+        context['is_manager'] = self._is_manager(self.request.user)
+        context['is_operator'] = self._is_operator(self.request.user)
+        from apps.services.models import Service
+        context['service_prices'] = {
+            str(service.id): str(service.price)
+            for service in Service.objects.filter(is_active=True).only('id', 'price')
+        }
         
-        service_id = request.POST.get("service")
-        service_changed = False
-        if service_id and str(order.service_id) != str(service_id):
-            order.service_id = service_id 
-            service_changed = True
-            
-        order.address = request.POST.get("address", order.address)
-        order.property_type = request.POST.get("property_type") or None
-        order.date_time = request.POST.get("date_time", order.date_time)
-        order.estimated_cost = request.POST.get("estimated_cost") or order.estimated_cost
-        order.estimated_rooms = request.POST.get("estimated_rooms") or order.estimated_rooms
-        order.estimated_sqm = request.POST.get("estimated_sqm") or order.estimated_sqm
-        order.windows_count = request.POST.get("windows_count") or order.windows_count
-        order.bathrooms_count = request.POST.get("bathrooms_count") or order.bathrooms_count
-        order.after_repair = bool(request.POST.get("after_repair"))
-        order.estimated_area = request.POST.get("estimated_area") or order.estimated_area
-        order.notes = request.POST.get("notes", order.notes)
-        order.channel = request.POST.get("channel", order.channel)
-        order.source = request.POST.get("source", order.source)
-        order.priority = request.POST.get("priority", order.priority)
-        order.status_operator = request.POST.get("status_operator", order.status_operator)
+        # Date/time dropdown values
+        from django.utils import timezone
+        import calendar
+        now = timezone.now()
+        context['current_month'] = now.month
+        context['current_day'] = now.day
+        context['current_hour'] = now.hour
+        # Show only next 14 days from today (shorter list)
+        days_in_month = calendar.monthrange(now.year, now.month)[1]
+        end_day = min(now.day + 14, days_in_month)
+        context['days_range'] = range(now.day, end_day + 1)
+        context['hours_range'] = range(8, 21)  # 8:00 - 20:00 working hours
         
-        order.save()
+        # Если клиент предзаполнен, добавляем его в контекст для отображения
+        client_id = self.request.GET.get('client')
+        if client_id:
+            from apps.clients.models import Client
+            try:
+                context['selected_client'] = Client.objects.get(pk=client_id)
+            except Client.DoesNotExist:
+                pass
+        return context
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        # Отправляем уведомление в Telegram
+        try:
+            NotificationService.new_order(self.object)
+        except Exception:
+            pass  # Не блокируем создание заказа если Telegram недоступен
+        return response
+
+    def form_invalid(self, form):
+        logger.warning("OrderCreateView form_invalid errors=%s", form.errors)
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                for err in errors:
+                    messages.error(self.request, str(err))
+                continue
+            label = form.fields.get(field).label if field in form.fields else field
+            for err in errors:
+                messages.error(self.request, f"{label}: {err}")
+        return super().form_invalid(form)
+    
+    def _is_manager(self, user):
+        """Проверка является ли пользователь менеджером или админом."""
+        if hasattr(user, 'role'):
+            return user.role in ['MANAGER', 'ADMIN', 'SUPER_ADMIN']
+        return user.is_staff or user.is_superuser
+
+
+class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    """Детальная страница заказа."""
+    permission_key = 'orders.view'
+    model = Order
+    template_name = 'orders/detail.html'
+    context_object_name = 'order'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not can_view_orders(request.user):
+            raise PermissionDenied('У вас нет доступа к просмотру заказов.')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        return super().get_queryset().select_related('client', 'service')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        order = self.object
         
-        messages.success(request, f"Заказ {order.code} успешно обновлён")
-        return redirect("orders:order_detail", pk=order.pk)
+        # Can transfer to manager: OPERATOR, FOUNDER, SUPER_ADMIN
+        context['can_transfer_to_manager'] = self._can_transfer(user)
+        
+        # Can edit order: based on permissions
+        context['can_edit_order'] = can_edit_orders(user)
+        
+        # Status actions for different roles
+        context['operator_actions'] = OrderStatusChecker.get_operator_actions(order, user)
+        context['manager_actions'] = OrderStatusChecker.get_manager_actions(order, user)
+        context['senior_actions'] = OrderStatusChecker.get_senior_actions(order, user)
+        
+        # Helper properties for status display
+        context['order_status_display'] = order.get_status_display()
+        context['operator_status_display'] = order.get_operator_status_display()
+        context['manager_status_display'] = order.get_manager_status_display()
+        context['senior_cleaner_status_display'] = order.get_senior_cleaner_status_display()
+        
+        # Employees for "Move to Process" modal - берем из Пользователей по роли
+        from apps.accounts.models import User
+        context['senior_cleaners'] = User.objects.filter(
+            role='SENIOR_CLEANER'
+        ).select_related('employee')
+        context['cleaners'] = User.objects.filter(
+            role='CLEANER'
+        ).select_related('employee')
+
+        # Assigned employees and notes (for display)
+        senior_assignment = order.order_employees.select_related('employee__user').filter(
+            role_on_order='senior_cleaner'
+        ).first()
+        context['assigned_senior_cleaner'] = senior_assignment
+        context['assigned_cleaners'] = order.order_employees.select_related('employee__user').filter(
+            role_on_order='cleaner'
+        )
+        context['assigned_cleaner_ids'] = list(
+            context['assigned_cleaners'].values_list('employee_id', flat=True)
+        )
+        context['assigned_cleaner_user_ids'] = list(
+            context['assigned_cleaners'].values_list('employee__user_id', flat=True)
+        )
+        context['notes_for_cleaners'] = (senior_assignment.notes if senior_assignment else '')
+        
+        # Фактическое время выполнения работы
+        if senior_assignment and senior_assignment.started_at and senior_assignment.finished_at:
+            duration = senior_assignment.finished_at - senior_assignment.started_at
+            context['actual_work_hours'] = round(duration.total_seconds() / 3600, 2)
+        else:
+            context['actual_work_hours'] = None
+        
+        # Task counters for checklist
+        # Доп. задачи создаются с высоким order_position (>= 100000) и отображаются отдельно
+        all_tasks_qs = order.tasks.order_by('order_position', 'id')
+        context['extra_tasks_list'] = all_tasks_qs.filter(order_position__gte=100000)
+        context['tasks_list'] = all_tasks_qs.filter(order_position__lt=100000)  # Только обычные задачи
+        context['tasks_total'] = context['tasks_list'].count()
+        context['tasks_completed'] = context['tasks_list'].filter(
+            status__in=['DONE', 'SKIPPED']
+        ).count()
+        
+        return context
     
-    clients = clients_models.Client.objects.all()
-    services = cms_models.Services.objects.all()
-    return render(request, "pages/system/others/orders/edit/order-operator-edit.html", locals())
+    def _can_transfer(self, user):
+        """Проверка: может ли пользователь передать заказ менеджеру."""
+        if user.is_superuser:
+            return True
+        if hasattr(user, 'role'):
+            return user.role in ['OPERATOR', 'FOUNDER', 'SUPER_ADMIN']
+        return False
 
 
-@login_required
-def order_send_to_manager(request, pk):
-    """Передача заказа менеджеру (автоматически меняет статус на ACCEPTED)"""
-    order = get_object_or_404(orders_models.Order, pk=pk)
+class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """Редактирование заказа."""
+    permission_key = 'orders.edit'
+    model = Order
+    form_class = OrderForm
+    template_name = 'orders/form.html'
     
-    # Меняем статус оператора на "Принято"
-    order.status_operator = orders_models.Order.OperatorStatus.ACCEPTED
-    # Устанавливаем статус менеджера на "Назначен"
-    order.status_manager = orders_models.Order.ManagerStatus.ASSIGNED
-    order.save()
+    def get_success_url(self):
+        """Redirect to order detail for managers, order list for operators."""
+        if self._is_manager(self.request.user):
+            return reverse('order_detail', kwargs={'pk': self.object.pk})
+        return reverse('orders_list')
     
-    # Автоматически создаем задачи из шаблонов для выбранной услуги (без дублей)
-    if order.service and hasattr(order.service, 'task_templates'):
-        task_templates = order.service.task_templates.all()
-        existing_desc = set(order.tasks.values_list('description', flat=True))
-        added = 0
-        for template in task_templates:
-            if template.description not in existing_desc:
-                orders_models.Task.objects.create(
-                    order=order,
-                    description=template.description,
-                    status='IN_PROGRESS'
-                )
-                added += 1
-        if added:
-            messages.info(request, f"Автоматически добавлено {added} задач(и) из шаблона")
+    def dispatch(self, request, *args, **kwargs):
+        if not can_edit_orders(request.user):
+            raise PermissionDenied('У вас нет прав на редактирование заказов.')
+        return super().dispatch(request, *args, **kwargs)
     
-    messages.success(request, f"Заказ {order.code} успешно передан менеджеру")
-    return redirect("orders:order_detail", pk=order.pk)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редактирование заказа'
+        context['button_text'] = 'Сохранить'
+        context['is_manager'] = self._is_manager(self.request.user)
+        context['is_operator'] = self._is_operator(self.request.user)
+        from apps.services.models import Service
+        context['service_prices'] = {
+            str(service.id): str(service.price)
+            for service in Service.objects.filter(is_active=True).only('id', 'price')
+        }
+        
+        # Данные для менеджера: клинеры, старшие клинеры, назначения
+        order = self.get_object()
+        from apps.employees.models import Employee
+        from apps.accounts.models import User
+        from apps.tasks.models import OrderTask
 
+        # Текущий назначенный старший клинер
+        assigned_senior = order.order_employees.filter(role_on_order='senior_cleaner').first()
+        context['assigned_senior_cleaner'] = assigned_senior
 
-@login_required
-def task_create(request, order_id):
-    settings = cms_models.Settings.objects.first()
-    order = get_object_or_404(orders_models.Order, pk=order_id)
+        # Текущие назначенные клинеры
+        assigned_cleaners = order.order_employees.filter(role_on_order='cleaner')
+        context['assigned_cleaners'] = assigned_cleaners
+        context['assigned_cleaner_ids'] = [ac.employee.user_id for ac in assigned_cleaners]
 
-    if request.method == "POST":
-        orders_models.Task.objects.create(
+        # Список старших клинеров: только пользователи с ролью SENIOR_CLEANER
+        senior_cleaner_users = User.objects.filter(
+            role='SENIOR_CLEANER',
+            is_active=True,
+        ).distinct()
+        context['senior_cleaners'] = senior_cleaner_users
+        
+        # Список обычных клинеров: только пользователи с ролью CLEANER
+        cleaner_users = User.objects.filter(
+            role='CLEANER',
+            is_active=True,
+        ).distinct()
+        context['cleaners'] = cleaner_users
+        
+        # Комментарий для клинеров (из заметок старшего клинера)
+        if assigned_senior:
+            context['notes_for_cleaners'] = assigned_senior.notes or ''
+        else:
+            context['notes_for_cleaners'] = ''
+        
+        # Дополнительные задачи (extra_tasks)
+        context['extra_tasks'] = OrderTask.objects.filter(
             order=order,
-            description=request.POST.get("description"),
-        )
-        messages.success(request, "Задача добавлена")
-        return redirect("orders:order_detail", pk=order.pk)
-
-    return render(request, "pages/system/others/orders/task-form.html", locals())
-
-
-@login_required
-def task_update(request, pk):
-    settings = cms_models.Settings.objects.first()
-    task = get_object_or_404(orders_models.Task, pk=pk)
-
-    if request.method == "POST":
-        task.description = request.POST.get("description", task.description)
-        task.status = request.POST.get("status", task.status)
+            order_position__gte=100000  # Доп. задачи имеют позиции >= 100000
+        ).order_by('order_position')
         
-        cleaner_id = request.POST.get("cleaner")
-        if cleaner_id:
-            task.cleaner_id = cleaner_id
-        else:
-            task.cleaner = None
+        return context
+    
+    def form_valid(self, form):
+        """Обработка сохранения формы с дополнительными полями менеджера."""
+        response = super().form_valid(form)
+        
+        # Обрабатываем поля менеджера только если пользователь - менеджер
+        if self._is_manager(self.request.user):
+            order = self.object
             
-        if "photo_before" in request.FILES:
-            task.photo_before = request.FILES["photo_before"]
-        if "photo_after" in request.FILES:
-            task.photo_after = request.FILES["photo_after"]
-        task.comment = request.POST.get("comment", task.comment)
-        task.save()
-
-        messages.success(request, "Задача обновлена")
-        return redirect("orders:order_manager_update", pk=task.order.pk)
-
-    return render(request, "pages/system/others/orders/task-form.html", locals())
-
-
-@login_required
-def task_delete(request, pk):
-    """Удаление задачи"""
-    task = get_object_or_404(orders_models.Task, pk=pk)
-    order_id = task.order.pk
+            # Получаем данные из POST
+            senior_cleaner_id = self.request.POST.get('senior_cleaner')
+            cleaners_ids = self.request.POST.getlist('cleaners')
+            notes_for_cleaners = self.request.POST.get('notes_for_cleaners', '')
+            extra_task_titles = self.request.POST.getlist('extra_task_title')
+            extra_task_rooms = self.request.POST.getlist('extra_task_room')
+            
+            from apps.employees.models import Employee
+            from apps.accounts.models import User
+            from apps.tasks.models import OrderTask, OrderTaskStatus
+            from decimal import Decimal, InvalidOperation
+            
+            def get_or_create_employee_from_user(user_id):
+                """Получает или создает Employee по user_id."""
+                try:
+                    return Employee.objects.get(user_id=user_id)
+                except Employee.DoesNotExist:
+                    user = User.objects.get(pk=user_id)
+                    employee = Employee.objects.create(
+                        user=user,
+                        status='ACTIVE',
+                        employee_code=None
+                    )
+                    return employee
+            
+            # Назначаем старшего клинера (если выбран)
+            if senior_cleaner_id:
+                try:
+                    senior_cleaner = get_or_create_employee_from_user(senior_cleaner_id)
+                    
+                    # Удаляем предыдущего старшего клинера (если меняли)
+                    order.order_employees.filter(
+                        role_on_order='senior_cleaner'
+                    ).exclude(employee=senior_cleaner).delete()
+                    
+                    # Создаем/обновляем запись старшего клинера и сохраняем заметку
+                    OrderEmployee.objects.update_or_create(
+                        order=order,
+                        employee=senior_cleaner,
+                        defaults={
+                            'role_on_order': 'senior_cleaner',
+                            'notes': notes_for_cleaners,
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not assign senior cleaner {senior_cleaner_id}: {e}")
+            else:
+                # Если старшего клинера сняли с заказа
+                order.order_employees.filter(role_on_order='senior_cleaner').delete()
+            
+            # Назначаем обычных клинеров
+            selected_cleaners = []
+            for cleaner_id in cleaners_ids:
+                try:
+                    cleaner = get_or_create_employee_from_user(cleaner_id)
+                    selected_cleaners.append(cleaner.pk)
+                    OrderEmployee.objects.update_or_create(
+                        order=order,
+                        employee=cleaner,
+                        defaults={'role_on_order': 'cleaner'}
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not assign cleaner {cleaner_id}: {e}")
+                    continue
+            
+            # Удаляем клинеров, которых сняли
+            if selected_cleaners:
+                order.order_employees.filter(
+                    role_on_order='cleaner'
+                ).exclude(employee_id__in=selected_cleaners).delete()
+            else:
+                order.order_employees.filter(role_on_order='cleaner').delete()
+            
+            # Обновляем доп. задачи: удаляем старые и создаем новые
+            if extra_task_titles:
+                # Удаляем существующие доп. задачи
+                OrderTask.objects.filter(
+                    order=order,
+                    order_position__gte=100000
+                ).delete()
+                
+                # Создаем новые доп. задачи
+                base_pos = 100000
+                for idx, raw_title in enumerate(extra_task_titles):
+                    title = (raw_title or '').strip()
+                    if not title:
+                        continue
+                    
+                    room = ''
+                    if idx < len(extra_task_rooms):
+                        room = (extra_task_rooms[idx] or '').strip()
+                    
+                    description = f"Комната: {room}" if room else ''
+                    OrderTask.objects.create(
+                        order=order,
+                        title=title,
+                        description=description,
+                        order_position=base_pos + idx + 1,
+                        status=OrderTaskStatus.PENDING,
+                    )
+        
+        return response
     
-    if request.method == "POST":
-        task.delete()
-        messages.success(request, "Задача удалена")
+    def _is_operator(self, user):
+        """Проверка является ли пользователь оператором."""
+        if hasattr(user, 'role'):
+            return user.role in ['OPERATOR']
+        return False
+
+    def _is_manager(self, user):
+        """Проверка является ли пользователь менеджером или админом."""
+        if hasattr(user, 'role'):
+            return user.role in ['MANAGER', 'ADMIN', 'SUPER_ADMIN']
+        return user.is_staff or user.is_superuser
+
+
+class OrderDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """Удаление заказа."""
+    permission_key = 'orders.delete'
+    model = Order
+    template_name = 'orders/delete.html'
+    success_url = reverse_lazy('orders_list')
+    context_object_name = 'order'
     
-    return redirect("orders:order_manager_update", pk=order_id)
+    def dispatch(self, request, *args, **kwargs):
+        if not can_delete_orders(request.user):
+            raise PermissionDenied('У вас нет прав на удаление заказов.')
+        return super().dispatch(request, *args, **kwargs)
 
 
-@login_required
-def order_revert_to_work(request, pk):
-    """Вернуть заказ с проверки обратно в работу. Доступно для MANAGER, FOUNDER."""
-    from django.utils import timezone  # noqa: F401 (может пригодиться в будущем)
-
-    order = get_object_or_404(orders_models.Order, pk=pk)
-
-    if request.user.role not in ['MANAGER', 'FOUNDER']:
-        messages.error(request, "У вас нет прав для этого действия")
-        return redirect("orders:order_detail", pk=pk)
-    if request.method == "POST":
-        if order.status_manager == 'PENDING_REVIEW':
-            order.status_manager = 'IN_PROGRESS'
-            order.work_finished_at = None
-            order.save()
-            messages.success(request, f"Заказ {order.code} возвращён в работу")
-        else:
-            messages.info(request, "Заказ не находится на проверке")
-        return redirect("orders:order_detail", pk=pk)
+class OrderHandToManagerView(LoginRequiredMixin, View):
+    """Предать заказ менеджеру."""
     
-    return redirect("orders:order_detail", pk=pk)
-@login_required
-def order_calendar_events(request):
-    status = request.GET.get("status", "all").lower()
-
-    qs = orders_models.Order.objects.select_related("client", "service")
-
-    if status == "completed":
-        qs = qs.filter(status_manager=orders_models.Order.ManagerStatus.COMPLETED)
-    elif status == "declined":
-        qs = qs.filter(
-            models.Q(status_manager=orders_models.Order.ManagerStatus.DECLINED)
-            | models.Q(status_operator=orders_models.Order.OperatorStatus.DECLINED)
-        )
-    elif status == "active":
-        qs = qs.filter(
-            models.Q(status_manager__in=[
-                orders_models.Order.ManagerStatus.ASSIGNED,
-                orders_models.Order.ManagerStatus.IN_PROGRESS,
-                orders_models.Order.ManagerStatus.PENDING_REVIEW,
-            ])
-            | models.Q(status_manager__isnull=True)
-        ).exclude(
-            models.Q(status_manager=orders_models.Order.ManagerStatus.COMPLETED)
-            | models.Q(status_manager=orders_models.Order.ManagerStatus.DECLINED)
-            | models.Q(status_operator=orders_models.Order.OperatorStatus.DECLINED)
-        )
-
-    events = []
-    for order in qs:
-        if order.status_manager == orders_models.Order.ManagerStatus.COMPLETED:
-            category = "completed"
-        elif (
-            order.status_manager == orders_models.Order.ManagerStatus.DECLINED
-            or order.status_operator == orders_models.Order.OperatorStatus.DECLINED
-        ):
-            category = "declined"
-        else:
-            category = "active"
-
-        title_parts = [order.code]
-        if order.client:
-            title_parts.append(str(order.client))
-        if order.service:
-            title_parts.append(order.service.title)
-
-        events.append(
-            {
-                "id": order.id,
-                "title": " | ".join(title_parts),
-                "start": order.date_time.isoformat() if order.date_time else None,
-                "end": order.deadline.isoformat() if order.deadline else None,
-                "extendedProps": {
-                    "code": order.code,
-                    "status_manager": order.status_manager,
-                    "status_operator": order.status_operator,
-                    "category": category,
-                    "address": order.address,
-                },
-            }
-        )
-
-    return JsonResponse(events, safe=False)
-
-
-@login_required
-def order_calendar_page(request):
-    settings = cms_models.Settings.objects.first()
-    return render(request, "pages/system/others/orders/order_calendar.html", {"settings": settings})
-
-@login_required
-def order_finish_work(request, pk):
-    """Менеджер/Основатель завершает работу и отправляет заказ на проверку"""
-    from django.utils import timezone
-
-    order = get_object_or_404(orders_models.Order, pk=pk)
-
-    # Только менеджер или основатель
-    if request.user.role not in ['MANAGER', 'FOUNDER']:
-        messages.error(request, "У вас нет прав для этого действия")
-        return redirect("orders:order_detail", pk=pk)
-
-    if request.method == "POST":
-        order.work_finished_at = timezone.now()
-        order.status_manager = orders_models.Order.ManagerStatus.PENDING_REVIEW
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        # Проверка прав
+        if not can_edit_orders(request.user):
+            raise PermissionDenied('У вас нет прав на редактирование заказов.')
+        
+        # Устанавливаем флаг и дату передачи
+        order.handed_to_manager = True
+        order.handed_to_manager_at = timezone.now()
         order.save()
-        messages.success(request, f"Работа по заказу {order.code} завершена и отправлена на проверку")
-        return redirect("orders:order_detail", pk=pk)
+        
+        messages.success(request, 'Заказ успешно передан менеджеру.')
+        return redirect('order_detail', pk=order.pk)
 
-    return redirect("orders:order_detail", pk=pk)
 
-@login_required
-def order_quality_check(request, pk):
-    """Проверка качества менеджером"""
-    from django.utils import timezone
+class OrderTransferToManagerView(LoginRequiredMixin, View):
+    """Передать заказ оператором менеджеру для обработки."""
     
-    order = get_object_or_404(orders_models.Order, pk=pk)
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.transfer_to_manager(order, request.user)
+            messages.success(
+                request, 
+                f'Заказ #{order.pk} успешно передан менеджеру. Менеджер теперь может работать с заказом.'
+            )
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class OrderRejectByOperatorView(LoginRequiredMixin, View):
+    """Оператор отменяет заказ."""
     
-    # Только менеджер или основатель
-    if request.user.role not in ['MANAGER', 'FOUNDER']:
-        messages.error(request, "Только менеджер может проверять качество")
-        return redirect("orders:order_detail", pk=pk)
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        reason = request.POST.get('reason', '')
+        
+        try:
+            OrderStatusService.reject_by_operator(order, request.user, reason)
+            messages.success(request, f'Заказ #{order.pk} отклонён.')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class OrderConfirmSuccessView(LoginRequiredMixin, View):
+    """Оператор подтверждает успешное завершение заказа."""
     
-    if request.method == "POST":
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.operator_mark_success(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} успешно завершён!')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class ManagerAcceptOrderView(LoginRequiredMixin, View):
+    """Менеджер принимает заказ в работу."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.manager_accept(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} принят в работу.')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class ManagerMoveToProcessView(LoginRequiredMixin, View):
+    """Менеджер переводит заказ в процесс с назначением клинеров."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        # DEBUG: логируем что пришло
+        logger.info(f"[DEBUG] ManagerMoveToProcessView: user={request.user}, role={getattr(request.user, 'role', 'NO ROLE')}")
+        logger.info(f"[DEBUG] POST data: senior_cleaner={request.POST.get('senior_cleaner')}, cleaners={request.POST.getlist('cleaners')}, notes={request.POST.get('notes_for_cleaners', '')[:50]}")
+        
         # Получаем данные из формы
-        quality_rating = request.POST.get("quality_rating")
-        quality_comment = request.POST.get("quality_comment")
-        decision = request.POST.get("decision")  # COMPLETED или IN_PROGRESS
+        final_price = request.POST.get('final_price')
+        senior_cleaner_id = request.POST.get('senior_cleaner')
+        cleaners_ids = request.POST.getlist('cleaners')
+        notes_for_cleaners = request.POST.get('notes_for_cleaners', '')
+        extra_task_titles = request.POST.getlist('extra_task_title')
+        extra_task_rooms = request.POST.getlist('extra_task_room')
         
-        # Сохраняем оценку
-        order.quality_rating = quality_rating
-        order.quality_comment = quality_comment
-        order.reviewed_at = timezone.now()
-        order.reviewed_by = request.user
-        order.status_manager = decision
-        order.save()
+        try:
+            with transaction.atomic():
+                # Обновляем цену если указана
+                if final_price:
+                    try:
+                        order.price = Decimal(final_price)
+                        order.save(update_fields=['price'])
+                    except (ValueError, InvalidOperation):
+                        pass
+
+                # Назначаем старшего клинера (обязательно)
+                if not senior_cleaner_id:
+                    raise ValueError('Выберите старшего клинера.')
+
+                from apps.employees.models import Employee
+                from apps.accounts.models import User
+                
+                def get_or_create_employee_from_user(user_id):
+                    """Получает или создает Employee по user_id."""
+                    try:
+                        return Employee.objects.get(user_id=user_id)
+                    except Employee.DoesNotExist:
+                        # Создаем Employee для пользователя
+                        user = User.objects.get(pk=user_id)
+                        employee = Employee.objects.create(
+                            user=user,
+                            status='ACTIVE',
+                            employee_code=None
+                        )
+                        return employee
+                
+                senior_cleaner = get_or_create_employee_from_user(senior_cleaner_id)
+
+                # Удаляем предыдущего старшего клинера (если меняли)
+                order.order_employees.filter(
+                    role_on_order='senior_cleaner'
+                ).exclude(employee=senior_cleaner).delete()
+
+                # Создаем/обновляем запись старшего клинера и сохраняем заметку
+                OrderEmployee.objects.update_or_create(
+                    order=order,
+                    employee=senior_cleaner,
+                    defaults={
+                        'role_on_order': 'senior_cleaner',
+                        'notes': notes_for_cleaners,
+                    }
+                )
+
+                # Назначаем обычных клинеров
+                selected_cleaners = []
+                for cleaner_id in cleaners_ids:
+                    try:
+                        cleaner = get_or_create_employee_from_user(cleaner_id)
+                        selected_cleaners.append(cleaner.pk)
+                        OrderEmployee.objects.update_or_create(
+                            order=order,
+                            employee=cleaner,
+                            defaults={'role_on_order': 'cleaner'}
+                        )
+                    except Exception as e:
+                        logger.warning(f"Could not assign cleaner {cleaner_id}: {e}")
+                        continue
+
+                # Удаляем клинеров, которых сняли
+                if selected_cleaners:
+                    order.order_employees.filter(
+                        role_on_order='cleaner'
+                    ).exclude(employee_id__in=selected_cleaners).delete()
+                else:
+                    order.order_employees.filter(role_on_order='cleaner').delete()
+
+                # Доп. задачи (создаем как OrderTask)
+                if extra_task_titles:
+                    from apps.tasks.models import OrderTask, OrderTaskStatus
+
+                    # Ставим доп. задачи в самый низ списка всегда (не зависит от текущих позиций)
+                    base_pos = 100000
+
+                    for idx, raw_title in enumerate(extra_task_titles):
+                        title = (raw_title or '').strip()
+                        if not title:
+                            continue
+
+                        room = ''
+                        if idx < len(extra_task_rooms):
+                            room = (extra_task_rooms[idx] or '').strip()
+
+                        description = f"Комната: {room}" if room else ''
+                        OrderTask.objects.create(
+                            order=order,
+                            title=title,
+                            description=description,
+                            order_position=base_pos + idx + 1,
+                            status=OrderTaskStatus.PENDING,
+                        )
+
+                OrderStatusService.manager_move_to_process(order, request.user)
+
+            # Дополнительная защита: фиксируем статус менеджера,
+            # чтобы кнопка "Перевести в процесс" не появлялась повторно.
+            if order.manager_status != Order.ManagerStatus.PROCESS:
+                order.manager_status = Order.ManagerStatus.PROCESS
+                order.save(update_fields=['manager_status'])
+            messages.success(request, f'Заказ #{order.pk} переведён в процесс и клинеры назначены.')
+
+            # Детальное уведомление в Telegram (тема «Уведомления»)
+            try:
+                from apps.notifications.services.telegram_service import TelegramService
+                order.refresh_from_db()
+                senior_oe = order.order_employees.filter(role_on_order='senior_cleaner').select_related('employee__user').first()
+                cleaner_oes = order.order_employees.filter(role_on_order='cleaner').select_related('employee__user')
+                senior_name = senior_oe.employee.user.full_name if senior_oe and senior_oe.employee else '—'
+                cleaner_names = ', '.join(
+                    oe.employee.user.full_name for oe in cleaner_oes if oe.employee and oe.employee.user
+                ) or '—'
+                price_str = f"{order.price} сом" if order.price else '—'
+                sched_date = order.scheduled_date.strftime('%d.%m.%Y') if order.scheduled_date else '—'
+                sched_time = order.scheduled_time.strftime('%H:%M') if order.scheduled_time else ''
+                manager_name = getattr(request.user, 'full_name', '') or getattr(request.user, 'phone', str(request.user))
+                text = (
+                    f"🧹 <b>Заказ отправлен в работу</b>\n\n"
+                    f"📋 Заказ: <b>{order.order_code}</b>\n"
+                    f"🛁 Услуга: {order.service.name if order.service else '—'}\n"
+                    f"👤 Клиент: {order.client.get_full_name() if order.client else '—'}\n"
+                    f"📍 Адрес: {order.address or '—'}\n"
+                    f"📅 Дата: {sched_date} {sched_time}\n\n"
+                    f"⭐ Ст. клинер: {senior_name}\n"
+                    f"👥 Клинеры: {cleaner_names}\n"
+                    f"💰 Итоговая цена: {price_str}\n\n"
+                    f"👨‍💼 Менеджер: {manager_name}"
+                )
+                TelegramService().send_cleaner_message(text)
+            except Exception:
+                pass
+
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            logger.exception('ManagerMoveToProcessView failed for order_id=%s', order.pk)
+            messages.error(
+                request,
+                f'Не удалось перевести заказ в процесс: {e}'
+            )
         
-        if decision == 'COMPLETED':
-            messages.success(request, f"Заказ {order.code} принят и завершён. Оценка: {quality_rating}/5")
-        else:
-            messages.warning(request, f"Заказ {order.code} отправлен на переделку")
-        
-        return redirect("orders:order_detail", pk=pk)
+        return redirect('order_detail', pk=order.pk)
+
+
+class ManagerMarkDeliveredView(LoginRequiredMixin, View):
+    """Менеджер сдаёт проект."""
     
-    return redirect("orders:order_detail", pk=pk)
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.manager_mark_delivered(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} сдан!')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class SeniorAcceptOrderView(LoginRequiredMixin, View):
+    """Старший клинер принимает заказ."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.senior_accept(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} принят.')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class SeniorStartWorkView(LoginRequiredMixin, View):
+    """Старший клинер начинает работу."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.senior_start_work(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} в работе.')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class SeniorSendForReviewView(LoginRequiredMixin, View):
+    """Старший клинер отправляет заказ на проверку."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        try:
+            OrderStatusService.senior_send_for_review(order, request.user)
+            messages.success(request, f'Заказ #{order.pk} отправлен на проверку менеджеру.')
+        except PermissionDenied as e:
+            messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)

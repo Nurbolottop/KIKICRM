@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ {{ order.order_code }} | KIKI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --kiki-primary: #667eea;
+            --kiki-secondary: #764ba2;
+            --kiki-success: #00d2a0;
+            --kiki-warning: #ffd93d;
+            --kiki-danger: #ff6b9d;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: linear-gradient(135deg, var(--kiki-primary) 0%, var(--kiki-secondary) 100%);
+            padding: 1.75rem 1rem;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 1.3rem;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .back-btn:hover {
+            transform: translateX(-4px);
+        }
+        .page-header h5 {
+            color: white;
+            font-weight: 600;
+            margin: 0;
+        }
+        .order-code {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 0.5px;
+        }
+        .status-badge {
+            padding: 0.6rem 1.25rem;
+            border-radius: 25px;
+            font-weight: 600;
+            display: inline-block;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+            font-size: 0.9rem;
+        }
+        .status-new { background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); color: #d63031; }
+        .status-confirmed { background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%); color: #2d3436; }
+        .status-inprogress { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); color: white; }
+        .status-completed { background: linear-gradient(135deg, var(--kiki-success) 0%, #00b894 100%); color: white; }
+        .status-cancelled { background: linear-gradient(135deg, var(--kiki-danger) 0%, #d63031 100%); color: white; }
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.75rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(102, 126, 234, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+        }
+        .info-card h6 {
+            color: #2d3436;
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+        }
+        .info-card h6 i {
+            color: var(--kiki-primary);
+            margin-right: 0.5rem;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #f5f6fa;
+            align-items: center;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #636e72;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .info-value {
+            font-weight: 600;
+            color: #2d3436;
+            text-align: right;
+            font-size: 0.95rem;
+        }
+        .info-value a {
+            color: var(--kiki-primary);
+            font-weight: 600;
+        }
+        .service-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--kiki-primary) 0%, var(--kiki-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0.5rem 0 1rem 0;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            padding: 0.85rem 0;
+            z-index: 1000;
+            border-top: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        .nav-item {
+            color: #95a5a6;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.8rem;
+            display: block;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .nav-item.active {
+            color: var(--kiki-primary);
+        }
+        .nav-item:hover {
+            color: var(--kiki-primary);
+        }
+        .nav-item i {
+            font-size: 1.6rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .checklist-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1.15rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 14px;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+        .checklist-item:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+            transform: translateX(4px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .checklist-checkbox {
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2.5px solid #b2bec3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: #b2bec3;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        .checklist-item.completed .checklist-checkbox {
+            background: linear-gradient(135deg, var(--kiki-primary) 0%, var(--kiki-secondary) 100%);
+            border-color: var(--kiki-primary);
+            color: white;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        .checklist-text {
+            flex: 1;
+            color: #2d3436;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .checklist-item.completed .checklist-text {
+            text-decoration: line-through;
+            color: #95a5a6;
+        }
+        .room-title {
+            font-weight: 700;
+            color: #2d3436;
+            margin: 1.5rem 0 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.05rem;
+        }
+        .room-title i {
+            color: var(--kiki-primary);
+        }
+        .task-right {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .task-assign-select {
+            min-width: 160px;
+            border-radius: 8px;
+            border-color: #dfe6e9;
+        }
+        .start-work-bar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            border-radius: 0 0 16px 16px;
+            margin-bottom: 1rem;
+        }
+        .timer-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-sm {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.4rem 0.9rem;
+        }
+        .btn-outline-primary {
+            border-color: var(--kiki-primary);
+            color: var(--kiki-primary);
+        }
+        .btn-outline-primary:hover {
+            background: var(--kiki-primary);
+            border-color: var(--kiki-primary);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--kiki-success) 0%, #00b894 100%);
+            border: none;
+        }
+        .badge {
+            border-radius: 8px;
+            padding: 0.4rem 0.75rem;
+            font-weight: 600;
+        }
+        .start-work-btn {
+            background: linear-gradient(135deg, var(--kiki-success) 0%, #00b894 100%) !important;
+            border: none !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(0, 210, 160, 0.3);
+            transition: all 0.3s;
+        }
+        .start-work-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 160, 0.4);
+        }
+        .start-work-btn i {
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+                <div>
+                    <a href="{% url 'orders_cl' %}" class="back-btn">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <h5 class="mt-2 mb-0">Детали заказа</h5>
+                </div>
+            </div>
+        </div>
+
+    <div class="container">
+
+        {% if is_senior %}
+        <div class="start-work-bar">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                    {% if work_started and work_started_at %}
+                        <span class="timer-pill">
+                            <i class="bi bi-stopwatch"></i>
+                            <span id="order-timer" 
+                                  data-start="{{ work_started_at|date:'c' }}"
+                                  {% if work_finished_at %}data-end="{{ work_finished_at|date:'c' }}"{% endif %}>
+                                00:00:00
+                            </span>
+                        </span>
+                        {% if order.service.service_deadline_hours %}
+                        <span class="text-muted small">
+                            <i class="bi bi-clock-history"></i>
+                            Дедлайн: {{ order.service.service_deadline_hours }} ч
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted small">Сначала распределите задачи, затем начните работу</span>
+                    {% endif %}
+                    {% if work_started %}
+                        <span class="nav-item active" style="cursor: default;">
+                            <i class="bi bi-play-circle"></i>
+                            <span>В работе</span>
+                        </span>
+                    {% else %}
+                        <form method="post" action="{% url 'start_work_cl' order.id %}" class="m-0" id="start-work-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn start-work-btn" id="start-work-btn">
+                                <i class="bi bi-play-circle me-2"></i>
+                                <span>Начать работу</span>
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if order.senior_cleaner_status == 'SENT_FOR_REVIEW' %}
+                        <div class="d-flex flex-column align-items-center gap-1">
+                            <span class="nav-item" style="cursor: default; color: #00b894;">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>Отправлено</span>
+                            </span>
+                            <form method="post" action="{% url 'cancel_senior_review_cl' order.id %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">
+                                    Отменить
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <form method="post" action="{% url 'senior_done_cl' order.id %}" class="m-0" id="senior-done-form">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-item" id="senior-done-btn" style="background: none; border: 0; width: 100%; padding: 0;" disabled>
+                                <i class="bi bi-check2-circle"></i>
+                                <span>Сделано</span>
+                            </button>
+                        </form>
+                    {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        <!-- Order Code & Status -->
+        <div class="text-center mb-3">
+            <div class="order-code">{{ order.order_code }}</div>
+            <div>
+                {% if order.status == 'NEW' %}
+                    <span class="status-badge status-new">Новый</span>
+                {% elif order.status == 'CONFIRMED' %}
+                    <span class="status-badge status-confirmed">Подтверждён</span>
+                {% elif order.status == 'IN_PROGRESS' %}
+                    <span class="status-badge status-inprogress">В работе</span>
+                {% elif order.status == 'COMPLETED' %}
+                    <span class="status-badge status-completed">Завершён</span>
+                {% elif order.status == 'CANCELLED' %}
+                    <span class="status-badge status-cancelled">Отменён</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Order Info -->
+        <div class="info-card">
+            <h6><i class="bi bi-card-text me-2"></i>Основная информация</h6>
+
+            {% if order.service %}
+            <div class="service-name">{{ order.service.name }}</div>
+            {% if order.service.description %}
+            <p class="text-muted small mb-3">{{ order.service.description|truncatechars:110 }}</p>
+            {% endif %}
+            {% endif %}
+
+            <div class="info-row">
+                <span class="info-label">Клиент</span>
+                <span class="info-value">{{ order.client.get_full_name|default:order.client.phone }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Телефон</span>
+                <span class="info-value">
+                    <a href="tel:{{ order.client.phone }}" class="text-decoration-none">
+                        {{ order.client.phone }}
+                    </a>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Дата</span>
+                <span class="info-value">{{ order.scheduled_date|date:"d.m.Y" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Время</span>
+                <span class="info-value">{{ order.scheduled_time|time:"H:i" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Адрес</span>
+                <span class="info-value">{{ order.address }}</span>
+            </div>
+            {% if order.total_price %}
+            <div class="info-row">
+                <span class="info-label">Стоимость</span>
+                <span class="info-value">{{ order.total_price }} сом</span>
+            </div>
+            {% endif %}
+            {% if order.comment %}
+            <div class="info-row">
+                <span class="info-label">Комментарий</span>
+                <span class="info-value">{{ order.comment }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Assigned Cleaners -->
+        {% if all_assigned_cleaners %}
+        <div class="info-card">
+            <h6><i class="bi bi-people me-2"></i>Назначенные клинеры</h6>
+            {% for oe in all_assigned_cleaners %}
+            <div class="info-row">
+                <span class="info-label">
+                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                </span>
+                <span class="info-value">
+                    {% if oe.employee.user.role == 'SENIOR_CLEANER' %}
+                        <span class="badge bg-warning text-dark">Ст. клинер</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Клинер</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Checklist -->
+        {% if task_groups or extra_tasks %}
+        <div class="info-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Чеклист задач</h6>
+                {% if can_assign and not work_started %}
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm" id="bulk-assign-all-select" style="min-width: 220px;">
+                            <option value="">Назначить всем...</option>
+                            {% for emp in assigned_employees %}
+                                <option value="{{ emp.id }}">{{ emp.user.full_name|default:emp.user.phone }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" type="button" id="bulk-assign-all-btn">
+                            Применить
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% for room, tasks in task_groups.items %}
+                <div class="room-title">
+                    <span><i class="bi bi-door-open me-2"></i>{{ room }}</span>
+                    <span class="d-flex align-items-center gap-2">
+                        <span class="text-muted small">{{ tasks|length }} задач</span>
+                        {% if can_assign and not work_started %}
+                            <select class="form-select form-select-sm bulk-room-select" data-room="{{ room }}" style="min-width: 200px;">
+                                <option value="">Всем в комнате...</option>
+                                {% for emp in assigned_employees %}
+                                    <option value="{{ emp.id }}">{{ emp.user.full_name|default:emp.user.phone }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary bulk-room-btn" type="button" data-room="{{ room }}">OK</button>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="checklist-container">
+                    {% for t in tasks %}
+                        <div class="checklist-item {% if t.status == 'DONE' %}completed{% endif %}" id="task-{{ t.id }}">
+                            <div class="checklist-checkbox">
+                                {% if t.status == 'DONE' %}
+                                    <i class="bi bi-check-lg"></i>
+                                {% elif t.status == 'ON_REVIEW' %}
+                                    <i class="bi bi-hourglass-split"></i>
+                                {% else %}
+                                    <i class="bi bi-circle"></i>
+                                {% endif %}
+                            </div>
+
+                            <div class="checklist-text">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ t.title }}</div>
+                                        {% if t.deadline %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-alarm"></i>
+                                                Дедлайн: {{ t.deadline|date:"d.m.Y H:i" }}
+                                            </div>
+                                        {% endif %}
+                                        {% if t.assigned_employee %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-person"></i>
+                                                <span class="assignee-label" data-task-id="{{ t.id }}">{{ t.assigned_employee.user.full_name|default:t.assigned_employee.user.phone }}</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-person"></i>
+                                                <span class="assignee-label" data-task-id="{{ t.id }}">Не назначено</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="task-right">
+                                        {% if can_assign and not work_started %}
+                                            <form method="post" action="{% url 'assign_task_cl' order.id t.id %}" class="d-flex gap-2 align-items-center js-assign-form" data-task-id="{{ t.id }}">
+                                                {% csrf_token %}
+                                                <select name="assigned_employee_id" class="form-select form-select-sm task-assign-select" required>
+                                                    <option value="" {% if not t.assigned_employee %}selected{% endif %}>Назначить...</option>
+                                                    {% for emp in assigned_employees %}
+                                                        <option value="{{ emp.id }}" {% if t.assigned_employee_id == emp.id %}selected{% endif %}>
+                                                            {{ emp.user.full_name|default:emp.user.phone }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button class="btn btn-sm btn-outline-primary js-assign-submit" type="submit">OK</button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if work_started and employee and t.assigned_employee_id == employee.id %}
+                                            {% if t.status == 'IN_PROGRESS' %}
+                                                <form method="post" action="{% url 'complete_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-success" type="submit">
+                                                        <i class="bi bi-check2-circle me-1"></i>Готово
+                                                    </button>
+                                                </form>
+                                            {% elif t.status == 'ON_REVIEW' %}
+                                                <span class="badge bg-warning text-dark">На проверке</span>
+                                            {% endif %}
+                                        {% endif %}
+
+                                        {% if can_review and t.status == 'ON_REVIEW' and t.assigned_employee_id != employee.id %}
+                                            <div class="d-flex gap-2">
+                                                <form method="post" action="{% url 'accept_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-outline-success" type="submit">Принята</button>
+                                                </form>
+                                                <form method="post" action="{% url 'rework_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-outline-danger" type="submit">Переделка</button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            {% if extra_tasks %}
+                <div class="room-title">
+                    <span><i class="bi bi-plus-circle me-2"></i>Дополнительные задачи</span>
+                    <span class="text-muted small">{{ extra_tasks|length }} задач</span>
+                </div>
+
+                <div class="checklist-container">
+                    {% for t in extra_tasks %}
+                        <div class="checklist-item {% if t.status == 'DONE' %}completed{% endif %}" id="task-{{ t.id }}">
+                            <div class="checklist-checkbox">
+                                {% if t.status == 'DONE' %}
+                                    <i class="bi bi-check-lg"></i>
+                                {% elif t.status == 'ON_REVIEW' %}
+                                    <i class="bi bi-hourglass-split"></i>
+                                {% else %}
+                                    <i class="bi bi-circle"></i>
+                                {% endif %}
+                            </div>
+
+                            <div class="checklist-text">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ t.title }} <span class="badge bg-info ms-2">Доп.</span></div>
+                                        {% if t.description %}
+                                            <div class="text-muted small mt-1">{{ t.description }}</div>
+                                        {% endif %}
+                                        {% if t.deadline %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-alarm"></i>
+                                                Дедлайн: {{ t.deadline|date:"d.m.Y H:i" }}
+                                            </div>
+                                        {% endif %}
+                                        {% if t.assigned_employee %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-person"></i>
+                                                <span class="assignee-label" data-task-id="{{ t.id }}">{{ t.assigned_employee.user.full_name|default:t.assigned_employee.user.phone }}</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="text-muted small mt-1">
+                                                <i class="bi bi-person"></i>
+                                                <span class="assignee-label" data-task-id="{{ t.id }}">Не назначено</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="task-right">
+                                        {% if can_assign and not work_started %}
+                                            <form method="post" action="{% url 'assign_task_cl' order.id t.id %}" class="d-flex gap-2 align-items-center js-assign-form" data-task-id="{{ t.id }}">
+                                                {% csrf_token %}
+                                                <select name="assigned_employee_id" class="form-select form-select-sm task-assign-select" required>
+                                                    <option value="" {% if not t.assigned_employee %}selected{% endif %}>Назначить...</option>
+                                                    {% for emp in assigned_employees %}
+                                                        <option value="{{ emp.id }}" {% if t.assigned_employee_id == emp.id %}selected{% endif %}>
+                                                            {{ emp.user.full_name|default:emp.user.phone }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button class="btn btn-sm btn-outline-primary js-assign-submit" type="submit">OK</button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if work_started and employee and t.assigned_employee_id == employee.id %}
+                                            {% if t.status == 'IN_PROGRESS' %}
+                                                <form method="post" action="{% url 'complete_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-success" type="submit">
+                                                        <i class="bi bi-check2-circle me-1"></i>Готово
+                                                    </button>
+                                                </form>
+                                            {% elif t.status == 'ON_REVIEW' %}
+                                                <span class="badge bg-warning text-dark">На проверке</span>
+                                            {% endif %}
+                                        {% endif %}
+
+                                        {% if can_review and t.status == 'ON_REVIEW' and t.assigned_employee_id != employee.id %}
+                                            <div class="d-flex gap-2">
+                                                <form method="post" action="{% url 'accept_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-outline-success" type="submit">Принята</button>
+                                                </form>
+                                                <form method="post" action="{% url 'rework_task_cl' order.id t.id %}">
+                                                    {% csrf_token %}
+                                                    <button class="btn btn-sm btn-outline-danger" type="submit">Переделка</button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if is_senior and not work_started %}
+        <div class="text-muted small mb-3">
+            {% if not all_tasks_assigned %}
+                Чтобы начать работу, назначь исполнителя для каждой задачи.
+            {% else %}
+                Все задачи распределены — можно начинать работу.
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Assignment Info -->
+        {% if order_employee %}
+        <div class="info-card">
+            <h6><i class="bi bi-check-circle me-2"></i>Статус выполнения</h6>
+            <div class="info-row">
+                <span class="info-label">Назначен</span>
+                <span class="info-value">
+                    {{ order_employee.assigned_at|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+            {% if order_employee.is_confirmed %}
+            <div class="info-row">
+                <span class="info-label">Подтверждён</span>
+                <span class="info-value">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    {{ order_employee.confirmed_at|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+            {% endif %}
+            {% if order_employee.started_at %}
+            <div class="info-row">
+                <span class="info-label">Начат</span>
+                <span class="info-value">
+                    {{ order_employee.started_at|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+            {% endif %}
+            {% if order_employee.finished_at %}
+            <div class="info-row">
+                <span class="info-label">Завершён</span>
+                <span class="info-value">
+                    {{ order_employee.finished_at|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="container">
+            <div class="row text-center">
+                {% if is_senior %}
+                <div class="col-6">
+                    <a href="{% url 'profile_cl' %}" class="nav-item">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Профиль</span>
+                    </a>
+                </div>
+
+                <div class="col-6">
+                    <a href="{% url 'orders_cl' %}" class="nav-item">
+                        <i class="bi bi-list-check"></i>
+                        <span>Заказы</span>
+                    </a>
+                </div>
+                {% else %}
+                <div class="col-6">
+                    <a href="{% url 'profile_cl' %}" class="nav-item">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Профиль</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="{% url 'orders_cl' %}" class="nav-item active">
+                        <i class="bi bi-list-check"></i>
+                        <span>Заказы</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% if is_senior and not work_started %}
+    <div class="modal fade" id="startWorkModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Начать работу?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    После старта:
+                    <div class="mt-2">
+                        - Распределение задач будет заблокировано
+                        - Запустится таймер заказа
+                        - Клинеры смогут отмечать выполнение своих задач
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <form method="post" action="{% url 'start_work_cl' order.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-1"></i>Да, начать
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if can_assign and not work_started %}
+    <script>
+        (function () {
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            function updateStartButtonState() {
+                const btn = document.getElementById('start-work-btn');
+                if (!btn) return;
+                const selects = document.querySelectorAll('form.js-assign-form select[name="assigned_employee_id"]');
+                if (!selects.length) return;
+                const allSelected = Array.from(selects).every(s => (s.value || '').trim() !== '');
+                btn.disabled = !allSelected;
+            }
+
+            async function bulkAssign(scope, room, employeeId) {
+                const csrf = getCookie('csrftoken');
+                const fd = new FormData();
+                fd.append('scope', scope);
+                fd.append('assigned_employee_id', employeeId);
+                if (room) fd.append('room', room);
+
+                const url = "{% url 'bulk_assign_tasks_cl' order.id %}";
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrf,
+                    },
+                    body: fd,
+                });
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data || !data.ok) {
+                    const msg = (data && data.error) ? data.error : 'Ошибка назначения';
+                    throw new Error(msg);
+                }
+
+                const ids = data.updated_task_ids || [];
+                ids.forEach((taskId) => {
+                    const label = document.querySelector(`.assignee-label[data-task-id="${taskId}"]`);
+                    if (label) label.textContent = data.assignee || 'Назначено';
+                    const form = document.querySelector(`form.js-assign-form[data-task-id="${taskId}"]`);
+                    if (form) {
+                        const s = form.querySelector('select[name="assigned_employee_id"]');
+                        if (s) s.value = String(employeeId);
+                        const card = form.closest('.checklist-item');
+                        if (card) {
+                            card.style.boxShadow = '0 0 0 2px rgba(108, 92, 231, 0.25)';
+                            setTimeout(() => { card.style.boxShadow = ''; }, 700);
+                        }
+                    }
+                });
+
+                updateStartButtonState();
+                return data;
+            }
+
+            async function handleAssignSubmit(e) {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const btn = form.querySelector('.js-assign-submit');
+                const select = form.querySelector('select[name="assigned_employee_id"]');
+                const taskId = form.getAttribute('data-task-id');
+                if (!select || !taskId) return;
+
+                const employeeId = (select.value || '').trim();
+                if (!employeeId) {
+                    select.focus();
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append('assigned_employee_id', employeeId);
+
+                const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = '...';
+                }
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrf,
+                        },
+                        body: fd,
+                    });
+                    const data = await res.json().catch(() => null);
+
+                    if (!res.ok || !data || !data.ok) {
+                        const msg = (data && data.error) ? data.error : 'Ошибка назначения';
+                        alert(msg);
+                        return;
+                    }
+
+                    const label = document.querySelector(`.assignee-label[data-task-id="${taskId}"]`);
+                    if (label) label.textContent = data.assignee || 'Назначено';
+
+                    const card = form.closest('.checklist-item');
+                    if (card) {
+                        card.style.boxShadow = '0 0 0 2px rgba(108, 92, 231, 0.25)';
+                        setTimeout(() => { card.style.boxShadow = ''; }, 700);
+                    }
+
+                    updateStartButtonState();
+                } catch (err) {
+                    alert('Ошибка сети');
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'OK';
+                    }
+                }
+            }
+
+            document.querySelectorAll('form.js-assign-form').forEach(f => {
+                f.addEventListener('submit', handleAssignSubmit);
+            });
+
+            const bulkAllBtn = document.getElementById('bulk-assign-all-btn');
+            const bulkAllSelect = document.getElementById('bulk-assign-all-select');
+            if (bulkAllBtn && bulkAllSelect) {
+                bulkAllBtn.addEventListener('click', async () => {
+                    const employeeId = (bulkAllSelect.value || '').trim();
+                    if (!employeeId) return;
+                    bulkAllBtn.disabled = true;
+                    try {
+                        await bulkAssign('all', '', employeeId);
+                    } catch (e) {
+                        alert(e.message || 'Ошибка');
+                    } finally {
+                        bulkAllBtn.disabled = false;
+                    }
+                });
+            }
+
+            document.querySelectorAll('.bulk-room-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const room = btn.getAttribute('data-room') || '';
+                    const select = document.querySelector(`.bulk-room-select[data-room="${room}"]`);
+                    const employeeId = (select?.value || '').trim();
+                    if (!employeeId) return;
+                    btn.disabled = true;
+                    try {
+                        await bulkAssign('room', room, employeeId);
+                    } catch (e) {
+                        alert(e.message || 'Ошибка');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+            updateStartButtonState();
+        })();
+    </script>
+    {% endif %}
+
+    {% if work_started and work_started_at %}
+    <script>
+        (function () {
+            const el = document.getElementById('order-timer');
+            if (!el) return;
+            const start = new Date(el.getAttribute('data-start'));
+            const endAttr = el.getAttribute('data-end');
+            const end = endAttr ? new Date(endAttr) : null;
+            
+            function pad(n){return String(n).padStart(2,'0');}
+            
+            if (end) {
+                // Таймер остановлен — показываем фиксированное время
+                const diff = Math.max(0, end - start);
+                const s = Math.floor(diff / 1000);
+                const h = Math.floor(s / 3600);
+                const m = Math.floor((s % 3600) / 60);
+                const sec = s % 60;
+                el.textContent = `${pad(h)}:${pad(m)}:${pad(sec)}`;
+            } else {
+                // Таймер работает — обновляем каждую секунду
+                function tick(){
+                    const now = new Date();
+                    const diff = Math.max(0, now - start);
+                    const s = Math.floor(diff / 1000);
+                    const h = Math.floor(s / 3600);
+                    const m = Math.floor((s % 3600) / 60);
+                    const sec = s % 60;
+                    el.textContent = `${pad(h)}:${pad(m)}:${pad(sec)}`;
+                }
+                tick();
+                setInterval(tick, 1000);
+            }
+        })();
+    </script>
+    {% endif %}
+
+    <script>
+        (function () {
+            const KEY = 'cl_order_detail_scroll_{{ order.id }}';
+
+            try {
+                const saved = sessionStorage.getItem(KEY);
+                if (saved) {
+                    sessionStorage.removeItem(KEY);
+                    const y = parseInt(saved, 10);
+                    if (!Number.isNaN(y)) {
+                        setTimeout(() => window.scrollTo(0, y), 0);
+                        setTimeout(() => window.scrollTo(0, y), 80);
+                    }
+                }
+            } catch (e) {
+                // ignore
+            }
+
+            const forms = document.querySelectorAll(
+                'form[action*="/complete/"], form[action*="/accept/"], form[action*="/rework/"]'
+            );
+            forms.forEach((form) => {
+                form.addEventListener('submit', function () {
+                    try {
+                        sessionStorage.setItem(KEY, String(window.scrollY || 0));
+                    } catch (e) {
+                        // ignore
+                    }
+                });
+            });
+        })();
+    </script>
+
+    {% if is_senior %}
+    <script>
+        (function () {
+            const btn = document.getElementById('senior-done-btn');
+            if (!btn) return;
+            function computeAllDone() {
+                const items = document.querySelectorAll('.checklist-item');
+                for (const el of items) {
+                    if (!el.classList.contains('completed')) return false;
+                }
+                return items.length > 0;
+            }
+            function update() {
+                const allDone = computeAllDone();
+                btn.disabled = !allDone;
+                
+                // Красный (заблокирована) - есть невыполненные задачи
+                if (!allDone) {
+                    btn.style.color = '#ff7675';
+                    btn.style.opacity = '0.5';
+                }
+                // Желтый (активна) - все задачи выполнены, можно завершить
+                else {
+                    btn.style.color = '#fdcb6e';
+                    btn.style.opacity = '1';
+                }
+            }
+            update();
+            setInterval(update, 800);
+        })();
+    </script>
+    {% endif %}
+</body>
+</html>

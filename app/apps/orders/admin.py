@@ -1,57 +1,177 @@
 from django.contrib import admin
-from .models import Order, Task
+from .models import Order, OrderEmployee, OrderStatus, OrderPhoto, RefuseSettings
 
 
-class TaskInline(admin.TabularInline):
-    model = Task
+class OrderEmployeeInline(admin.TabularInline):
+    """Inline для назначения сотрудников на заказ."""
+    model = OrderEmployee
     extra = 1
-    fields = ("description", "status", "photo_before", "photo_after", "comment")
-    show_change_link = True
+    autocomplete_fields = ['employee']
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("code", "client", "service", "channel", "source", "status_operator", "status_manager", "operator", "manager_comment", "created_at")
-    list_filter = ("status_operator", "status_manager", "priority", "channel", "source", "created_at")
-    search_fields = ("code", "client__full_name", "service__title", "channel", "source", "address", "notes")
-    ordering = ("-created_at",)
+    """Админ-панель для модели Order."""
+
+    list_display = [
+        'id',
+        'order_code',
+        'client',
+        'service',
+        'scheduled_date',
+        'scheduled_time',
+        'status',
+        'operator_status',
+        'manager_status',
+        'senior_cleaner_status',
+        'price',
+        'created_by'
+    ]
+    list_filter = [
+        'status',
+        'operator_status',
+        'manager_status',
+        'senior_cleaner_status',
+        'scheduled_date',
+        'service',
+        'created_at'
+    ]
+    list_editable = [
+        'operator_status',
+        'manager_status',
+        'senior_cleaner_status',
+    ]
+    search_fields = [
+        'order_code',
+        'client__name',
+        'client__phone',
+        'address'
+    ]
+    ordering = ['-scheduled_date', '-scheduled_time']
+
+    readonly_fields = ['order_code', 'created_at', 'updated_at']
 
     fieldsets = (
-        ("Основная информация", {"fields": ("code", "client", "category", "status_operator", "status_manager")}),
-        ("Детали заказа", {"fields": ("service", "address", "date_time", "estimated_cost", "estimated_area", "final_cost", "final_area", "notes")}),
-        ("Маркетинг", {"fields": ("channel", "source")}),
-        ("Сотрудники", {"fields": ("operator", "deadline", "manager_comment")}),
-        ("Служебное", {"fields": ("created_at", "updated_at")}),
+        ('Основная информация', {
+            'fields': ('order_code', 'client', 'service')
+        }),
+        ('Детали заказа', {
+            'fields': ('address', 'scheduled_date', 'scheduled_time', 'price', 'preliminary_price')
+        }),
+        ('Статусы', {
+            'fields': (
+                'status',
+                'operator_status',
+                'manager_status',
+                'senior_cleaner_status',
+                'handed_to_manager',
+                'handed_to_manager_at',
+            ),
+            'description': 'Изменяйте статусы вручную только при необходимости.'
+        }),
+        ('Комментарий', {
+            'fields': ('comment',),
+            'classes': ('collapse',)
+        }),
+        ('Назначения', {
+            'fields': ('created_by', 'assigned_manager')
+        }),
+        ('Системные', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
     )
 
-    readonly_fields = ("code", "created_at", "updated_at")
-    inlines = [TaskInline]
+    autocomplete_fields = ['client', 'service', 'created_by', 'assigned_manager']
+    inlines = [OrderEmployeeInline]
 
-    actions = [
-        "revert_to_in_progress",
+
+@admin.register(OrderEmployee)
+class OrderEmployeeAdmin(admin.ModelAdmin):
+    """Админ-панель для модели OrderEmployee."""
+
+    list_display = [
+        'id',
+        'order',
+        'employee',
+        'role_on_order',
+        'is_confirmed',
+        'assigned_at',
+        'confirmed_at',
+        'started_at',
+        'finished_at'
     ]
+    list_filter = [
+        'role_on_order',
+        'is_confirmed',
+        'assigned_at',
+        'started_at',
+        'finished_at'
+    ]
+    search_fields = [
+        'order__order_code',
+        'employee__user__full_name',
+        'employee__user__phone'
+    ]
+    ordering = ['-assigned_at']
 
-    def revert_to_in_progress(self, request, queryset):
-        """Отменить отправку на проверку: вернуть заказ в работу.
-        - Меняет статус менеджера на IN_PROGRESS
-        - Очищает отметку о завершении работы (work_finished_at)
-        - Поле статуса старшего клинера удалено
-        """
-        updated = 0
-        for order in queryset:
-            if order.status_manager == Order.ManagerStatus.PENDING_REVIEW:
-                order.status_manager = Order.ManagerStatus.IN_PROGRESS
-                # Вернуть процесс в работу
-                order.work_finished_at = None
-                order.save()
-                updated += 1
-        self.message_user(request, f"Возвращено в работу: {updated} заказ(ов)")
-    revert_to_in_progress.short_description = "Отменить отправку на проверку (вернуть в работу)"
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('order', 'employee', 'role_on_order')
+        }),
+        ('Статус', {
+            'fields': ('is_confirmed', 'confirmed_at', 'started_at', 'finished_at')
+        }),
+        ('Заметки', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['assigned_at', 'confirmed_at', 'started_at', 'finished_at']
+    autocomplete_fields = ['order', 'employee']
 
 
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    list_display = ("description", "order", "status")
-    list_filter = ("status",)
-    search_fields = ("description", "order__code")
-    ordering = ("status", "id")
+@admin.register(OrderPhoto)
+class OrderPhotoAdmin(admin.ModelAdmin):
+    """Админ-панель для фото заказов."""
+
+    list_display = [
+        'id',
+        'order',
+        'uploaded_by',
+        'photo_type',
+        'uploaded_at'
+    ]
+    list_filter = [
+        'photo_type',
+        'uploaded_at'
+    ]
+    search_fields = [
+        'order__order_code',
+        'uploaded_by__user__full_name',
+        'comment'
+    ]
+    ordering = ['-uploaded_at']
+    
+    readonly_fields = ['uploaded_at']
+    autocomplete_fields = ['order', 'uploaded_by']
+
+
+@admin.register(RefuseSettings)
+class RefuseSettingsAdmin(admin.ModelAdmin):
+    """Админ-панель для настроек отказов."""
+
+    list_display = (
+        "max_refuses",
+        "period_days",
+        "is_active",
+        "updated_at"
+    )
+
+    list_editable = ("is_active",)
+
+    readonly_fields = (
+        "created_at",
+        "updated_at"
+    )

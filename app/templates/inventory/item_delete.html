@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление товара - CRM KIKI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Удаление товара
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Вы действительно хотите удалить товар:</p>
+                    <div class="alert alert-light">
+                        <h6 class="mb-1">{{ item.name }}</h6>
+                        <small class="text-muted">
+                            Категория: {{ item.category.name }}<br>
+                            Остаток: {{ item.quantity }} {{ item.unit }}
+                        </small>
+                    </div>
+                    <p class="text-danger mb-4">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <strong>Внимание!</strong> Это действие необратимо. Все связанные операции также будут удалены.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Да, удалить
+                            </button>
+                            <a href="{% url 'inventory_detail' item.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
