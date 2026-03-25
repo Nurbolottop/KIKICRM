@@ -3,9 +3,42 @@
 
 {% block title %}Операции со складом - CRM KIKI{% endblock %}
 
+{% block extra_css %}
+<style>
+.inventory-transactions-mobile { display: none; }
+.inventory-transaction-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+.inventory-transaction-card + .inventory-transaction-card { margin-top: 12px; }
+.inventory-transaction-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 0.92rem;
+}
+.inventory-transaction-label { color: #6b7280; flex: 0 0 96px; }
+.inventory-transaction-value { flex: 1 1 auto; text-align: right; word-break: break-word; }
+
+@media (max-width: 768px) {
+    .inventory-transaction-topbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.85rem;
+    }
+    .inventory-transaction-desktop { display: none; }
+    .inventory-transactions-mobile { display: block; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 inventory-transaction-topbar">
         <h1 class="h3 mb-0">Операции со складом</h1>
         {% if request.user|can_manage_inventory_transactions %}
         <a href="{% url 'inventory_transaction_create' %}" class="btn btn-primary">
@@ -46,7 +79,7 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card inventory-transaction-desktop">
         <div class="card-body">
             {% if transactions %}
             <div class="table-responsive">
@@ -139,5 +172,50 @@
             {% endif %}
         </div>
     </div>
+
+    {% if transactions %}
+    <div class="inventory-transactions-mobile">
+        {% for trans in transactions %}
+        <div class="inventory-transaction-card">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                    <a href="{% url 'inventory_detail' trans.item.id %}" class="fw-semibold text-decoration-none">{{ trans.item.name }}</a>
+                    <div class="text-muted small mt-1">{{ trans.item.category.name }}</div>
+                </div>
+                <div>
+                    {% if trans.transaction_type == 'IN' %}
+                    <span class="badge bg-success">Приход</span>
+                    {% elif trans.transaction_type == 'OUT' %}
+                    <span class="badge bg-danger">Списание</span>
+                    {% else %}
+                    <span class="badge bg-warning">Корректировка</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="inventory-transaction-row">
+                <span class="inventory-transaction-label">Дата</span>
+                <span class="inventory-transaction-value">{{ trans.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            <div class="inventory-transaction-row">
+                <span class="inventory-transaction-label">Количество</span>
+                <span class="inventory-transaction-value"><strong>{{ trans.get_quantity_change }}</strong> {{ trans.item.unit }}</span>
+            </div>
+            <div class="inventory-transaction-row">
+                <span class="inventory-transaction-label">Заказ</span>
+                <span class="inventory-transaction-value">{% if trans.order %}{{ trans.order.order_code }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="inventory-transaction-row">
+                <span class="inventory-transaction-label">Сотрудник</span>
+                <span class="inventory-transaction-value">{% if trans.employee %}{{ trans.employee.user.full_name }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="inventory-transaction-row">
+                <span class="inventory-transaction-label">Комментарий</span>
+                <span class="inventory-transaction-value">{{ trans.comment|default:"—" }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

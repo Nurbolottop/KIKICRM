@@ -3,6 +3,54 @@
 {% block title %}Расход #{{ expense.id }} - CRM KIKI{% endblock %}
 {% block page_title %}Детали расхода{% endblock %}
 
+{% block extra_css %}
+<style>
+@media (max-width: 768px) {
+    .expense-detail-container .card {
+        border-radius: 14px;
+    }
+
+    .expense-detail-container .card-header,
+    .expense-detail-container .card-body,
+    .expense-detail-container .card-footer {
+        padding: 0.95rem;
+    }
+
+    .expense-detail-container .card-footer .d-flex.justify-content-between {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+
+    .expense-detail-container .card-footer .d-flex.justify-content-between > a,
+    .expense-detail-container .card-footer .d-flex.justify-content-between > div,
+    .expense-detail-container .card-footer .d-flex.justify-content-between .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .expense-detail-container .table.table-borderless tr {
+        display: flex;
+        flex-direction: column;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .expense-detail-container .table.table-borderless td {
+        width: 100% !important;
+        display: block;
+        padding: 0.15rem 0;
+    }
+
+    .expense-detail-container .img-thumbnail {
+        width: 100%;
+        max-height: 260px !important;
+        object-fit: cover;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="expense-detail-container">
     <div class="row">

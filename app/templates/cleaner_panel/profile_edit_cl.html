@@ -42,6 +42,39 @@
             display: block;
             margin-bottom: 0.25rem;
         }
+
+        @media (max-width: 768px) {
+            .container.py-4 {
+                padding-top: 1rem !important;
+                padding-bottom: 1rem !important;
+            }
+            .info-card {
+                border-radius: 14px;
+                padding: 1rem;
+            }
+            .bottom-nav {
+                padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            body {
+                padding-bottom: 98px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container.py-4 {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            .info-card {
+                padding: 0.9rem;
+            }
+            .d-flex.align-items-center.justify-content-between.mb-3 {
+                gap: 0.6rem;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+        }
     </style>
 </head>
 <body>

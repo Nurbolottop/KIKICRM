@@ -424,6 +424,127 @@
 .hidden {
     display: none !important;
 }
+
+@media (max-width: 768px) {
+    .profile-section {
+        border-radius: 18px;
+        padding: 24px 18px;
+    }
+
+    .profile-avatar-large {
+        width: 96px;
+        height: 96px;
+    }
+
+    .profile-name {
+        font-size: 1.45rem;
+        margin-top: 14px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stat-card,
+    .info-compact,
+    .section-panel {
+        border-radius: 16px;
+        padding: 18px;
+    }
+
+    .section-tabs {
+        overflow-x: auto;
+        padding: 6px;
+    }
+
+    .section-tab {
+        white-space: nowrap;
+        min-width: max-content;
+        flex: 0 0 auto;
+        padding: 12px 16px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .section-header .btn-accent {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .order-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .order-card .text-end {
+        width: 100%;
+        text-align: left !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid.py-4 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .profile-section {
+        padding: 20px 14px;
+    }
+
+    .quick-actions {
+        flex-direction: column;
+    }
+
+    .qa-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .info-table,
+    .info-table tbody,
+    .info-table tr,
+    .info-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .info-table tr {
+        padding: 0.7rem 0;
+    }
+
+    .info-label,
+    .info-value {
+        width: 100%;
+    }
+
+    .section-tab {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+    }
+
+    .comment-modern,
+    .timeline-item {
+        flex-direction: column;
+    }
+
+    #addNoteModal .modal-footer {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    #addNoteModal .modal-footer .btn {
+        width: 100%;
+        margin: 0;
+    }
+}
 </style>
 
 <div class="container-fluid py-4">

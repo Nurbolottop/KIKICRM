@@ -127,6 +127,76 @@
             display: block;
             margin-bottom: 0.25rem;
         }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 1.5rem 1rem;
+            }
+            .profile-avatar {
+                width: 82px;
+                height: 82px;
+                font-size: 2.3rem;
+            }
+            .stats-card,
+            .info-card {
+                border-radius: 14px;
+            }
+            .stats-card {
+                padding: 1rem 0.65rem;
+            }
+            .stats-number {
+                font-size: 1.8rem;
+            }
+            .bottom-nav {
+                padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            body {
+                padding-bottom: 98px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .profile-header {
+                padding: 1.25rem 0.85rem;
+            }
+            .profile-avatar {
+                width: 72px;
+                height: 72px;
+                font-size: 2rem;
+                margin-bottom: 0.8rem;
+            }
+            .profile-header h4 {
+                font-size: 1.08rem;
+            }
+            .role-badge {
+                font-size: 0.82rem;
+                padding: 0.42rem 0.85rem;
+            }
+            .stats-card {
+                padding: 0.9rem 0.45rem;
+            }
+            .stats-number {
+                font-size: 1.35rem;
+            }
+            .stats-label {
+                font-size: 0.78rem;
+            }
+            .info-card {
+                padding: 1rem;
+            }
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.3rem;
+                padding: 0.8rem 0;
+            }
+            .info-value {
+                text-align: left;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+        }
     </style>
 </head>
 <body>

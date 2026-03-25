@@ -145,6 +145,23 @@
             .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
             .hr-main { margin-left: 0; padding: 1rem; }
             .hr-sidebar-footer { display: none; }
+            .hr-form-card { max-width: 100%; padding: 1rem; border-radius: 14px; }
+            .modal-success-card .modal-body { padding: 1rem; }
+            .modal-success-card .modal-header { padding: 1rem; }
+            .modal-footer { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+            .modal-footer .btn, .modal-footer a { width: 100%; }
+        }
+
+        @media (max-width: 576px) {
+            .hr-sidebar-brand { padding: 0 1rem 1rem; }
+            .hr-nav-link { padding: 0.55rem 0.8rem; font-size: 0.86rem; }
+            .hr-main { padding: 0.8rem; }
+            .hr-form-card { padding: 0.9rem; }
+            .hr-form-title { font-size: 1.15rem; margin-bottom: 1rem; }
+            .hr-back { width: 100%; justify-content: center; }
+            .hr-default-pwd-info,
+            .hr-no-pwd-info { padding: 0.7rem 0.85rem; font-size: 0.82rem; }
+            .cred-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
         }
     </style>
 </head>

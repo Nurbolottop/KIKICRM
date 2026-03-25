@@ -297,6 +297,115 @@
         .start-work-btn i {
             color: white !important;
         }
+
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 1.2rem 1rem;
+                margin-bottom: 1rem;
+            }
+            .page-header::before {
+                width: 220px;
+                height: 220px;
+            }
+            .order-code {
+                padding: 0.65rem 1rem;
+                font-size: 0.92rem;
+                border-radius: 10px;
+            }
+            .status-badge {
+                padding: 0.5rem 0.95rem;
+                font-size: 0.82rem;
+            }
+            .info-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+            .service-name {
+                font-size: 1.15rem;
+            }
+            .info-row {
+                gap: 0.8rem;
+            }
+            .room-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.65rem;
+            }
+            .room-title > span:last-child {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            .task-right {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+            .task-assign-select,
+            .bulk-room-select,
+            #bulk-assign-all-select {
+                min-width: 0 !important;
+                width: 100%;
+            }
+            .js-assign-form {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            .js-assign-form .btn,
+            .bulk-room-btn,
+            #bulk-assign-all-btn {
+                width: 100%;
+            }
+            .start-work-bar {
+                padding: 0.85rem 0;
+                border-radius: 0 0 14px 14px;
+            }
+            .timer-pill {
+                width: 100%;
+                justify-content: center;
+            }
+            .bottom-nav {
+                padding: 0.6rem 0 calc(0.6rem + env(safe-area-inset-bottom));
+            }
+            body {
+                padding-bottom: 100px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .page-header {
+                padding: 1rem 0.85rem;
+            }
+            .page-header h5 {
+                font-size: 1rem;
+            }
+            .back-btn {
+                font-size: 1.15rem;
+            }
+            .info-card {
+                padding: 0.9rem;
+            }
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.7rem 0;
+            }
+            .info-value {
+                text-align: left;
+                width: 100%;
+            }
+            .checklist-item {
+                padding: 0.95rem;
+            }
+            .checklist-text {
+                font-size: 0.9rem;
+            }
+            .checklist-text .d-flex.justify-content-between.align-items-start.gap-2 {
+                flex-direction: column;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+        }
     </style>
 </head>
 <body>

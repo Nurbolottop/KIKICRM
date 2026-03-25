@@ -3,6 +3,53 @@
 {% block title %}{{ title }} - CRM KIKI{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+@media (max-width: 768px) {
+    .client-form-container .row {
+        --bs-gutter-x: 0.9rem;
+        --bs-gutter-y: 0.9rem;
+    }
+
+    .client-form-container .card {
+        border-radius: 14px;
+    }
+
+    .client-form-container .card-header,
+    .client-form-container .card-body {
+        padding: 0.95rem;
+    }
+
+    .client-form-container .img-thumbnail {
+        max-width: 120px !important;
+        max-height: 120px !important;
+    }
+
+    .client-form-container .d-flex.justify-content-between.mt-3 {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+
+    .client-form-container .d-flex.justify-content-between.mt-3 > a,
+    .client-form-container .d-flex.justify-content-between.mt-3 > div,
+    .client-form-container .d-flex.justify-content-between.mt-3 button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .client-form-container .card-header,
+    .client-form-container .card-body {
+        padding: 0.85rem;
+    }
+
+    .client-form-container .border.rounded.p-4 {
+        padding: 1.25rem !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="client-form-container">
     <form method="post" enctype="multipart/form-data" class="client-form">

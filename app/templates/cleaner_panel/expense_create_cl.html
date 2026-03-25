@@ -140,6 +140,61 @@
             display: block;
             margin-bottom: 0.25rem;
         }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.95rem 1rem;
+            }
+            .form-container {
+                padding: 0.9rem;
+            }
+            .form-card {
+                padding: 1rem;
+                border-radius: 14px;
+            }
+            .expense-mode-card {
+                padding: 0.9rem;
+            }
+            .bottom-nav {
+                padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            body {
+                padding-bottom: 98px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h5 {
+                font-size: 1rem;
+            }
+            .form-container {
+                padding: 0.75rem;
+            }
+            .form-card {
+                padding: 0.85rem;
+            }
+            .expense-mode-switch {
+                gap: 0.6rem;
+            }
+            .expense-mode-switch .form-check-input {
+                width: 2.6rem;
+                height: 1.45rem;
+            }
+            .expense-mode-title {
+                font-size: 0.95rem;
+            }
+            .expense-mode-text {
+                font-size: 0.82rem;
+            }
+            .form-control,
+            .form-select,
+            .btn-submit {
+                min-height: 46px;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+        }
     </style>
 </head>
 <body>

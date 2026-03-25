@@ -3,10 +3,38 @@
 {% block title %}Клиенты - CRM KIKI{% endblock %}
 {% block page_title %}Клиенты{% endblock %}
 
+{% block extra_css %}
+<style>
+.client-mobile-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+.client-mobile-main {
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+}
+.client-mobile-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.client-mobile-name {
+    font-weight: 600;
+    color: #111827;
+    text-decoration: none;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="clients-container">
     <!-- Header with stats -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="crm-unified-topbar clients-topbar">
         <div>
             <h2 class="mb-1">Клиенты</h2>
             <p class="text-muted mb-0">{{ page_obj.paginator.count }} клиентов в базе</p>
@@ -43,7 +71,7 @@
 
     <!-- Clients table -->
     {% if clients %}
-    <div class="card border-0 shadow-sm">
+    <div class="crm-unified-table-card crm-unified-table-desktop clients-desktop-table">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -90,6 +118,43 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="crm-unified-mobile-list clients-mobile-list">
+        {% for client in clients %}
+        <div class="crm-unified-mobile-card">
+            <div class="crm-unified-mobile-head client-mobile-top">
+                <div class="crm-unified-mobile-main client-mobile-main">
+                    <img src="{{ client.get_avatar_url }}" alt="" class="crm-unified-mobile-avatar client-mobile-avatar">
+                    <div class="min-w-0">
+                        <a href="{% url 'clients_detail' client.id %}" class="crm-unified-mobile-title client-mobile-name">{{ client.get_full_name }}</a>
+                        <div class="crm-unified-mobile-subtitle">ID: {{ client.id }}</div>
+                    </div>
+                </div>
+                <span class="badge bg-soft-secondary text-secondary">{{ client.get_source_display }}</span>
+            </div>
+
+            <div class="crm-unified-mobile-meta client-mobile-meta">
+                <div class="crm-unified-mobile-row client-mobile-row">
+                    <span class="crm-unified-mobile-label client-mobile-label">Телефон</span>
+                    <span class="crm-unified-mobile-value client-mobile-value">{{ client.phone }}</span>
+                </div>
+                <div class="crm-unified-mobile-row client-mobile-row">
+                    <span class="crm-unified-mobile-label client-mobile-label">Создан</span>
+                    <span class="crm-unified-mobile-value client-mobile-value">{{ client.created_at|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+
+            <div class="crm-unified-mobile-actions client-mobile-actions">
+                <a href="{% url 'clients_detail' client.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye-fill"></i>
+                </a>
+                <a href="{% url 'clients_delete' client.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить клиента?')">
+                    <i class="bi bi-trash-fill"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 
     <!-- Pagination -->

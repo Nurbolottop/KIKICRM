@@ -156,12 +156,39 @@
         background: #6366f1;
         border-color: #6366f1;
     }
-</style>
 
-<div class="emp-page">
-    <div class="emp-header">
-        <h2><i class="bi bi-person-badge me-2"></i>Сотрудники</h2>
-    </div>
+    .emp-mobile-list { display: none; }
+    .emp-mobile-card {
+        background: white;
+        border: 1px solid #f0f0f5;
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .emp-mobile-card + .emp-mobile-card { margin-top: 0.85rem; }
+    .emp-mobile-meta { display: grid; gap: 0.55rem; margin-top: 0.85rem; }
+    .emp-mobile-row { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.92rem; }
+    .emp-mobile-label { color: #6b7280; flex: 0 0 88px; }
+    .emp-mobile-value { flex: 1 1 auto; text-align: right; word-break: break-word; }
+
+    @media (max-width: 768px) {
+        .emp-header { flex-direction: column; align-items: stretch; gap: 0.85rem; }
+        .emp-table-card { display: none; }
+        .emp-mobile-list { display: block; }
+        .emp-filters { padding: 0.9rem; }
+    }
+
+    @media (max-width: 576px) {
+        .emp-header h2 { font-size: 1.2rem; }
+        .emp-stat { min-width: calc(50% - 0.4rem); padding: 0.7rem 0.9rem; }
+        .emp-stat-count { font-size: 1.15rem; }
+    }
+ </style>
+
+ <div class="emp-page">
+    <div class="emp-header crm-unified-topbar">
+         <h2><i class="bi bi-person-badge me-2"></i>Сотрудники</h2>
+     </div>
 
     <!-- Stats -->
     <div class="emp-stats">
@@ -208,7 +235,7 @@
 
     <!-- Table -->
     {% if employees %}
-    <div class="emp-table-card">
+    <div class="emp-table-card crm-unified-table-card crm-unified-table-desktop">
         <table class="table emp-table">
             <thead>
                 <tr>
@@ -256,6 +283,43 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="emp-mobile-list crm-unified-mobile-list">
+        {% for emp in employees %}
+        <div class="emp-mobile-card crm-unified-mobile-card">
+            <div class="crm-unified-mobile-head emp-name-cell">
+                <div class="emp-avatar crm-unified-mobile-avatar">
+                    {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+                </div>
+                <div class="min-w-0 flex-grow-1">
+                    <a href="{% url 'employee_detail' emp.pk %}" class="emp-name crm-unified-mobile-title">{{ emp.full_name|default:"Без имени" }}</a>
+                    <div class="emp-phone mt-1 crm-unified-mobile-subtitle">{{ emp.phone }}</div>
+                </div>
+            </div>
+
+            <div class="emp-mobile-meta crm-unified-mobile-meta">
+                <div class="emp-mobile-row crm-unified-mobile-row">
+                    <span class="emp-mobile-label crm-unified-mobile-label">Роль</span>
+                    <span class="emp-mobile-value crm-unified-mobile-value"><span class="emp-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span></span>
+                </div>
+                <div class="emp-mobile-row crm-unified-mobile-row">
+                    <span class="emp-mobile-label crm-unified-mobile-label">Статус</span>
+                    <span class="emp-mobile-value crm-unified-mobile-value">{% if emp.is_active %}<span><span class="emp-status-dot active"></span>Активен</span>{% else %}<span><span class="emp-status-dot inactive"></span>Неактивен</span>{% endif %}</span>
+                </div>
+                <div class="emp-mobile-row crm-unified-mobile-row">
+                    <span class="emp-mobile-label crm-unified-mobile-label">Создан</span>
+                    <span class="emp-mobile-value crm-unified-mobile-value">{{ emp.date_joined|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+
+            <div class="mt-3 d-grid">
+                <a href="{% url 'employee_detail' emp.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> Открыть профиль
+                </a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 
     <!-- Pagination -->

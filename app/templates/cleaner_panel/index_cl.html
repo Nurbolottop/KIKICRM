@@ -91,6 +91,63 @@
         .nav-item.active { color: var(--kiki-primary); }
         .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 0.25rem; }
         .content-wrapper { padding-bottom: 80px; }
+
+        @media (max-width: 768px) {
+            .cleaner-header {
+                padding: 1.5rem 1rem 1.25rem;
+            }
+            .cleaner-avatar {
+                width: 68px;
+                height: 68px;
+                font-size: 1.7rem;
+                margin-bottom: 0.75rem;
+            }
+            .stats-card {
+                padding: 1rem 0.6rem;
+                border-radius: 14px;
+            }
+            .stats-number {
+                font-size: 1.45rem;
+            }
+            .order-card {
+                border-radius: 14px;
+            }
+            .bottom-nav {
+                padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            .content-wrapper {
+                padding-bottom: 96px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .cleaner-header h4 {
+                font-size: 1.1rem;
+            }
+            .role-badge {
+                font-size: 0.82rem;
+                padding: 0.4rem 0.85rem;
+            }
+            .container.my-4 {
+                margin-top: 1rem !important;
+                margin-bottom: 1rem !important;
+            }
+            .stats-card {
+                padding: 0.85rem 0.45rem;
+            }
+            .stats-number {
+                font-size: 1.2rem;
+            }
+            .order-card {
+                padding: 0.9rem;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+            .nav-item {
+                font-size: 0.72rem;
+            }
+        }
     </style>
 </head>
 <body>

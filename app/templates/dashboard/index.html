@@ -3,32 +3,121 @@
 {% block title %}Dashboard - KIKI CRM{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+    .dashboard-hero {
+        gap: 12px;
+    }
+
+    .dashboard-role-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .dashboard-chart-card canvas {
+        width: 100% !important;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-hero {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        .dashboard-title {
+            font-size: 1.35rem;
+        }
+
+        .dashboard-section-title {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .dashboard-metric-card .card-body {
+            padding: 1rem 0.85rem;
+        }
+
+        .dashboard-metric-card h3 {
+            font-size: 1.4rem;
+        }
+
+        .dashboard-chart-card .card-body > div {
+            height: 220px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-title {
+            font-size: 1.2rem;
+        }
+
+        .dashboard-chart-card .card-header {
+            padding: 0.85rem;
+        }
+
+        .dashboard-chart-card .card-header h5 {
+            font-size: 0.95rem;
+        }
+
+        .dashboard-chart-card .card-body > div {
+            height: 200px !important;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="mb-2">📊 Dashboard</h2>
-            <p class="text-muted mb-0">
-                Роль: <span class="badge bg-primary">{{ user_role_display }}</span>
-                {% if is_full_access %}
-                    <span class="badge bg-success">Полный доступ</span>
-                {% else %}
-                    <span class="badge bg-info">Ограниченный доступ</span>
-                {% endif %}
-            </p>
+            <div class="d-flex justify-content-between align-items-center dashboard-hero">
+                <div>
+                    <h2 class="mb-2 dashboard-title">
+                        {% if is_founder_dashboard %}
+                        📊 Dashboard основателя
+                        {% elif is_manager_dashboard %}
+                        📋 Dashboard менеджера
+                        {% elif is_operator_dashboard %}
+                        ☎️ Dashboard оператора
+                        {% else %}
+                        📊 Dashboard
+                        {% endif %}
+                    </h2>
+                    <div class="dashboard-role-badges">
+                        <span class="badge bg-primary">{{ user_role_display }}</span>
+                        {% if is_full_access %}
+                            <span class="badge bg-success">Полный доступ</span>
+                        {% else %}
+                            <span class="badge bg-info">Ограниченный доступ</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Charts -->
     <div class="row mb-4">
         <div class="col-12">
-            <h5 class="mb-3">📊 Графики</h5>
+            <h5 class="mb-3 dashboard-section-title">
+                {% if is_operator_dashboard %}
+                📊 Заказы и загрузка
+                {% elif is_manager_dashboard %}
+                📊 Операционная аналитика
+                {% else %}
+                📊 Графики и аналитика
+                {% endif %}
+            </h5>
         </div>
         <div class="col-lg-8 mb-3">
-            <div class="card">
+            <div class="card dashboard-chart-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Заказы (14 дней)</h5>
+                    <h5 class="mb-0">
+                        {% if is_operator_dashboard %}Новые заказы (14 дней){% else %}Заказы (14 дней){% endif %}
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div style="height: 280px;">
@@ -38,7 +127,7 @@
             </div>
         </div>
         <div class="col-lg-4 mb-3">
-            <div class="card">
+            <div class="card dashboard-chart-card">
                 <div class="card-header">
                     <h5 class="mb-0">Статусы заказов</h5>
                 </div>
@@ -49,8 +138,9 @@
                 </div>
             </div>
         </div>
+        {% if show_revenue_chart %}
         <div class="col-12 mb-3">
-            <div class="card">
+            <div class="card dashboard-chart-card">
                 <div class="card-header">
                     <h5 class="mb-0">Выручка (завершённые заказы, 14 дней)</h5>
                 </div>
@@ -61,15 +151,26 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Main Metrics Cards -->
     <div class="row mb-4">
         <div class="col-12">
-            <h5 class="mb-3">📈 Основные показатели</h5>
+            <h5 class="mb-3 dashboard-section-title">
+                {% if is_founder_dashboard %}
+                📈 Стратегические показатели
+                {% elif is_manager_dashboard %}
+                📈 Операционные показатели
+                {% elif is_operator_dashboard %}
+                📈 Показатели по клиентам и заказам
+                {% else %}
+                📈 Основные показатели
+                {% endif %}
+            </h5>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card text-center">
+            <div class="card text-center dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-primary">{{ main_metrics.total_clients }}</h3>
                     <small class="text-muted">Клиентов</small>
@@ -77,15 +178,16 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card text-center">
+            <div class="card text-center dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-success">{{ main_metrics.total_orders }}</h3>
                     <small class="text-muted">Заказов</small>
                 </div>
             </div>
         </div>
+        {% if is_founder_dashboard or is_manager_dashboard %}
         <div class="col-md-3 mb-3">
-            <div class="card text-center">
+            <div class="card text-center dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-info">{{ main_metrics.total_services }}</h3>
                     <small class="text-muted">Услуг</small>
@@ -93,19 +195,37 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card text-center">
+            <div class="card text-center dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-warning">{{ main_metrics.total_employees }}</h3>
                     <small class="text-muted">Сотрудников</small>
                 </div>
             </div>
         </div>
+        {% else %}
+        <div class="col-md-3 mb-3">
+            <div class="card text-center dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ today_metrics.new_clients_today }}</h3>
+                    <small class="text-muted">Новых клиентов сегодня</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-warning">{{ today_metrics.orders_today }}</h3>
+                    <small class="text-muted">Заказов на сегодня</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Secondary Metrics -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="card text-center border-warning">
+            <div class="card text-center border-warning dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-warning">{{ main_metrics.active_orders }}</h3>
                     <small class="text-muted">Активных заказов</small>
@@ -113,29 +233,65 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card text-center border-success">
+            <div class="card text-center border-success dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-success">{{ main_metrics.completed_orders }}</h3>
                     <small class="text-muted">Завершенных</small>
                 </div>
             </div>
         </div>
+        {% if is_founder_dashboard %}
         <div class="col-md-3 mb-3">
-            <div class="card text-center border-danger">
+            <div class="card text-center border-danger dashboard-metric-card">
                 <div class="card-body">
-                    <h3 class="mb-0 text-danger">{{ main_metrics.pending_expenses_count }}</h3>
-                    <small class="text-muted">Ожид. расходов</small>
+                    <h3 class="mb-0 text-danger">{{ main_metrics.total_expenses_count }}</h3>
+                    <small class="text-muted">Всего расходов</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="card text-center border-info">
+            <div class="card text-center border-info dashboard-metric-card">
                 <div class="card-body">
                     <h3 class="mb-0 text-info">{{ main_metrics.low_stock_items_count }}</h3>
                     <small class="text-muted">Низких остатков</small>
                 </div>
             </div>
         </div>
+        {% elif is_manager_dashboard %}
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-danger">{{ today_metrics.active_cleaners_today }}</h3>
+                    <small class="text-muted">Клинеров в работе</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ main_metrics.low_stock_items_count }}</h3>
+                    <small class="text-muted">Низких остатков</small>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-danger">{{ today_metrics.expenses_today_count }}</h3>
+                    <small class="text-muted">Ожид. расходов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info dashboard-metric-card">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ today_metrics.expenses_today_sum|floatformat:0 }}</h3>
+                    <small class="text-muted">Расходы сегодня</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Today Metrics -->
@@ -185,7 +341,7 @@
         </div>
     </div>
 
-    {% if is_full_access %}
+    {% if show_financial_summary %}
     <!-- Financial Summary -->
     <div class="row mb-4">
         <div class="col-12">
@@ -221,6 +377,7 @@
         </div>
     </div>
 
+    {% if show_financial_block %}
     <!-- Financial Analytics -->
     <div class="row mb-4">
         <div class="col-12">
@@ -259,7 +416,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if is_founder_dashboard %}
     <!-- Profit Card -->
     <div class="row mb-4">
         <div class="col-md-6">
@@ -271,6 +430,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     {% endif %}
 
     <!-- Two Column Layout for Operational Blocks -->
@@ -321,7 +481,7 @@
                 </div>
             </div>
 
-            {% if is_full_access %}
+            {% if show_expenses_block %}
             <!-- Recent Expenses -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -358,7 +518,7 @@
         
         <!-- Right Column -->
         <div class="col-md-6">
-            {% if is_full_access %}
+            {% if show_inventory_block %}
             <!-- Low Stock Items -->
             {% if low_stock_items %}
             <div class="card mb-4 border-danger">
@@ -394,6 +554,7 @@
             </div>
             {% endif %}
 
+            {% if show_active_orders_block %}
             <!-- Active Orders in Progress -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -427,7 +588,9 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
+            {% if show_team_block %}
             <!-- Cleaner Performance -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -462,7 +625,9 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
+            {% if show_clients_sources %}
             <!-- Clients by Source -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -493,7 +658,9 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
+            {% if show_problematic_cleaners %}
             <!-- Problematic Cleaners -->
             <div class="card mb-4 border-warning">
                 <div class="card-header bg-warning text-dark">

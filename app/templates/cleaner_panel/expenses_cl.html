@@ -100,6 +100,54 @@
             font-size: 4rem;
             margin-bottom: 1rem;
         }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.95rem 1rem;
+            }
+            .expense-card {
+                border-radius: 14px;
+                padding: 0.95rem;
+            }
+            .expense-amount {
+                font-size: 1.1rem;
+            }
+            .fab-button {
+                width: 56px;
+                height: 56px;
+                right: 16px;
+                bottom: 96px;
+            }
+            .bottom-nav {
+                padding: 0.55rem 0 calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            body {
+                padding-bottom: 98px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h5 {
+                font-size: 1rem;
+            }
+            .container.my-3 {
+                margin-top: 0.9rem !important;
+                margin-bottom: 0.9rem !important;
+            }
+            .expense-card {
+                padding: 0.85rem;
+            }
+            .expense-category {
+                font-size: 0.76rem;
+                padding: 0.25rem 0.6rem;
+            }
+            .expense-amount {
+                font-size: 1rem;
+            }
+            .nav-item i {
+                font-size: 1.35rem;
+            }
+        }
     </style>
 </head>
 <body>

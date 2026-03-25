@@ -108,6 +108,21 @@
             .hr-main { margin-left: 0; padding: 1rem; }
             .hr-sidebar-footer { display: none; }
             .hr-info-grid { grid-template-columns: 1fr; }
+            .hr-profile-card,
+            .hr-actions-card { padding: 1rem; border-radius: 14px; }
+            .hr-profile-top { gap: 1rem; }
+            .hr-action-row form { width: 100%; }
+            .btn-hr-action { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 576px) {
+            .hr-sidebar-brand { padding: 0 1rem 1rem; }
+            .hr-nav-link { padding: 0.55rem 0.8rem; font-size: 0.86rem; }
+            .hr-main { padding: 0.8rem; }
+            .hr-back { width: 100%; justify-content: center; }
+            .hr-profile-top { flex-direction: column; align-items: flex-start; }
+            .hr-profile-name { font-size: 1.15rem; }
+            .hr-avatar-big { width: 64px; height: 64px; font-size: 1.35rem; }
         }
     </style>
 </head>

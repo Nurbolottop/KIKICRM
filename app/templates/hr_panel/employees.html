@@ -104,6 +104,18 @@
         .hr-empty { text-align: center; padding: 3rem 1rem; color: #9ca3af; }
         .hr-empty i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
 
+        .hr-mobile-list { display: none; }
+        .hr-mobile-card {
+            background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+            padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .hr-mobile-card + .hr-mobile-card { margin-top: 0.85rem; }
+        .hr-mobile-meta { display: grid; gap: 0.55rem; margin-top: 0.85rem; }
+        .hr-mobile-row { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.92rem; }
+        .hr-mobile-label { color: #6b7280; flex: 0 0 84px; }
+        .hr-mobile-value { flex: 1 1 auto; text-align: right; word-break: break-word; }
+        .hr-mobile-actions { display: grid; grid-template-columns: 1fr; gap: 0.65rem; margin-top: 0.95rem; }
+
         @media (max-width: 768px) {
             .hr-sidebar { width: 100%; height: auto; position: relative; }
             .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
@@ -111,6 +123,18 @@
             .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
             .hr-main { margin-left: 0; padding: 1rem; }
             .hr-sidebar-footer { display: none; }
+            .hr-page-title { flex-direction: column; align-items: stretch; gap: 0.85rem; font-size: 1.25rem; }
+            .hr-page-title .btn { width: 100%; }
+            .hr-table-card { display: none; }
+            .hr-mobile-list { display: block; }
+            .hr-filters { padding: 0.9rem; }
+        }
+
+        @media (max-width: 576px) {
+            .hr-main { padding: 0.8rem; }
+            .hr-sidebar-brand { padding: 0 1rem 1rem; }
+            .hr-nav-link { padding: 0.55rem 0.8rem; font-size: 0.86rem; }
+            .hr-mobile-card { padding: 0.9rem; }
         }
     </style>
 </head>
@@ -234,6 +258,49 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <div class="hr-mobile-list">
+            {% for emp in employees %}
+            <div class="hr-mobile-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="hr-avatar">
+                        {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fw-semibold">{{ emp.full_name|default:"Без имени" }}</div>
+                        <div class="text-muted small">{{ emp.phone }}</div>
+                    </div>
+                </div>
+
+                <div class="hr-mobile-meta">
+                    <div class="hr-mobile-row">
+                        <span class="hr-mobile-label">Роль</span>
+                        <span class="hr-mobile-value"><span class="hr-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span></span>
+                    </div>
+                    <div class="hr-mobile-row">
+                        <span class="hr-mobile-label">Статус</span>
+                        <span class="hr-mobile-value">
+                            {% if emp.is_active %}
+                            <span><span class="hr-status-dot active"></span>Активен</span>
+                            {% else %}
+                            <span><span class="hr-status-dot inactive"></span>Неактивен</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="hr-mobile-row">
+                        <span class="hr-mobile-label">Создан</span>
+                        <span class="hr-mobile-value">{{ emp.date_joined|date:"d.m.Y" }}</span>
+                    </div>
+                </div>
+
+                <div class="hr-mobile-actions">
+                    <a href="{% url 'hr_employee_detail' emp.pk %}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i> Открыть профиль
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
         <div class="hr-table-card">
