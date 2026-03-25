@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ emp.full_name|default:"Сотрудник" }} - CRM KIKI{% endblock %}
+
+{% block content %}
+<style>
+    .ed-page { max-width: 800px; }
+    .ed-back {
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 0.92rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.15s;
+        margin-bottom: 1.5rem;
+    }
+    .ed-back:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+
+    .ed-profile-card {
+        background: white;
+        border: 1px solid #f0f0f5;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 1.5rem;
+    }
+    .ed-profile-top {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 1.75rem;
+    }
+    .ed-avatar-big {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.6rem;
+        flex-shrink: 0;
+    }
+    .ed-profile-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .ed-profile-role {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.4rem;
+    }
+    .role-FOUNDER { background: #fef3c7; color: #92400e; }
+    .role-MANAGER { background: #dbeafe; color: #1e40af; }
+    .role-OPERATOR { background: #e0e7ff; color: #3730a3; }
+    .role-SMM { background: #fce7f3; color: #9d174d; }
+    .role-HR { background: #d1fae5; color: #065f46; }
+    .role-SENIOR_CLEANER { background: #ede9fe; color: #5b21b6; }
+    .role-CLEANER { background: #f3f4f6; color: #374151; }
+
+    .ed-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+    .ed-info-item {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+    }
+    .ed-info-label {
+        font-size: 0.78rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .ed-info-value {
+        font-size: 0.95rem;
+        color: #1f2937;
+        font-weight: 500;
+    }
+    .ed-status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.4rem;
+    }
+    .ed-status-dot.active { background: #22c55e; }
+    .ed-status-dot.inactive { background: #ef4444; }
+
+    .ed-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .ed-expenses-card {
+        background: white;
+        border: 1px solid #f0f0f5;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .ed-expenses-table { margin: 0; }
+    .ed-expenses-table thead th {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.7rem 1rem;
+        font-weight: 600;
+        font-size: 0.82rem;
+        color: #6b7280;
+        text-transform: uppercase;
+    }
+    .ed-expenses-table tbody td {
+        padding: 0.7rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.9rem;
+    }
+    .ed-expenses-table tbody tr:last-child td { border-bottom: none; }
+    .ed-empty-section {
+        text-align: center;
+        padding: 2rem;
+        color: #9ca3af;
+        font-size: 0.92rem;
+    }
+</style>
+
+<div class="ed-page">
+    <a href="{% url 'employees_list' %}" class="ed-back">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+    </a>
+
+    <div class="ed-profile-card">
+        <div class="ed-profile-top">
+            <div class="ed-avatar-big">
+                {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+            </div>
+            <div>
+                <h2 class="ed-profile-name">{{ emp.full_name|default:"Без имени" }}</h2>
+                <span class="ed-profile-role role-{{ emp.role }}">{{ emp.get_role_display }}</span>
+            </div>
+        </div>
+
+        <div class="ed-info-grid">
+            <div class="ed-info-item">
+                <div class="ed-info-label">Телефон</div>
+                <div class="ed-info-value">{{ emp.phone }}</div>
+            </div>
+            <div class="ed-info-item">
+                <div class="ed-info-label">Статус</div>
+                <div class="ed-info-value">
+                    {% if emp.is_active %}
+                    <span class="ed-status-dot active"></span>Активен
+                    {% else %}
+                    <span class="ed-status-dot inactive"></span>Неактивен
+                    {% endif %}
+                </div>
+            </div>
+            <div class="ed-info-item">
+                <div class="ed-info-label">Дата регистрации</div>
+                <div class="ed-info-value">{{ emp.date_joined|date:"d.m.Y" }}</div>
+            </div>
+            <div class="ed-info-item">
+                <div class="ed-info-label">Последний вход</div>
+                <div class="ed-info-value">{{ emp.last_login|date:"d.m.Y H:i"|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Expenses -->
+    <div class="ed-section-title">
+        <i class="bi bi-wallet2"></i> Последние расходы
+    </div>
+    {% if recent_expenses %}
+    <div class="ed-expenses-card">
+        <table class="table ed-expenses-table">
+            <thead>
+                <tr>
+                    <th>Категория</th>
+                    <th>Сумма</th>
+                    <th>Дата</th>
+                    <th>Заказ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in recent_expenses %}
+                <tr>
+                    <td><span class="badge bg-info">{{ expense.get_category_display }}</span></td>
+                    <td><strong>{{ expense.amount }} сом</strong></td>
+                    <td>{{ expense.expense_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if expense.order %}
+                        {{ expense.order.order_code }}
+                        {% else %}
+                        <span class="text-muted">Общий</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="ed-expenses-card">
+        <div class="ed-empty-section">
+            <i class="bi bi-wallet2 d-block mb-2" style="font-size:1.5rem;"></i>
+            Нет расходов
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

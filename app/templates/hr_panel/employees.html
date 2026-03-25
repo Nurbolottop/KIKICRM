@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сотрудники | HR Панель | KIKI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --hr-primary: #6366f1; --hr-primary-dark: #4f46e5; }
+        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+
+        .hr-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+            padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column;
+        }
+        .hr-sidebar-brand {
+            color: white; font-size: 1.2rem; font-weight: 700;
+            padding: 0 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 0.6rem; text-decoration: none;
+        }
+        .hr-sidebar-nav { padding: 1rem 0; flex: 1; }
+        .hr-nav-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65);
+            text-decoration: none; font-size: 0.92rem; transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .hr-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
+        .hr-nav-link.active {
+            color: white; background: rgba(255,255,255,0.12);
+            border-left-color: var(--hr-primary);
+        }
+        .hr-nav-link i { font-size: 1.15rem; width: 22px; text-align: center; }
+        .hr-sidebar-footer {
+            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .hr-sidebar-user {
+            color: rgba(255,255,255,0.8); font-size: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .hr-logout {
+            color: rgba(255,255,255,0.5); font-size: 0.82rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        .hr-logout:hover { color: white; }
+
+        .hr-main { margin-left: 240px; padding: 2rem; }
+        .hr-page-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+
+        .hr-filters {
+            background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+            padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .hr-filters .form-control, .hr-filters .form-select {
+            border-radius: 10px; border: 1px solid #e5e7eb;
+            padding: 0.55rem 0.85rem; font-size: 0.92rem;
+        }
+        .hr-filters .form-control:focus, .hr-filters .form-select:focus {
+            border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+        .btn-hr { background: var(--hr-primary); color: white; border: none; border-radius: 10px; padding: 0.55rem 1.25rem; font-weight: 600; }
+        .btn-hr:hover { background: var(--hr-primary-dark); color: white; }
+
+        .hr-table-card {
+            background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+            overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .hr-table { margin: 0; }
+        .hr-table thead th {
+            background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+            padding: 0.85rem 1rem; font-weight: 600; font-size: 0.82rem;
+            color: #6b7280; text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .hr-table tbody td {
+            padding: 0.85rem 1rem; vertical-align: middle;
+            border-bottom: 1px solid #f3f4f6; font-size: 0.93rem;
+        }
+        .hr-table tbody tr:hover { background: #fafaff; }
+        .hr-table tbody tr:last-child td { border-bottom: none; }
+
+        .hr-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .hr-name-cell { display: flex; align-items: center; gap: 0.75rem; }
+        .hr-name { font-weight: 600; color: #1f2937; text-decoration: none; }
+        .hr-name:hover { color: var(--hr-primary); }
+        .hr-phone { color: #6b7280; font-size: 0.85rem; }
+
+        .hr-role-badge { display: inline-block; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+        .role-SENIOR_CLEANER { background: #ede9fe; color: #5b21b6; }
+        .role-CLEANER { background: #f3f4f6; color: #374151; }
+
+        .hr-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
+        .hr-status-dot.active { background: #22c55e; }
+        .hr-status-dot.inactive { background: #ef4444; }
+
+        .hr-empty { text-align: center; padding: 3rem 1rem; color: #9ca3af; }
+        .hr-empty i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+
+        @media (max-width: 768px) {
+            .hr-sidebar { width: 100%; height: auto; position: relative; }
+            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
+            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
+            .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
+            .hr-main { margin-left: 0; padding: 1rem; }
+            .hr-sidebar-footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="hr-sidebar">
+        <a href="{% url 'hr_dashboard' %}" class="hr-sidebar-brand">
+            <i class="bi bi-people-fill"></i> <span>HR Панель</span>
+        </a>
+        <nav class="hr-sidebar-nav">
+            <a href="{% url 'hr_dashboard' %}" class="hr-nav-link">
+                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+            </a>
+            <a href="{% url 'hr_employees' %}" class="hr-nav-link active">
+                <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
+            </a>
+            <a href="{% url 'hr_employee_create' %}" class="hr-nav-link">
+                <i class="bi bi-person-plus"></i> <span>Добавить клинера</span>
+            </a>
+            <a href="{% url 'hr_settings' %}" class="hr-nav-link">
+                <i class="bi bi-gear"></i> <span>Настройки</span>
+            </a>
+        </nav>
+        <div class="hr-sidebar-footer">
+            <div class="hr-sidebar-user">
+                <i class="bi bi-person-circle"></i>
+                <div>{{ request.user.full_name|default:request.user.phone }} <span class="badge bg-info" style="font-size:0.7rem;">HR</span></div>
+            </div>
+            <a href="{% url 'login' %}" class="hr-logout"
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="bi bi-box-arrow-left"></i> Выйти
+            </a>
+            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
+        </div>
+    </aside>
+
+    <main class="hr-main">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px;">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="hr-page-title">
+            <span><i class="bi bi-person-badge me-2"></i>Сотрудники ({{ total }})</span>
+            <a href="{% url 'hr_employee_create' %}" class="btn btn-hr">
+                <i class="bi bi-plus-lg me-1"></i> Добавить
+            </a>
+        </div>
+
+        <div class="hr-filters">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по имени или телефону..." value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select">
+                        <option value="">Все роли</option>
+                        <option value="CLEANER" {% if role_filter == 'CLEANER' %}selected{% endif %}>Клинер</option>
+                        <option value="SENIOR_CLEANER" {% if role_filter == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Активные</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Неактивные</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-hr w-100">
+                        <i class="bi bi-search me-1"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if employees %}
+        <div class="hr-table-card">
+            <table class="table hr-table">
+                <thead>
+                    <tr>
+                        <th>Сотрудник</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>
+                            <div class="hr-name-cell">
+                                <div class="hr-avatar">
+                                    {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'hr_employee_detail' emp.pk %}" class="hr-name">{{ emp.full_name|default:"Без имени" }}</a>
+                                    <div class="hr-phone">{{ emp.phone }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="hr-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span></td>
+                        <td>
+                            {% if emp.is_active %}
+                            <span><span class="hr-status-dot active"></span>Активен</span>
+                            {% else %}
+                            <span><span class="hr-status-dot inactive"></span>Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.date_joined|date:"d.m.Y" }}</td>
+                        <td>
+                            <a href="{% url 'hr_employee_detail' emp.pk %}" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="hr-table-card">
+            <div class="hr-empty">
+                <i class="bi bi-people"></i>
+                <div>Сотрудники не найдены</div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -21,16 +21,11 @@ class ExpenseListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Expense.objects.select_related('employee', 'employee__user', 'order').order_by('-created_at')
+        queryset = Expense.objects.select_related('user', 'order').order_by('-created_at')
         
         # Основатель видит все расходы, остальные только свои
         if self.request.user.role != 'FOUNDER':
-            # Фильтруем по текущему сотруднику
-            if hasattr(self.request.user, 'employee'):
-                queryset = queryset.filter(employee=self.request.user.employee)
-            else:
-                # Если у пользователя нет профиля сотрудника, показываем пустой список
-                queryset = queryset.none()
+            queryset = queryset.filter(user=self.request.user)
         
         # Поиск по описанию
         search = self.request.GET.get('search')
@@ -41,6 +36,14 @@ class ExpenseListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         category = self.request.GET.get('category')
         if category:
             queryset = queryset.filter(category=category)
+        
+        # Фильтр по заказу (только для основателя)
+        order_id = self.request.GET.get('order')
+        if order_id and self.request.user.role == 'FOUNDER':
+            if order_id == 'none':
+                queryset = queryset.filter(order__isnull=True)
+            else:
+                queryset = queryset.filter(order_id=order_id)
         
         # Фильтр по дате
         date_from = self.request.GET.get('date_from')
@@ -56,10 +59,17 @@ class ExpenseListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['search'] = self.request.GET.get('search', '')
         context['category_filter'] = self.request.GET.get('category', '')
+        context['order_filter'] = self.request.GET.get('order', '')
         context['date_from'] = self.request.GET.get('date_from', '')
         context['date_to'] = self.request.GET.get('date_to', '')
         from .models import ExpenseCategory
         context['category_choices'] = ExpenseCategory.choices
+        
+        # Добавляем список заказов для основателя
+        if self.request.user.role == 'FOUNDER':
+            from apps.orders.models import Order
+            context['orders'] = Order.objects.all().order_by('-created_at')[:100]
+        
         return context
 
 
@@ -77,14 +87,8 @@ class ExpenseCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return kwargs
     
     def form_valid(self, form):
-        # Для общих расходов сотрудник не нужен
-        if not form.cleaned_data.get('is_general'):
-            # Для личных расходов устанавливаем текущего сотрудника автоматически
-            if hasattr(self.request.user, 'employee'):
-                form.instance.employee = self.request.user.employee
-            else:
-                messages.error(self.request, 'У вас нет профиля сотрудника. Обратитесь к администратору.')
-                return redirect('expenses_list')
+        # Устанавливаем текущего пользователя автоматически
+        form.instance.user = self.request.user
         
         response = super().form_valid(form)
         # Отправляем уведомление в Telegram
@@ -109,14 +113,11 @@ class ExpenseDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
     context_object_name = 'expense'
     
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('employee', 'employee__user', 'order')
+        queryset = super().get_queryset().select_related('user', 'order')
         
         # Основатель видит все расходы, остальные только свои
         if self.request.user.role != 'FOUNDER':
-            if hasattr(self.request.user, 'employee'):
-                queryset = queryset.filter(employee=self.request.user.employee)
-            else:
-                queryset = queryset.none()
+            queryset = queryset.filter(user=self.request.user)
         
         return queryset
 

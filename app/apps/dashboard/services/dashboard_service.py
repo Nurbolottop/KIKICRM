@@ -217,7 +217,7 @@ def get_recent_expenses(limit=5):
     from apps.expenses.models import Expense
     
     return Expense.objects.select_related(
-        'employee', 'order'
+        'user', 'order'
     ).order_by('-created_at')[:limit]
 
 

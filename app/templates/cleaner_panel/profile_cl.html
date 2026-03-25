@@ -252,13 +252,10 @@
                     </a>
                 </div>
                 <div class="col-4">
-                    <form method="post" action="{% url 'logout' %}" class="m-0">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-item" style="background: none; border: 0; width: 100%; padding: 0;">
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>Выйти</span>
-                        </button>
-                    </form>
+                    <a href="{% url 'expenses_cl' %}" class="nav-item">
+                        <i class="bi bi-receipt"></i>
+                        <span>Расходы</span>
+                    </a>
                 </div>
                 {% else %}
                 <div class="col-6">

@@ -1,6 +1,9 @@
 """Cleaner panel views - новая версия."""
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.http import JsonResponse
 from django.utils import timezone
 
 from apps.orders.models import Order, OrderEmployee
@@ -378,3 +381,54 @@ def refuse_order(request, order_id):
     
     messages.success(request, 'Вы отказались от заказа')
     return JsonResponse({'success': True, 'message': 'Отказ зафиксирован'})
+
+
+@login_required
+def expenses_cl(request):
+    """Список расходов клинера."""
+    if not is_cleaner(request.user):
+        return render(request, 'cleaner_panel/error_cl.html', {
+            'message': 'Эта страница только для клинеров.'
+        })
+    
+    from apps.expenses.models import Expense
+    
+    # Показываем только расходы текущего пользователя
+    expenses = Expense.objects.filter(user=request.user).order_by('-created_at')
+    
+    is_senior = request.user.role == UserRole.SENIOR_CLEANER
+    
+    return render(request, 'cleaner_panel/expenses_cl.html', {
+        'expenses': expenses,
+        'is_senior': is_senior,
+    })
+
+
+@login_required
+def expense_create_cl(request):
+    """Создание расхода клинером."""
+    if not is_cleaner(request.user):
+        return render(request, 'cleaner_panel/error_cl.html', {
+            'message': 'Эта страница только для клинеров.'
+        })
+    
+    from apps.expenses.models import Expense
+    from apps.expenses.forms import ExpenseForm
+    from django.shortcuts import redirect
+    
+    is_senior = request.user.role == UserRole.SENIOR_CLEANER
+    
+    if request.method == 'POST':
+        form = ExpenseForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            expense = form.save(commit=False)
+            expense.user = request.user
+            expense.save()
+            return redirect('expenses_cl')
+    else:
+        form = ExpenseForm(user=request.user)
+    
+    return render(request, 'cleaner_panel/expense_create_cl.html', {
+        'form': form,
+        'is_senior': is_senior,
+    })

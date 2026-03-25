@@ -15,4 +15,6 @@ class PhoneLoginView(LoginView):
         user = self.request.user
         if user.role in [UserRole.CLEANER, UserRole.SENIOR_CLEANER]:
             return reverse_lazy('index_cl')
+        if user.role == UserRole.HR:
+            return reverse_lazy('hr_dashboard')
         return reverse_lazy('dashboard')

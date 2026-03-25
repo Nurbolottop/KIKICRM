@@ -15,25 +15,36 @@
     <!-- Search and Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3">
+            <form method="get" class="row g-3" id="expenseFilterForm">
                 <div class="col-md-3">
                     <input type="text" name="search" class="form-control" placeholder="Поиск по описанию..." value="{{ search }}">
                 </div>
-                <div class="col-md-3">
-                    <select name="category" class="form-select">
+                <div class="col-md-2">
+                    <select name="category" class="form-select" id="categoryFilter">
                         <option value="">Все категории</option>
                         {% for value, label in category_choices %}
                         <option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% if user.role == 'FOUNDER' %}
+                <div class="col-md-2">
+                    <select name="order" class="form-select" id="orderFilter">
+                        <option value="">Все заказы</option>
+                        <option value="none" {% if order_filter == 'none' %}selected{% endif %}>Основные расходы (без заказа)</option>
+                        {% for order in orders %}
+                        <option value="{{ order.id }}" {% if order_filter == order.id|stringformat:"s" %}selected{% endif %}>{{ order.order_code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
                 <div class="col-md-2">
                     <input type="date" name="date_from" class="form-control" placeholder="С" value="{{ date_from }}">
                 </div>
                 <div class="col-md-2">
                     <input type="date" name="date_to" class="form-control" placeholder="По" value="{{ date_to }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-outline-primary w-100">
                         <i class="bi bi-search"></i>
                     </button>
@@ -42,13 +53,15 @@
         </div>
     </div>
     
+    <div id="expensesTableContainer">
+    
     {% if expenses %}
     <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Тип/Сотрудник</th>
+                    <th>Пользователь</th>
                     <th>Категория</th>
                     <th>Сумма</th>
                     <th>Дата</th>
@@ -59,15 +72,7 @@
                 {% for expense in expenses %}
                 <tr>
                     <td>{{ expense.id }}</td>
-                    <td>
-                        {% if expense.is_general %}
-                            <span class="badge bg-primary">ОБЩИЙ</span>
-                        {% elif expense.employee %}
-                            {{ expense.employee.user.full_name }}
-                        {% else %}
-                            <span class="text-muted">—</span>
-                        {% endif %}
-                    </td>
+                    <td>{{ expense.user.full_name }}</td>
                     <td>
                         <span class="badge bg-info">{{ expense.get_category_display }}</span>
                     </td>
@@ -124,5 +129,50 @@
         <i class="bi bi-info-circle"></i> Пока нет расходов.
     </div>
     {% endif %}
+    
+    </div> <!-- Close expensesTableContainer -->
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const orderFilter = document.getElementById('orderFilter');
+    
+    // AJAX фильтрация при изменении категории
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            loadExpenses();
+        });
+    }
+    
+    // AJAX фильтрация при изменении заказа
+    if (orderFilter) {
+        orderFilter.addEventListener('change', function() {
+            loadExpenses();
+        });
+    }
+    
+    function loadExpenses() {
+        const form = document.getElementById('expenseFilterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        fetch('{% url "expenses_list" %}?' + params.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newContent = doc.getElementById('expensesTableContainer');
+            if (newContent) {
+                document.getElementById('expensesTableContainer').innerHTML = newContent.innerHTML;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+});
+</script>
 {% endblock %}

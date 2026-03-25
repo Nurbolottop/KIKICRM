@@ -3,147 +3,294 @@
 {% block title %}{{ title }} - CRM KIKI{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">{{ title }}</h1>
-        <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
+<style>
+    .ef-container {
+        max-width: 620px;
+    }
+    .ef-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid #f0f0f5;
+    }
+    .ef-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.75rem;
+    }
+    .ef-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .ef-back {
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 0.92rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.15s;
+    }
+    .ef-back:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        color: #374151;
+    }
+    .ef-mode-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+        border: 1px solid #dbe3ff;
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .ef-mode-card:hover {
+        border-color: #b8c6ff;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08);
+    }
+    .ef-mode-switch {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        margin: 0;
+    }
+    .ef-mode-switch .form-check-input {
+        width: 2.85rem;
+        height: 1.55rem;
+        margin-top: 0.1rem;
+        margin-left: 0;
+        flex-shrink: 0;
+        border: none;
+        background-color: #cbd5e1;
+        box-shadow: none;
+    }
+    .ef-mode-switch .form-check-input:checked {
+        background-color: #6366f1;
+    }
+    .ef-mode-switch .form-check-label {
+        cursor: pointer;
+    }
+    .ef-mode-title {
+        display: block;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+    .ef-mode-desc {
+        display: block;
+        color: #6b7280;
+        font-size: 0.88rem;
+        margin-top: 0.3rem;
+        line-height: 1.45;
+    }
+    .ef-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+        font-size: 0.92rem;
+    }
+    .ef-field {
+        margin-bottom: 1.25rem;
+    }
+    .ef-card .form-control,
+    .ef-card .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        padding: 0.7rem 0.9rem;
+        font-size: 0.95rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .ef-card .form-control:focus,
+    .ef-card .form-select:focus {
+        border-color: #818cf8;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+    .ef-info {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: #0c4a6e;
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+    .ef-info i {
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    .ef-submit {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 0.85rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: background 0.15s;
+        width: 100%;
+    }
+    .ef-submit:hover {
+        background: #4f46e5;
+        color: white;
+    }
+    .ef-cancel {
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 0.92rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0.7rem;
+        margin-top: 0.5rem;
+        border-radius: 10px;
+        transition: background 0.15s;
+    }
+    .ef-cancel:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .ef-photo-current {
+        margin-bottom: 1.25rem;
+    }
+    .ef-photo-current img {
+        border-radius: 10px;
+        max-height: 180px;
+    }
+</style>
+
+<div class="ef-container">
+    <div class="ef-header">
+        <h2>{{ title }}</h2>
+        <a href="{% url 'expenses_list' %}" class="ef-back">
             <i class="bi bi-arrow-left"></i> Назад к списку
         </a>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <!-- Общий расход -->
-                        <div class="mb-3">
-                            <div class="form-check">
-                                {{ form.is_general }}
-                                <label class="form-check-label" for="{{ form.is_general.id_for_label }}">
-                                    <strong>Общий расход компании</strong>
-                                    <small class="text-muted d-block">Аренда, химия, коммунальные услуги и т.д.</small>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <!-- Информация о сотруднике -->
-                        <div class="row" id="employee-info">
-                            <div class="col-md-12 mb-3">
-                                <div class="alert alert-secondary d-flex align-items-center">
-                                    <i class="bi bi-person-badge me-2"></i>
-                                    <div>
-                                        <strong>Сотрудник:</strong> {{ request.user.full_name }} (установится автоматически)
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Заказ -->
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="{{ form.order.id_for_label }}" class="form-label">Заказ (опционально)</label>
-                                {{ form.order }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория *</label>
-                                {{ form.category }}
-                                {% if form.category.errors %}
-                                <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма (сом) *</label>
-                                {{ form.amount }}
-                                {% if form.amount.errors %}
-                                <div class="invalid-feedback d-block">{{ form.amount.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <div class="alert alert-info d-flex align-items-center">
-                                    <i class="bi bi-calendar-check me-2"></i>
-                                    <div>
-                                        <strong>Дата расхода:</strong> {% now "d.m.Y" %} (установится автоматически)
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="{{ form.photo.id_for_label }}" class="form-label">Фото чека</label>
-                                {{ form.photo }}
-                                <small class="form-text text-muted">Опционально</small>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        {% if expense.photo %}
-                        <div class="mb-3">
-                            <label class="form-label">Текущее фото чека</label>
-                            <div>
-                                <img src="{{ expense.photo.url }}" alt="Чек" class="img-thumbnail" style="max-height: 200px;">
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-lg"></i> {{ button_text }}
-                            </button>
-                            <a href="{% url 'expenses_list' %}" class="btn btn-outline-secondary">
-                                Отмена
-                            </a>
-                        </div>
-                    </form>
+    <div class="ef-card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger" style="border-radius: 10px;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger" style="border-radius: 10px;">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="ef-mode-card">
+                <div class="form-check form-switch ef-mode-switch">
+                    {{ form.is_general }}
+                    <label class="form-check-label" for="{{ form.is_general.id_for_label }}">
+                        <span class="ef-mode-title">Общий расход</span>
+                        <span class="ef-mode-desc">Аренда, налоги, офис и другие расходы без привязки к заказу</span>
+                    </label>
                 </div>
             </div>
-        </div>
+
+            <div class="ef-field" id="category-field-row">
+                <label class="ef-label">Категория</label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                <div class="text-danger mt-1" style="font-size:0.85rem;">{{ form.category.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="ef-field">
+                <label class="ef-label">Сумма (сом)</label>
+                {{ form.amount }}
+                {% if form.amount.errors %}
+                <div class="text-danger mt-1" style="font-size:0.85rem;">{{ form.amount.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="ef-field" id="order-field-row">
+                <label class="ef-label">Заказ (необязательно)</label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                <div class="text-danger mt-1" style="font-size:0.85rem;">{{ form.order.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="ef-field">
+                <label class="ef-label">Описание (необязательно)</label>
+                {{ form.description }}
+            </div>
+
+            <div class="ef-field">
+                <label class="ef-label">Фото чека (необязательно)</label>
+                {{ form.photo }}
+            </div>
+
+            {% if expense.photo %}
+            <div class="ef-photo-current">
+                <label class="ef-label">Текущее фото</label>
+                <div>
+                    <img src="{{ expense.photo.url }}" alt="Чек" class="img-thumbnail">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="ef-info">
+                <i class="bi bi-person-badge"></i>
+                <span><strong>Сотрудник:</strong> {{ request.user.full_name }} (установится автоматически)</span>
+            </div>
+
+            <div class="ef-info">
+                <i class="bi bi-calendar-check"></i>
+                <span><strong>Дата расхода:</strong> {% now "d.m.Y" %} (установится автоматически)</span>
+            </div>
+
+            <button type="submit" class="ef-submit">
+                <i class="bi bi-check-circle me-2"></i>{{ button_text|default:"Добавить расход" }}
+            </button>
+            <a href="{% url 'expenses_list' %}" class="ef-cancel">Отмена</a>
+        </form>
     </div>
 </div>
 
-{% block extra_js %}
 <script>
-// Показать/скрыть информацию о сотруднике в зависимости от флага общего расхода
-$(document).ready(function() {
-    const isGeneralCheckbox = $('#{{ form.is_general.id_for_label }}');
-    const employeeInfo = $('#employee-info');
-    
-    function toggleEmployeeInfo() {
-        if (isGeneralCheckbox.is(':checked')) {
-            employeeInfo.hide();
+document.addEventListener('DOMContentLoaded', function() {
+    const isGeneralInput = document.getElementById('{{ form.is_general.id_for_label }}');
+    const orderRow = document.getElementById('order-field-row');
+    const categoryRow = document.getElementById('category-field-row');
+    const orderSelect = document.getElementById('{{ form.order.id_for_label }}');
+
+    function toggleExpenseMode() {
+        if (!isGeneralInput) return;
+        if (isGeneralInput.checked) {
+            if (orderRow) orderRow.style.display = 'none';
+            if (categoryRow) categoryRow.style.display = 'none';
+            if (orderSelect) orderSelect.value = '';
         } else {
-            employeeInfo.show();
+            if (orderRow) orderRow.style.display = '';
+            if (categoryRow) categoryRow.style.display = '';
         }
     }
-    
-    // Инициализация
-    toggleEmployeeInfo();
-    
-    // Обработка изменения
-    isGeneralCheckbox.on('change', toggleEmployeeInfo);
+
+    isGeneralInput.addEventListener('change', toggleExpenseMode);
+    toggleExpenseMode();
 });
 </script>
 {% endblock %}
-{% endblock %}
-
-<style>
-.form-control, .form-select, textarea {
-    border-radius: 0.375rem;
-}
-</style>

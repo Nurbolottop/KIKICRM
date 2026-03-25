@@ -93,8 +93,6 @@ ROLE_PERMISSIONS = {
         # Expenses
         'expenses.view': True,
         'expenses.create': True,
-        'expenses.approve': True,
-        'expenses.reject': True,
         # Inventory
         'inventory.view': True,
         'inventory.create': True,
@@ -135,12 +133,10 @@ ROLE_PERMISSIONS = {
         'employees.edit': False,
         'employees.delete': False,
         # Expenses
-        'expenses.view': False,
-        'expenses.create': False,
-        'expenses.approve': False,
-        'expenses.reject': False,
+        'expenses.view': True,
+        'expenses.create': True,
         # Inventory
-        'inventory.view': False,
+        'inventory.view': True,
         'inventory.create': False,
         'inventory.edit': False,
         'inventory.transactions': False,
@@ -181,8 +177,6 @@ ROLE_PERMISSIONS = {
         # Expenses
         'expenses.view': True,
         'expenses.create': True,
-        'expenses.approve': False,
-        'expenses.reject': False,
         # Inventory
         'inventory.view': False,
         'inventory.create': False,
@@ -225,8 +219,6 @@ ROLE_PERMISSIONS = {
         # Expenses
         'expenses.view': True,
         'expenses.create': True,
-        'expenses.approve': False,
-        'expenses.reject': False,
         # Inventory
         'inventory.view': False,
         'inventory.create': False,
@@ -269,8 +261,6 @@ ROLE_PERMISSIONS = {
         # Expenses
         'expenses.view': True,  # Видит только свои расходы
         'expenses.create': True,
-        'expenses.approve': False,
-        'expenses.reject': False,
         # Inventory
         'inventory.view': False,
         'inventory.create': False,

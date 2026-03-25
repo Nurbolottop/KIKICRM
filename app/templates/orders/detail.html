@@ -322,6 +322,42 @@
                 </div>
             </div>
 
+            {% if inventory_usages %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h6 class="text-muted text-uppercase mb-0">
+                        <i class="bi bi-box-seam-fill"></i> Использованный инвентарь
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Тип</th>
+                                    <th>Инвентарь</th>
+                                    <th>Категория</th>
+                                    <th>Количество</th>
+                                    <th>Примечание</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usage in inventory_usages %}
+                                <tr>
+                                    <td><span class="badge {% if usage.inventory_item.item_type == 'LARGE' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ usage.inventory_item.get_item_type_display }}</span></td>
+                                    <td>{{ usage.inventory_item.name }}</td>
+                                    <td>{{ usage.inventory_item.category.name }}</td>
+                                    <td>{{ usage.quantity }} {{ usage.inventory_item.unit }}</td>
+                                    <td>{{ usage.note|default:'—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Блок: Чеклист задач -->
             {% if tasks_list %}
             <div class="card mb-4 border-0 shadow-sm">

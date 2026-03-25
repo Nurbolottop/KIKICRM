@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 import logging
@@ -14,13 +15,110 @@ from apps.common.permissions import (
     can_view_orders, can_create_orders, can_edit_orders, can_delete_orders,
     can_assign_cleaners, PermissionRequiredMixin
 )
-from .models import Order, OrderEmployee, OrderPhoto, RefuseSettings, OrderStatus
+from .models import Order, OrderEmployee, OrderInventoryUsage, OrderPhoto, RefuseSettings, OrderStatus
 from .forms import OrderForm
 from apps.orders.services.order_status_service import OrderStatusChecker, OrderStatusService
 from apps.notifications.services.notification_service import NotificationService
+from apps.inventory.models import InventoryItem, InventoryTransaction, TransactionType
+from apps.services.models import ServiceInventoryTemplate
 
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_decimal(value, default='0'):
+    try:
+        if value in (None, ''):
+            return Decimal(default)
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal(default)
+
+
+def build_inventory_usage_initial(order):
+    existing = list(
+        order.inventory_usages.select_related('inventory_item', 'inventory_item__category').order_by(
+            'inventory_item__item_type', 'inventory_item__category__name', 'inventory_item__name'
+        )
+    )
+    if existing:
+        return existing, False
+
+    if not order.service_id:
+        return [], False
+
+    templates = list(
+        ServiceInventoryTemplate.objects.filter(service=order.service).select_related(
+            'inventory_item', 'inventory_item__category'
+        ).order_by('inventory_item__item_type', 'inventory_item__category__name', 'inventory_item__name')
+    )
+    return templates, True
+
+
+def sync_order_inventory_usage(order, request):
+    item_ids = request.POST.getlist('usage_inventory_item[]')
+    quantities = request.POST.getlist('usage_quantity[]')
+    notes = request.POST.getlist('usage_note[]')
+
+    parsed_rows = []
+    for index, raw_item_id in enumerate(item_ids):
+        item_id = (raw_item_id or '').strip()
+        if not item_id:
+            continue
+
+        quantity = _parse_decimal(quantities[index] if index < len(quantities) else '0')
+        note = (notes[index] if index < len(notes) else '').strip()
+        if quantity <= 0:
+            continue
+        parsed_rows.append((int(item_id), quantity, note))
+
+    item_map = {item.id: item for item in InventoryItem.objects.filter(id__in=[row[0] for row in parsed_rows])}
+    existing_usages = {usage.inventory_item_id: usage for usage in order.inventory_usages.select_related('inventory_item')}
+    touched_ids = []
+
+    for item_id, quantity, note in parsed_rows:
+        item = item_map.get(item_id)
+        if not item:
+            continue
+        usage = existing_usages.get(item_id)
+        previous_quantity = usage.quantity if usage else Decimal('0')
+        delta = quantity - previous_quantity
+
+        if usage:
+            usage.quantity = quantity
+            usage.note = note
+            usage.save(update_fields=['quantity', 'note', 'updated_at'])
+        else:
+            usage = OrderInventoryUsage.objects.create(
+                order=order,
+                inventory_item=item,
+                quantity=quantity,
+                note=note,
+            )
+
+        touched_ids.append(usage.id)
+        if delta != 0:
+            transaction_type = TransactionType.OUT if delta > 0 else TransactionType.IN
+            InventoryTransaction.objects.create(
+                item=item,
+                transaction_type=transaction_type,
+                quantity=abs(delta),
+                order=order,
+                usage=usage,
+                comment=f'Синхронизация использования инвентаря по заказу {order.order_code}',
+            )
+
+    for usage in order.inventory_usages.exclude(id__in=touched_ids):
+        if usage.quantity > 0:
+            InventoryTransaction.objects.create(
+                item=usage.inventory_item,
+                transaction_type=TransactionType.IN,
+                quantity=usage.quantity,
+                order=order,
+                usage=usage,
+                comment=f'Возврат инвентаря после удаления строки использования по заказу {order.order_code}',
+            )
+        usage.delete()
 
 
 class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -183,9 +281,13 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
             str(service.id): str(service.price)
             for service in Service.objects.filter(is_active=True).only('id', 'price')
         }
-        
+        context['inventory_items'] = InventoryItem.objects.filter(is_active=True).select_related('category').order_by(
+            'item_type', 'category__name', 'name'
+        )
+        context['inventory_usage_rows'] = []
+        context['inventory_usage_prefilled'] = False
+         
         # Date/time dropdown values
-        from django.utils import timezone
         import calendar
         now = timezone.now()
         context['current_month'] = now.month
@@ -297,6 +399,9 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
             context['assigned_cleaners'].values_list('employee__user_id', flat=True)
         )
         context['notes_for_cleaners'] = (senior_assignment.notes if senior_assignment else '')
+        context['inventory_usages'] = order.inventory_usages.select_related(
+            'inventory_item', 'inventory_item__category'
+        ).order_by('inventory_item__item_type', 'inventory_item__category__name', 'inventory_item__name')
         
         # Фактическое время выполнения работы
         if senior_assignment and senior_assignment.started_at and senior_assignment.finished_at:
@@ -360,6 +465,9 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
             str(service.id): str(service.price)
             for service in Service.objects.filter(is_active=True).only('id', 'price')
         }
+        context['inventory_items'] = InventoryItem.objects.filter(is_active=True).select_related('category').order_by(
+            'item_type', 'category__name', 'name'
+        )
         
         # Данные для менеджера: клинеры, старшие клинеры, назначения
         order = self.get_object()
@@ -395,6 +503,10 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
             context['notes_for_cleaners'] = assigned_senior.notes or ''
         else:
             context['notes_for_cleaners'] = ''
+
+        inventory_rows, inventory_prefilled = build_inventory_usage_initial(order)
+        context['inventory_usage_rows'] = inventory_rows
+        context['inventory_usage_prefilled'] = inventory_prefilled
         
         # Дополнительные задачи (extra_tasks)
         context['extra_tasks'] = OrderTask.objects.filter(
@@ -512,6 +624,8 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                         order_position=base_pos + idx + 1,
                         status=OrderTaskStatus.PENDING,
                     )
+
+            sync_order_inventory_usage(order, self.request)
         
         return response
     

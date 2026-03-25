@@ -16,15 +16,13 @@ class ExpenseCategory(models.TextChoices):
 
 
 class Expense(models.Model):
-    """Модель расхода сотрудника."""
+    """Модель расхода."""
     
-    employee = models.ForeignKey(
-        'employees.Employee',
+    user = models.ForeignKey(
+        'accounts.User',
         on_delete=models.CASCADE,
         related_name='expenses',
-        verbose_name='Сотрудник',
-        null=True,
-        blank=True  # Для общих расходов может не быть сотрудника
+        verbose_name='Пользователь'
     )
     order = models.ForeignKey(
         'orders.Order',
@@ -59,11 +57,6 @@ class Expense(models.Model):
         'Дата расхода',
         default=timezone.now
     )
-    is_general = models.BooleanField(
-        'Общий расход',
-        default=False,
-        help_text='Общие расходы компании (аренда, химия и т.д.)'
-    )
     created_at = models.DateTimeField(
         'Дата создания',
         auto_now_add=True
@@ -75,9 +68,6 @@ class Expense(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        if self.is_general:
-            return f'ОБЩИЙ — {self.get_category_display()} ({self.amount} сом)'
-        elif self.employee:
-            return f'{self.employee.user.full_name} — {self.get_category_display()} ({self.amount} сом)'
-        else:
-            return f'Расход — {self.get_category_display()} ({self.amount} сом)'
+        if self.order:
+            return f'{self.user.full_name} — {self.get_category_display()} — {self.order.order_code} ({self.amount} сом)'
+        return f'ОБЩИЙ — {self.get_category_display()} ({self.amount} сом)'

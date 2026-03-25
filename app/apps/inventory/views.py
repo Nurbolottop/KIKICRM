@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Q, Sum
 from apps.common.permissions import PermissionRequiredMixin
-from .models import InventoryCategory, InventoryItem, InventoryTransaction, TransactionType
+from .models import InventoryCategory, InventoryItem, InventoryItemType, InventoryTransaction, TransactionType
 
 
 class InventoryItemListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -17,7 +17,7 @@ class InventoryItemListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = InventoryItem.objects.select_related('category').order_by('category', 'name')
+        queryset = InventoryItem.objects.select_related('category').order_by('item_type', 'category', 'name')
         
         # Поиск
         search = self.request.GET.get('search')
@@ -25,6 +25,10 @@ class InventoryItemListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
             queryset = queryset.filter(
                 Q(name__icontains=search) | Q(category__name__icontains=search)
             )
+        
+        item_type = self.request.GET.get('item_type')
+        if item_type:
+            queryset = queryset.filter(item_type=item_type)
         
         # Фильтр по категории
         category = self.request.GET.get('category')
@@ -40,10 +44,16 @@ class InventoryItemListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
         context['search'] = self.request.GET.get('search', '')
         context['category_filter'] = self.request.GET.get('category', '')
+        context['item_type_filter'] = self.request.GET.get('item_type', '')
         context['low_stock_filter'] = self.request.GET.get('low_stock', '')
         context['categories'] = InventoryCategory.objects.filter(is_active=True)
+        context['item_types'] = InventoryItemType.choices
+        context['large_count'] = queryset.filter(item_type=InventoryItemType.LARGE).count() if hasattr(queryset, 'filter') else 0
+        context['small_count'] = queryset.filter(item_type=InventoryItemType.SMALL).count() if hasattr(queryset, 'filter') else 0
+        context['low_stock_count'] = sum(1 for item in queryset if item.is_low_stock())
         return context
 
 
@@ -52,7 +62,7 @@ class InventoryItemCreateView(LoginRequiredMixin, PermissionRequiredMixin, Creat
     permission_key = 'inventory.create'
     model = InventoryItem
     template_name = 'inventory/item_form.html'
-    fields = ['name', 'category', 'unit', 'quantity', 'min_quantity', 'price_per_unit', 'is_active']
+    fields = ['name', 'category', 'item_type', 'unit', 'quantity', 'min_quantity', 'price_per_unit', 'is_active']
     success_url = reverse_lazy('inventory_list')
     
     def get_context_data(self, **kwargs):
@@ -73,7 +83,7 @@ class InventoryItemDetailView(LoginRequiredMixin, PermissionRequiredMixin, Detai
         context = super().get_context_data(**kwargs)
         # Последние транзакции
         context['recent_transactions'] = self.object.transactions.select_related(
-            'order', 'employee__user'
+            'order', 'employee__user', 'usage'
         ).order_by('-created_at')[:10]
         return context
 
@@ -83,7 +93,7 @@ class InventoryItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Updat
     permission_key = 'inventory.edit'
     model = InventoryItem
     template_name = 'inventory/item_form.html'
-    fields = ['name', 'category', 'unit', 'min_quantity', 'price_per_unit', 'is_active']
+    fields = ['name', 'category', 'item_type', 'unit', 'min_quantity', 'price_per_unit', 'is_active']
     success_url = reverse_lazy('inventory_list')
     
     def get_context_data(self, **kwargs):
@@ -112,7 +122,7 @@ class InventoryTransactionListView(LoginRequiredMixin, PermissionRequiredMixin, 
     
     def get_queryset(self):
         queryset = InventoryTransaction.objects.select_related(
-            'item', 'item__category', 'order', 'employee__user'
+            'item', 'item__category', 'order', 'employee__user', 'usage'
         ).order_by('-created_at')
         
         # Фильтр по типу

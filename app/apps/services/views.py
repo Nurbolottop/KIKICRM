@@ -7,8 +7,48 @@ from django.shortcuts import redirect
 from django.db.models.deletion import ProtectedError
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
-from .models import Service
+from .models import Service, ServiceInventoryTemplate
 from .forms import ServiceForm
+from apps.inventory.models import InventoryItem
+
+
+def sync_service_inventory_templates(service, request):
+    item_ids = request.POST.getlist('inventory_item[]')
+    quantities = request.POST.getlist('inventory_quantity[]')
+    notes = request.POST.getlist('inventory_note[]')
+
+    template_map = {}
+    for index, raw_item_id in enumerate(item_ids):
+        item_id = (raw_item_id or '').strip()
+        if not item_id:
+            continue
+
+        quantity_raw = (quantities[index] if index < len(quantities) else '0').strip()
+        note = (notes[index] if index < len(notes) else '').strip()
+        try:
+            quantity = float(quantity_raw or 0)
+        except (TypeError, ValueError):
+            quantity = 0
+
+        if quantity <= 0:
+            continue
+
+        template_map[int(item_id)] = {
+            'quantity': quantity,
+            'note': note,
+        }
+
+    service.inventory_templates.exclude(inventory_item_id__in=list(template_map.keys())).delete()
+
+    for inventory_item_id, payload in template_map.items():
+        ServiceInventoryTemplate.objects.update_or_create(
+            service=service,
+            inventory_item_id=inventory_item_id,
+            defaults={
+                'quantity': payload['quantity'],
+                'note': payload['note'],
+            },
+        )
 
 
 class ServiceListView(LoginRequiredMixin, ListView):
@@ -31,6 +71,7 @@ class ServiceDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['service'] = self.object
+        context['inventory_templates'] = self.object.get_inventory_templates()
         return context
 
 
@@ -74,6 +115,8 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
                 service.image = request.FILES['image']
             
             service.save()
+            
+            sync_service_inventory_templates(service, request)
             
             return JsonResponse({
                 'ok': True,
@@ -136,6 +179,10 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Новая услуга'
         context['button_text'] = 'Создать'
+        context['inventory_items'] = InventoryItem.objects.filter(is_active=True).select_related('category').order_by(
+            'item_type', 'category__name', 'name'
+        )
+        context['inventory_templates'] = []
         return context
     
     def form_valid(self, form):
@@ -154,6 +201,8 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
                 self.object.save()
             except json.JSONDecodeError:
                 pass
+
+        sync_service_inventory_templates(self.object, self.request)
 
         try:
             from apps.notifications.services.telegram_service import TelegramService
@@ -191,6 +240,10 @@ class ServiceUpdateView(LoginRequiredMixin, UpdateView):
         context['title'] = 'Редактирование услуги'
         context['button_text'] = 'Сохранить'
         context['service'] = self.object
+        context['inventory_items'] = InventoryItem.objects.filter(is_active=True).select_related('category').order_by(
+            'item_type', 'category__name', 'name'
+        )
+        context['inventory_templates'] = self.object.get_inventory_templates()
         return context
 
     def form_valid(self, form):
@@ -209,6 +262,7 @@ class ServiceUpdateView(LoginRequiredMixin, UpdateView):
                 self.object.save()
             except json.JSONDecodeError:
                 pass
+        sync_service_inventory_templates(self.object, self.request)
         return response
 
 

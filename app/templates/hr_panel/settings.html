@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки | HR Панель | KIKI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --hr-primary: #6366f1; --hr-primary-dark: #4f46e5; }
+        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+
+        .hr-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+            padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column;
+        }
+        .hr-sidebar-brand {
+            color: white; font-size: 1.2rem; font-weight: 700;
+            padding: 0 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 0.6rem; text-decoration: none;
+        }
+        .hr-sidebar-nav { padding: 1rem 0; flex: 1; }
+        .hr-nav-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65);
+            text-decoration: none; font-size: 0.92rem; transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .hr-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
+        .hr-nav-link.active {
+            color: white; background: rgba(255,255,255,0.12);
+            border-left-color: var(--hr-primary);
+        }
+        .hr-nav-link i { font-size: 1.15rem; width: 22px; text-align: center; }
+        .hr-sidebar-footer {
+            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .hr-sidebar-user {
+            color: rgba(255,255,255,0.8); font-size: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .hr-logout {
+            color: rgba(255,255,255,0.5); font-size: 0.82rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        .hr-logout:hover { color: white; }
+
+        .hr-main { margin-left: 240px; padding: 2rem; }
+        .hr-page-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem; }
+
+        .hr-settings-card {
+            background: white; border-radius: 16px; padding: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f0f0f5;
+            max-width: 520px;
+        }
+        .hr-settings-section {
+            margin-bottom: 1.5rem;
+        }
+        .hr-settings-section-title {
+            font-size: 1rem; font-weight: 700; color: #1f2937;
+            margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .hr-settings-desc {
+            color: #6b7280; font-size: 0.88rem; margin-bottom: 1rem; line-height: 1.5;
+        }
+        .hr-field { margin-bottom: 1.25rem; }
+        .hr-label { font-weight: 600; color: #374151; margin-bottom: 0.4rem; font-size: 0.92rem; }
+        .hr-settings-card .form-control {
+            border-radius: 10px; border: 1px solid #e5e7eb;
+            padding: 0.7rem 0.9rem; font-size: 0.95rem;
+        }
+        .hr-settings-card .form-control:focus {
+            border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+        .btn-hr { background: var(--hr-primary); color: white; border: none; border-radius: 10px; padding: 0.7rem 1.5rem; font-weight: 600; font-size: 0.95rem; }
+        .btn-hr:hover { background: var(--hr-primary-dark); color: white; }
+
+        .hr-current-pwd {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+            padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.6rem;
+            color: #166534; font-size: 0.9rem; margin-bottom: 1rem;
+        }
+        .hr-no-pwd {
+            background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px;
+            padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.6rem;
+            color: #92400e; font-size: 0.9rem; margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .hr-sidebar { width: 100%; height: auto; position: relative; }
+            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
+            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
+            .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
+            .hr-main { margin-left: 0; padding: 1rem; }
+            .hr-sidebar-footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="hr-sidebar">
+        <a href="{% url 'hr_dashboard' %}" class="hr-sidebar-brand">
+            <i class="bi bi-people-fill"></i> <span>HR Панель</span>
+        </a>
+        <nav class="hr-sidebar-nav">
+            <a href="{% url 'hr_dashboard' %}" class="hr-nav-link">
+                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+            </a>
+            <a href="{% url 'hr_employees' %}" class="hr-nav-link">
+                <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
+            </a>
+            <a href="{% url 'hr_employee_create' %}" class="hr-nav-link">
+                <i class="bi bi-person-plus"></i> <span>Добавить клинера</span>
+            </a>
+            <a href="{% url 'hr_settings' %}" class="hr-nav-link active">
+                <i class="bi bi-gear"></i> <span>Настройки</span>
+            </a>
+        </nav>
+        <div class="hr-sidebar-footer">
+            <div class="hr-sidebar-user">
+                <i class="bi bi-person-circle"></i>
+                <div>{{ request.user.full_name|default:request.user.phone }} <span class="badge bg-info" style="font-size:0.7rem;">HR</span></div>
+            </div>
+            <a href="{% url 'login' %}" class="hr-logout"
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="bi bi-box-arrow-left"></i> Выйти
+            </a>
+            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
+        </div>
+    </aside>
+
+    <main class="hr-main">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px; max-width:520px;">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <h1 class="hr-page-title"><i class="bi bi-gear me-2"></i>Настройки</h1>
+
+        <div class="hr-settings-card">
+            <div class="hr-settings-section">
+                <div class="hr-settings-section-title">
+                    <i class="bi bi-key"></i> Стандартный пароль
+                </div>
+                <div class="hr-settings-desc">
+                    Этот пароль будет автоматически использоваться при создании новых клинеров.
+                    Вы можете изменить его в любой момент.
+                </div>
+
+                {% if hr_settings.default_password %}
+                <div class="hr-current-pwd">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Текущий пароль: <strong>{{ hr_settings.default_password }}</strong></span>
+                </div>
+                {% else %}
+                <div class="hr-no-pwd">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Стандартный пароль не установлен. Пароль нужно вводить вручную при создании клинера.</span>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="hr-field">
+                        <label class="hr-label">Новый стандартный пароль</label>
+                        <input type="text" name="default_password" class="form-control"
+                               placeholder="Введите пароль..."
+                               value="{{ hr_settings.default_password }}">
+                        <div class="form-text" style="font-size:0.82rem; color:#9ca3af; margin-top:0.4rem;">
+                            Оставьте пустым, чтобы удалить стандартный пароль
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-hr">
+                        <i class="bi bi-check-lg me-1"></i> Сохранить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

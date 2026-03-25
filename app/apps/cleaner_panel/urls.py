@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views_cl
+from . import views_cl, views
 from .views_cancel_review import cancel_senior_review_cl
 
 urlpatterns = [
@@ -17,4 +17,7 @@ urlpatterns = [
     path('orders/<int:order_id>/tasks/<int:task_id>/deadline/', views_cl.update_task_deadline_cl, name='update_task_deadline_cl'),
     path('orders/<int:order_id>/tasks/<int:task_id>/accept/', views_cl.accept_task_cl, name='accept_task_cl'),
     path('orders/<int:order_id>/tasks/<int:task_id>/rework/', views_cl.rework_task_cl, name='rework_task_cl'),
+    # Expenses
+    path('expenses/', views.expenses_cl, name='expenses_cl'),
+    path('expenses/create/', views.expense_create_cl, name='expense_create_cl'),
 ]

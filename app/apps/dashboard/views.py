@@ -49,6 +49,9 @@ def dashboard(request):
     user = request.user
     
     # Проверка доступа
+    if user.role == UserRole.HR:
+        return redirect('hr_dashboard')
+    
     if not has_full_dashboard_access(user) and not has_limited_dashboard_access(user):
         # Для клинеров — редирект на панель клинера (index_cl)
         if user.role in [UserRole.CLEANER, UserRole.SENIOR_CLEANER]:

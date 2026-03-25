@@ -111,6 +111,40 @@
             </div>
         </div>
         {% endif %}
+
+        {% if inventory_templates %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Шаблон инвентаря</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Тип</th>
+                                <th>Инвентарь</th>
+                                <th>Категория</th>
+                                <th>Количество</th>
+                                <th>Примечание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in inventory_templates %}
+                            <tr>
+                                <td><span class="badge {% if template.inventory_item.item_type == 'LARGE' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ template.inventory_item.get_item_type_display }}</span></td>
+                                <td>{{ template.inventory_item.name }}</td>
+                                <td>{{ template.inventory_item.category.name }}</td>
+                                <td>{{ template.quantity }} {{ template.inventory_item.unit }}</td>
+                                <td>{{ template.note|default:'—' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Edit Mode (shown by default) -->

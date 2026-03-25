@@ -237,6 +237,26 @@
     <nav class="bottom-nav">
         <div class="container">
             <div class="row text-center">
+                {% if is_senior %}
+                <div class="col-4">
+                    <a href="{% url 'profile_cl' %}" class="nav-item">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Профиль</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{% url 'orders_cl' %}" class="nav-item active">
+                        <i class="bi bi-list-check"></i>
+                        <span>Заказы</span>
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="{% url 'expenses_cl' %}" class="nav-item">
+                        <i class="bi bi-receipt"></i>
+                        <span>Расходы</span>
+                    </a>
+                </div>
+                {% else %}
                 <div class="col-6">
                     <a href="{% url 'profile_cl' %}" class="nav-item">
                         <i class="bi bi-person-circle"></i>
@@ -249,6 +269,7 @@
                         <span>Заказы</span>
                     </a>
                 </div>
+                {% endif %}
             </div>
         </div>
     </nav>

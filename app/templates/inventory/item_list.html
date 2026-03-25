@@ -14,6 +14,33 @@
         {% endif %}
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Крупный инвентарь</div>
+                    <div class="h4 mb-0">{{ large_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Мелкий инвентарь</div>
+                    <div class="h4 mb-0">{{ small_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Низкий остаток</div>
+                    <div class="h4 mb-0 text-warning">{{ low_stock_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
@@ -27,6 +54,14 @@
                         <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>
                             {{ cat.name }}
                         </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="item_type" class="form-select">
+                        <option value="">Все типы</option>
+                        {% for value, label in item_types %}
+                        <option value="{{ value }}" {% if item_type_filter == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -53,6 +88,7 @@
                     <thead>
                         <tr>
                             <th>Название</th>
+                            <th>Тип</th>
                             <th>Категория</th>
                             <th>Остаток</th>
                             <th>Мин. остаток</th>
@@ -67,6 +103,9 @@
                         <tr>
                             <td>
                                 <a href="{% url 'inventory_detail' item.id %}">{{ item.name }}</a>
+                            </td>
+                            <td>
+                                <span class="badge {% if item.item_type == 'LARGE' %}bg-primary{% else %}bg-info text-dark{% endif %}">{{ item.get_item_type_display }}</span>
                             </td>
                             <td>{{ item.category.name }}</td>
                             <td>

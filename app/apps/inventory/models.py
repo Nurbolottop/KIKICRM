@@ -8,6 +8,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+class InventoryItemType(models.TextChoices):
+    """Тип инвентаря: крупный или мелкий."""
+    LARGE = 'LARGE', 'Крупный'
+    SMALL = 'SMALL', 'Мелкий'
+
+
 class InventoryCategory(models.Model):
     """Категория инвентаря."""
 
@@ -64,6 +70,14 @@ class InventoryItem(models.Model):
         related_name='items',
         verbose_name='Категория'
     )
+    item_type = models.CharField(
+        'Тип инвентаря',
+        max_length=20,
+        choices=InventoryItemType.choices,
+        default=InventoryItemType.SMALL,
+        db_index=True,
+        help_text='Крупный: техника и оборудование. Мелкий: расходники, тряпки, насадки и т.д.'
+    )
     unit = models.CharField(
         'Единица измерения',
         max_length=50,
@@ -112,6 +126,14 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.quantity} {self.unit})'
+
+    @property
+    def is_large(self):
+        return self.item_type == InventoryItemType.LARGE
+
+    @property
+    def is_small(self):
+        return self.item_type == InventoryItemType.SMALL
 
     def is_low_stock(self):
         """Проверка на низкий остаток."""
@@ -166,6 +188,15 @@ class InventoryTransaction(models.Model):
         related_name='inventory_transactions',
         verbose_name='Заказ',
         help_text='Связанный заказ (для списаний)'
+    )
+    usage = models.ForeignKey(
+        'orders.OrderInventoryUsage',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transactions',
+        verbose_name='Строка использования',
+        help_text='Связанная строка фактического использования инвентаря'
     )
     employee = models.ForeignKey(
         'employees.Employee',

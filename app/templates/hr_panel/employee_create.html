@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить клинера | HR Панель | KIKI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --hr-primary: #6366f1; --hr-primary-dark: #4f46e5; }
+        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+
+        .hr-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+            padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column;
+        }
+        .hr-sidebar-brand {
+            color: white; font-size: 1.2rem; font-weight: 700;
+            padding: 0 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 0.6rem; text-decoration: none;
+        }
+        .hr-sidebar-nav { padding: 1rem 0; flex: 1; }
+        .hr-nav-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65);
+            text-decoration: none; font-size: 0.92rem; transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .hr-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
+        .hr-nav-link.active {
+            color: white; background: rgba(255,255,255,0.12);
+            border-left-color: var(--hr-primary);
+        }
+        .hr-nav-link i { font-size: 1.15rem; width: 22px; text-align: center; }
+        .hr-sidebar-footer {
+            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .hr-sidebar-user {
+            color: rgba(255,255,255,0.8); font-size: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .hr-logout {
+            color: rgba(255,255,255,0.5); font-size: 0.82rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        .hr-logout:hover { color: white; }
+
+        .hr-main { margin-left: 240px; padding: 2rem; }
+
+        .hr-form-card {
+            background: white; border-radius: 16px; padding: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #f0f0f5;
+            max-width: 560px;
+        }
+        .hr-form-title { font-size: 1.35rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem; }
+        .hr-back {
+            color: #6b7280; text-decoration: none; font-size: 0.92rem;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.45rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb;
+            transition: all 0.15s; margin-bottom: 1.5rem;
+        }
+        .hr-back:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+
+        .hr-field { margin-bottom: 1.25rem; }
+        .hr-label { font-weight: 600; color: #374151; margin-bottom: 0.4rem; font-size: 0.92rem; }
+        .hr-form-card .form-control, .hr-form-card .form-select {
+            border-radius: 10px; border: 1px solid #e5e7eb;
+            padding: 0.7rem 0.9rem; font-size: 0.95rem;
+        }
+        .hr-form-card .form-control:focus, .hr-form-card .form-select:focus {
+            border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+        .hr-submit {
+            background: var(--hr-primary); color: white; border: none;
+            padding: 0.85rem 2rem; border-radius: 10px; font-weight: 600;
+            font-size: 0.95rem; width: 100%; transition: background 0.15s;
+        }
+        .hr-submit:hover { background: var(--hr-primary-dark); color: white; }
+        .hr-cancel {
+            color: #6b7280; text-decoration: none; font-size: 0.92rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 100%; padding: 0.7rem; margin-top: 0.5rem;
+            border-radius: 10px; transition: background 0.15s;
+        }
+        .hr-cancel:hover { background: #f3f4f6; color: #374151; }
+
+        .hr-default-pwd-info {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+            padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.6rem;
+            color: #166534; font-size: 0.85rem; margin-bottom: 1.25rem;
+        }
+        .hr-default-pwd-info i { flex-shrink: 0; }
+        .hr-no-pwd-info {
+            background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px;
+            padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.6rem;
+            color: #92400e; font-size: 0.85rem; margin-bottom: 1.25rem;
+        }
+        .hr-no-pwd-info i { flex-shrink: 0; }
+
+        .modal-success-card {
+            border-radius: 16px; border: none;
+        }
+        .modal-success-card .modal-header {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            color: white; border-radius: 16px 16px 0 0; border: none;
+            padding: 1.25rem 1.5rem;
+        }
+        .modal-success-card .modal-header .btn-close { filter: brightness(0) invert(1); }
+        .modal-success-card .modal-body { padding: 1.5rem; }
+        .cred-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.7rem 0; border-bottom: 1px solid #f3f4f6;
+        }
+        .cred-row:last-child { border-bottom: none; }
+        .cred-label { color: #6b7280; font-size: 0.85rem; font-weight: 600; }
+        .cred-value { font-weight: 600; color: #1f2937; font-size: 0.95rem; }
+        .cred-link-box {
+            background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
+            padding: 0.65rem 0.85rem; font-size: 0.88rem; color: #374151;
+            word-break: break-all; margin-top: 1rem; position: relative;
+        }
+        .cred-copy-all {
+            background: var(--hr-primary); color: white; border: none;
+            border-radius: 10px; padding: 0.75rem; font-weight: 600;
+            font-size: 0.92rem; width: 100%; margin-top: 1rem; transition: background 0.15s;
+        }
+        .cred-copy-all:hover { background: var(--hr-primary-dark); }
+        .cred-copy-link {
+            background: #e0e7ff; color: #4338ca; border: none;
+            border-radius: 10px; padding: 0.75rem; font-weight: 600;
+            font-size: 0.92rem; width: 100%; margin-top: 0.5rem; transition: background 0.15s;
+        }
+        .cred-copy-link:hover { background: #c7d2fe; }
+        .copy-feedback {
+            display: none; color: #16a34a; font-size: 0.82rem;
+            text-align: center; margin-top: 0.5rem; font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .hr-sidebar { width: 100%; height: auto; position: relative; }
+            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
+            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
+            .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
+            .hr-main { margin-left: 0; padding: 1rem; }
+            .hr-sidebar-footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="hr-sidebar">
+        <a href="{% url 'hr_dashboard' %}" class="hr-sidebar-brand">
+            <i class="bi bi-people-fill"></i> <span>HR Панель</span>
+        </a>
+        <nav class="hr-sidebar-nav">
+            <a href="{% url 'hr_dashboard' %}" class="hr-nav-link">
+                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+            </a>
+            <a href="{% url 'hr_employees' %}" class="hr-nav-link">
+                <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
+            </a>
+            <a href="{% url 'hr_employee_create' %}" class="hr-nav-link active">
+                <i class="bi bi-person-plus"></i> <span>Добавить клинера</span>
+            </a>
+            <a href="{% url 'hr_settings' %}" class="hr-nav-link">
+                <i class="bi bi-gear"></i> <span>Настройки</span>
+            </a>
+        </nav>
+        <div class="hr-sidebar-footer">
+            <div class="hr-sidebar-user">
+                <i class="bi bi-person-circle"></i>
+                <div>{{ request.user.full_name|default:request.user.phone }} <span class="badge bg-info" style="font-size:0.7rem;">HR</span></div>
+            </div>
+            <a href="{% url 'login' %}" class="hr-logout"
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="bi bi-box-arrow-left"></i> Выйти
+            </a>
+            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
+        </div>
+    </aside>
+
+    <main class="hr-main">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px; max-width:560px;">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <a href="{% url 'hr_employees' %}" class="hr-back">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+
+        <div class="hr-form-card">
+            <div class="hr-form-title"><i class="bi bi-person-plus me-2"></i>Добавить клинера</div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="hr-field">
+                    <label class="hr-label">Полное имя *</label>
+                    <input type="text" name="full_name" class="form-control" placeholder="Иванов Иван Иванович" value="{{ full_name|default:'' }}" required>
+                </div>
+                <div class="hr-field">
+                    <label class="hr-label">Телефон *</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+996XXXXXXXXX" value="{{ phone|default:'' }}" required>
+                </div>
+                {% if default_password %}
+                <div class="hr-default-pwd-info">
+                    <i class="bi bi-key-fill"></i>
+                    <span>Стандартный пароль: <strong>{{ default_password }}</strong> (применится автоматически)</span>
+                </div>
+                <div class="hr-field">
+                    <label class="hr-label">Пароль <span style="color:#9ca3af; font-weight:400;">(необязательно, есть стандартный)</span></label>
+                    <input type="text" name="password" class="form-control" placeholder="Оставьте пустым для стандартного пароля">
+                </div>
+                {% else %}
+                <div class="hr-no-pwd-info">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Стандартный пароль не задан. <a href="{% url 'hr_settings' %}">Настроить</a></span>
+                </div>
+                <div class="hr-field">
+                    <label class="hr-label">Пароль *</label>
+                    <input type="text" name="password" class="form-control" placeholder="Минимум 6 символов" required>
+                </div>
+                {% endif %}
+                <div class="hr-field">
+                    <label class="hr-label">Роль</label>
+                    <select name="role" class="form-select">
+                        <option value="CLEANER" {% if role == 'CLEANER' or not role %}selected{% endif %}>Клинер</option>
+                        <option value="SENIOR_CLEANER" {% if role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
+                    </select>
+                </div>
+                <button type="submit" class="hr-submit">
+                    <i class="bi bi-check-circle me-2"></i>Создать клинера
+                </button>
+                <a href="{% url 'hr_employees' %}" class="hr-cancel">Отмена</a>
+            </form>
+        </div>
+    </main>
+
+    <!-- Modal: данные созданного клинера -->
+    {% if created_user %}
+    <div class="modal fade" id="createdModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-success-card">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i>Клинер создан!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color:#6b7280; font-size:0.9rem; margin-bottom:1rem;">Скопируйте данные и отправьте клинеру для входа в систему:</p>
+
+                    <div class="cred-row">
+                        <span class="cred-label">Имя</span>
+                        <span class="cred-value">{{ created_user.full_name }}</span>
+                    </div>
+                    <div class="cred-row">
+                        <span class="cred-label">Телефон (логин)</span>
+                        <span class="cred-value">{{ created_user.phone }}</span>
+                    </div>
+                    <div class="cred-row">
+                        <span class="cred-label">Пароль</span>
+                        <span class="cred-value">{{ created_user.password }}</span>
+                    </div>
+                    <div class="cred-row">
+                        <span class="cred-label">Роль</span>
+                        <span class="cred-value">{{ created_user.role }}</span>
+                    </div>
+
+                    <div class="cred-link-box">
+                        <i class="bi bi-link-45deg me-1"></i> {{ created_user.login_url }}
+                    </div>
+
+                    <button class="cred-copy-all" onclick="copyAllData()">
+                        <i class="bi bi-clipboard me-1"></i> Скопировать все данные
+                    </button>
+                    <button class="cred-copy-link" onclick="copyLink()">
+                        <i class="bi bi-link-45deg me-1"></i> Скопировать ссылку для входа
+                    </button>
+                    <div class="copy-feedback" id="copyFeedback">Скопировано!</div>
+                </div>
+                <div class="modal-footer" style="border:none; padding: 0 1.5rem 1.5rem;">
+                    <a href="{% url 'hr_employee_create' %}" class="btn btn-outline-secondary" style="border-radius:10px;">Создать ещё</a>
+                    <a href="{% url 'hr_employees' %}" class="btn" style="background:#6366f1; color:white; border-radius:10px;">К списку сотрудников</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if created_user %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new bootstrap.Modal(document.getElementById('createdModal')).show();
+    });
+
+    function copyAllData() {
+        const text = `Данные для входа в KIKI:\n\nИмя: {{ created_user.full_name }}\nТелефон (логин): {{ created_user.phone }}\nПароль: {{ created_user.password }}\nСсылка для входа: {{ created_user.login_url }}`;
+        navigator.clipboard.writeText(text).then(function() {
+            showFeedback();
+        });
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText('{{ created_user.login_url }}').then(function() {
+            showFeedback();
+        });
+    }
+
+    function showFeedback() {
+        const el = document.getElementById('copyFeedback');
+        el.style.display = 'block';
+        setTimeout(function() { el.style.display = 'none'; }, 2000);
+    }
+    </script>
+    {% endif %}
+</body>
+</html>

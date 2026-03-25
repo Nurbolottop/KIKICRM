@@ -7,21 +7,19 @@ class ExpenseAdmin(admin.ModelAdmin):
     """Админ-панель для расходов."""
     list_display = [
         'id',
-        'employee',
+        'user',
         'category',
         'amount',
         'expense_date',
-        'is_general',
         'created_at'
     ]
     list_filter = [
         'category',
-        'is_general',
         'expense_date'
     ]
     search_fields = [
-        'employee__user__full_name',
-        'employee__user__phone',
+        'user__full_name',
+        'user__phone',
         'description'
     ]
     date_hierarchy = 'expense_date'

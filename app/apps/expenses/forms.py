@@ -1,15 +1,23 @@
 from django import forms
-from .models import Expense
+from .models import Expense, ExpenseCategory
 
 
 class ExpenseForm(forms.ModelForm):
     """Форма для создания и редактирования расхода."""
+
+    is_general = forms.BooleanField(
+        required=False,
+        label='Общий расход',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'role': 'switch',
+        })
+    )
     
     class Meta:
         model = Expense
-        fields = ['is_general', 'order', 'category', 'amount', 'description', 'photo']
+        fields = ['order', 'category', 'amount', 'description', 'photo']
         widgets = {
-            'is_general': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'order': forms.Select(attrs={'class': 'form-select'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Сумма в сомах', 'step': '0.01'}),
@@ -20,15 +28,6 @@ class ExpenseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Если это не общий расход, показать поле сотрудника
-        if user and hasattr(user, 'employee'):
-            self.fields['employee'].queryset = user.employee.__class__.objects.filter(
-                status='ACTIVE'
-            ).select_related('user')
-            # По умолчанию выбираем текущего сотрудника
-            if not self.instance.pk:
-                self.fields['employee'].initial = user.employee
         
         # Фильтр заказов - только актуальные (за последние 30 дней, активные статусы)
         from django.utils import timezone
@@ -41,3 +40,23 @@ class ExpenseForm(forms.ModelForm):
             created_at__gte=thirty_days_ago
         ).order_by('-created_at')
         self.fields['order'].required = False
+        self.fields['category'].required = False
+
+        if self.instance and self.instance.pk and not self.instance.order_id:
+            self.fields['is_general'].initial = True
+        else:
+            self.fields['is_general'].initial = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_general = cleaned_data.get('is_general')
+        order = cleaned_data.get('order')
+        category = cleaned_data.get('category')
+
+        if is_general:
+            cleaned_data['order'] = None
+            cleaned_data['category'] = category or ExpenseCategory.OTHER
+        elif not category:
+            self.add_error('category', 'Выберите категорию расхода.')
+
+        return cleaned_data

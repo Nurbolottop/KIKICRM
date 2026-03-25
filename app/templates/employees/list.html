@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Сотрудники - CRM KIKI{% endblock %}
+
+{% block content %}
+<style>
+    .emp-page { max-width: 1100px; }
+    .emp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .emp-header h2 { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin: 0; }
+    .emp-stats { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .emp-stat {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+        min-width: 120px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+        color: inherit;
+    }
+    .emp-stat:hover { border-color: #818cf8; box-shadow: 0 4px 12px rgba(99,102,241,0.1); color: inherit; }
+    .emp-stat.active { border-color: #6366f1; background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%); }
+    .emp-stat-count { font-size: 1.35rem; font-weight: 700; color: #1f2937; }
+    .emp-stat-label { font-size: 0.78rem; color: #6b7280; margin-top: 0.15rem; }
+
+    .emp-filters {
+        background: white;
+        border: 1px solid #f0f0f5;
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .emp-filters .form-control,
+    .emp-filters .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.92rem;
+    }
+    .emp-filters .form-control:focus,
+    .emp-filters .form-select:focus {
+        border-color: #818cf8;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .emp-filters .btn-search {
+        background: #6366f1;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.55rem 1.25rem;
+        font-weight: 600;
+    }
+    .emp-filters .btn-search:hover { background: #4f46e5; }
+
+    .emp-table-card {
+        background: white;
+        border: 1px solid #f0f0f5;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .emp-table { margin: 0; }
+    .emp-table thead th {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.85rem 1rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .emp-table tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.93rem;
+    }
+    .emp-table tbody tr:hover { background: #fafaff; }
+    .emp-table tbody tr:last-child td { border-bottom: none; }
+
+    .emp-name {
+        font-weight: 600;
+        color: #1f2937;
+        text-decoration: none;
+    }
+    .emp-name:hover { color: #6366f1; }
+    .emp-phone { color: #6b7280; font-size: 0.88rem; }
+
+    .emp-role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .role-FOUNDER { background: #fef3c7; color: #92400e; }
+    .role-MANAGER { background: #dbeafe; color: #1e40af; }
+    .role-OPERATOR { background: #e0e7ff; color: #3730a3; }
+    .role-SMM { background: #fce7f3; color: #9d174d; }
+    .role-HR { background: #d1fae5; color: #065f46; }
+    .role-SENIOR_CLEANER { background: #ede9fe; color: #5b21b6; }
+    .role-CLEANER { background: #f3f4f6; color: #374151; }
+
+    .emp-status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.4rem;
+    }
+    .emp-status-dot.active { background: #22c55e; }
+    .emp-status-dot.inactive { background: #ef4444; }
+
+    .emp-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .emp-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .emp-actions .btn {
+        padding: 0.3rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+    .emp-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #9ca3af;
+    }
+    .emp-empty i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+
+    .emp-pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+    .emp-pagination .page-item.active .page-link {
+        background: #6366f1;
+        border-color: #6366f1;
+    }
+</style>
+
+<div class="emp-page">
+    <div class="emp-header">
+        <h2><i class="bi bi-person-badge me-2"></i>Сотрудники</h2>
+    </div>
+
+    <!-- Stats -->
+    <div class="emp-stats">
+        <a href="{% url 'employees_list' %}" class="emp-stat {% if not role_filter %}active{% endif %}">
+            <div class="emp-stat-count">{{ total_count }}</div>
+            <div class="emp-stat-label">Все</div>
+        </a>
+        {% for rs in role_stats %}
+        <a href="?role={{ rs.value }}" class="emp-stat {% if role_filter == rs.value %}active{% endif %}">
+            <div class="emp-stat-count">{{ rs.count }}</div>
+            <div class="emp-stat-label">{{ rs.label }}</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Filters -->
+    <div class="emp-filters">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Поиск по имени или телефону..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="role" class="form-select">
+                    <option value="">Все роли</option>
+                    {% for value, label in role_choices %}
+                    <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Активные</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Неактивные</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn-search w-100">
+                    <i class="bi bi-search me-1"></i> Найти
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    {% if employees %}
+    <div class="emp-table-card">
+        <table class="table emp-table">
+            <thead>
+                <tr>
+                    <th>Сотрудник</th>
+                    <th>Телефон</th>
+                    <th>Роль</th>
+                    <th>Статус</th>
+                    <th>Дата регистрации</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>
+                        <div class="emp-name-cell">
+                            <div class="emp-avatar">
+                                {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'employee_detail' emp.pk %}" class="emp-name">
+                                    {{ emp.full_name|default:"Без имени" }}
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="emp-phone">{{ emp.phone }}</td>
+                    <td>
+                        <span class="emp-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span>
+                    </td>
+                    <td>
+                        {% if emp.is_active %}
+                        <span><span class="emp-status-dot active"></span>Активен</span>
+                        {% else %}
+                        <span><span class="emp-status-dot inactive"></span>Неактивен</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ emp.date_joined|date:"d.m.Y" }}</td>
+                    <td class="emp-actions">
+                        <a href="{% url 'employee_detail' emp.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center emp-pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">«</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">‹</a>
+            </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} из {{ paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">›</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">»</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="emp-table-card">
+        <div class="emp-empty">
+            <i class="bi bi-people"></i>
+            <div>Сотрудники не найдены</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

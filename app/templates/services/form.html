@@ -156,6 +156,70 @@
                         
                         <!-- Скрытое поле для JSON данных -->
                         <input type="hidden" name="checklist_data" id="checklistData" value="">
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label mb-0">Шаблон инвентаря для услуги</label>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addInventoryRow()">
+                                    <i class="bi bi-plus-lg"></i> Добавить инвентарь
+                                </button>
+                            </div>
+                            <div id="inventoryTemplateContainer" class="d-grid gap-2">
+                                {% for template in inventory_templates %}
+                                <div class="inventory-row row g-2 align-items-end border rounded p-2 mx-0">
+                                    <div class="col-md-5">
+                                        <label class="form-label small text-muted">Инвентарь</label>
+                                        <select name="inventory_item[]" class="form-select form-select-sm">
+                                            <option value="">Выберите инвентарь</option>
+                                            {% for item in inventory_items %}
+                                            <option value="{{ item.id }}" {% if template.inventory_item_id == item.id %}selected{% endif %}>{{ item.get_item_type_display }} — {{ item.name }} ({{ item.category.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small text-muted">Количество</label>
+                                        <input type="number" name="inventory_quantity[]" class="form-control form-control-sm" min="0" step="0.001" value="{{ template.quantity }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted">Примечание</label>
+                                        <input type="text" name="inventory_note[]" class="form-control form-control-sm" value="{{ template.note }}" placeholder="Например: 2 запасные тряпки">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeInventoryRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <template id="inventoryRowTemplate">
+                                <div class="inventory-row row g-2 align-items-end border rounded p-2 mx-0">
+                                    <div class="col-md-5">
+                                        <label class="form-label small text-muted">Инвентарь</label>
+                                        <select name="inventory_item[]" class="form-select form-select-sm">
+                                            <option value="">Выберите инвентарь</option>
+                                            {% for item in inventory_items %}
+                                            <option value="{{ item.id }}">{{ item.get_item_type_display }} — {{ item.name }} ({{ item.category.name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small text-muted">Количество</label>
+                                        <input type="number" name="inventory_quantity[]" class="form-control form-control-sm" min="0" step="0.001" value="1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted">Примечание</label>
+                                        <input type="text" name="inventory_note[]" class="form-control form-control-sm" placeholder="Например: 2 запасные тряпки">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeInventoryRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div class="form-text mt-2">Этот шаблон будет подставляться менеджеру в заказе как стартовый список инвентаря.</div>
+                        </div>
                         
                         <div class="mb-3 form-check">
                             {{ form.is_active }}
@@ -286,6 +350,18 @@ function addRoomTask(btn) {
 function removeRoomTask(btn) {
     btn.closest('li').remove();
     scheduleTotalDeadlineUpdate();
+}
+
+function addInventoryRow() {
+    const template = document.getElementById('inventoryRowTemplate');
+    const container = document.getElementById('inventoryTemplateContainer');
+    if (!template || !container) return;
+    container.insertAdjacentHTML('beforeend', template.innerHTML);
+}
+
+function removeInventoryRow(btn) {
+    const row = btn.closest('.inventory-row');
+    if (row) row.remove();
 }
 
 function prepareChecklistData() {

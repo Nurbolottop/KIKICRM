@@ -333,25 +333,17 @@
                     <table class="table table-hover table-sm mb-0">
                         <thead>
                             <tr>
-                                <th>Сотрудник</th>
+                                <th>Пользователь</th>
                                 <th>Сумма</th>
-                                <th>Статус</th>
+                                <th>Дата</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for expense in recent_expenses %}
                             <tr>
-                                <td>{{ expense.employee.user.full_name|default:"—" }}</td>
+                                <td>{{ expense.user.full_name|default:"—" }}</td>
                                 <td>{{ expense.amount|floatformat:0 }} сом</td>
-                                <td>
-                                    {% if expense.status == 'PENDING' %}
-                                        <span class="badge bg-warning">Ожидание</span>
-                                    {% elif expense.status == 'APPROVED' %}
-                                        <span class="badge bg-success">Одобрено</span>
-                                    {% elif expense.status == 'REJECTED' %}
-                                        <span class="badge bg-danger">Отклонено</span>
-                                    {% endif %}
-                                </td>
+                                <td>{{ expense.expense_date|date:"d.m.Y" }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

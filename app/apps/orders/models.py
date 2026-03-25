@@ -525,7 +525,7 @@ class OrderPhoto(models.Model):
 
 
 class OrderAttachment(models.Model):
-    """Модель для прикрепления файлов к заказу."""
+    """Файлы и документы по заказу."""
 
     order = models.ForeignKey(
         Order,
@@ -573,11 +573,51 @@ class OrderAttachment(models.Model):
             self.filename = self.file.name
         super().save(*args, **kwargs)
 
+
+class OrderInventoryUsage(models.Model):
+    """Фактически использованный инвентарь по заказу."""
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='inventory_usages',
+        verbose_name='Заказ'
+    )
+    inventory_item = models.ForeignKey(
+        'inventory.InventoryItem',
+        on_delete=models.PROTECT,
+        related_name='order_usages',
+        verbose_name='Инвентарь'
+    )
+    quantity = models.DecimalField(
+        'Использованное количество',
+        max_digits=12,
+        decimal_places=3,
+        default=0
+    )
+    note = models.CharField(
+        'Примечание',
+        max_length=255,
+        blank=True,
+        default=''
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Использование инвентаря в заказе'
+        verbose_name_plural = 'Использование инвентаря в заказах'
+        ordering = ['inventory_item__item_type', 'inventory_item__category__name', 'inventory_item__name']
+        unique_together = ('order', 'inventory_item')
+
+    def __str__(self):
+        return f'{self.order.order_code} — {self.inventory_item.name} ({self.quantity})'
+
+
 @receiver(post_save, sender=Order)
 def order_completed_notification(sender, instance, created, **kwargs):
     """Отправляет уведомление при завершении заказа."""
     if not created and instance.status == OrderStatus.COMPLETED:
-        # Проверяем что заказ только что стал COMPLETED
         from apps.notifications.services.notification_service import NotificationService
         try:
             NotificationService.order_completed(instance)

@@ -38,12 +38,14 @@
                 </a>
             </li>
             
+            {% if request.user.role == 'FOUNDER' or request.user.role == 'MANAGER' %}
             <li class="nav-item">
-                <a href="#" class="nav-link disabled">
+                <a href="{% url 'employees_list' %}" class="nav-link {% if '/employees/' in request.path %}active{% endif %}">
                     <i class="bi bi-person-badge"></i>
                     <span>Сотрудники</span>
                 </a>
             </li>
+            {% endif %}
             
             <li class="nav-section">Операции</li>
             
