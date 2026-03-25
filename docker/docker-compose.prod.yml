@@ -35,7 +35,7 @@ services:
     env_file:
       - ../.env
     environment:
-      - DJANGO_SETTINGS_MODULE=core.settings.dev
+      - DJANGO_SETTINGS_MODULE=core.settings.prod
     depends_on:
       db_kikicrm:
         condition: service_healthy
