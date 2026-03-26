@@ -19,7 +19,9 @@ class NotificationService:
         client = order.client
         client_name = client.get_full_name() if client else '—'
         client_phone = client.phone if client else '—'
-        client_address = client.address if hasattr(client, 'address') and client.address else '—'
+        client_address = order.address if hasattr(order, 'address') and order.address else (
+            client.address if hasattr(client, 'address') and client.address else '—'
+        )
         
         # Service info
         service_name = order.service.name if order.service else '—'

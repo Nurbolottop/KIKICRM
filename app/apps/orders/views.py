@@ -386,11 +386,13 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
 
         # Assigned employees and notes (for display)
         senior_assignment = order.order_employees.select_related('employee__user').filter(
-            role_on_order='senior_cleaner'
+            role_on_order='senior_cleaner',
+            finished_at__isnull=True
         ).first()
         context['assigned_senior_cleaner'] = senior_assignment
         context['assigned_cleaners'] = order.order_employees.select_related('employee__user').filter(
-            role_on_order='cleaner'
+            role_on_order='cleaner',
+            finished_at__isnull=True
         )
         context['assigned_cleaner_ids'] = list(
             context['assigned_cleaners'].values_list('employee_id', flat=True)
@@ -476,11 +478,17 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         from apps.tasks.models import OrderTask
 
         # Текущий назначенный старший клинер
-        assigned_senior = order.order_employees.filter(role_on_order='senior_cleaner').first()
+        assigned_senior = order.order_employees.filter(
+            role_on_order='senior_cleaner',
+            finished_at__isnull=True
+        ).first()
         context['assigned_senior_cleaner'] = assigned_senior
 
         # Текущие назначенные клинеры
-        assigned_cleaners = order.order_employees.filter(role_on_order='cleaner')
+        assigned_cleaners = order.order_employees.filter(
+            role_on_order='cleaner',
+            finished_at__isnull=True
+        )
         context['assigned_cleaners'] = assigned_cleaners
         context['assigned_cleaner_ids'] = [ac.employee.user_id for ac in assigned_cleaners]
 
@@ -874,8 +882,14 @@ class ManagerMoveToProcessView(LoginRequiredMixin, View):
             try:
                 from apps.notifications.services.telegram_service import TelegramService
                 order.refresh_from_db()
-                senior_oe = order.order_employees.filter(role_on_order='senior_cleaner').select_related('employee__user').first()
-                cleaner_oes = order.order_employees.filter(role_on_order='cleaner').select_related('employee__user')
+                senior_oe = order.order_employees.filter(
+                    role_on_order='senior_cleaner',
+                    finished_at__isnull=True
+                ).select_related('employee__user').first()
+                cleaner_oes = order.order_employees.filter(
+                    role_on_order='cleaner',
+                    finished_at__isnull=True
+                ).select_related('employee__user')
                 senior_name = senior_oe.employee.user.full_name if senior_oe and senior_oe.employee else '—'
                 cleaner_names = ', '.join(
                     oe.employee.user.full_name for oe in cleaner_oes if oe.employee and oe.employee.user
