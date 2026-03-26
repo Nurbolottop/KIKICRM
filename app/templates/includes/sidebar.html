@@ -58,7 +58,7 @@
             </li>
             {% endif %}
             
-            {% if request.user.is_authenticated %}
+            {% if request.user.role == 'FOUNDER' or request.user.role == 'MANAGER' %}
             <li class="nav-item">
                 <a href="{% url 'inventory_list' %}" class="nav-link {% if '/inventory/' in request.path %}active{% endif %}">
                     <i class="bi bi-box-seam"></i>

@@ -136,7 +136,7 @@ ROLE_PERMISSIONS = {
         'expenses.view': True,
         'expenses.create': True,
         # Inventory
-        'inventory.view': True,
+        'inventory.view': False,
         'inventory.create': False,
         'inventory.edit': False,
         'inventory.transactions': False,

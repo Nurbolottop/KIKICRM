@@ -19,12 +19,30 @@ class ClientListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         queryset = super().get_queryset().order_by('-created_at')
-        search = self.request.GET.get('search')
+        search = self.request.GET.get('q') or self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
                 Q(first_name__icontains=search) |
                 Q(last_name__icontains=search) |
                 Q(phone__icontains=search)
+            )
+
+        profile_status = (self.request.GET.get('profile_status') or '').strip()
+        if profile_status == 'complete':
+            queryset = queryset.exclude(
+                Q(last_name='') |
+                Q(middle_name='') |
+                Q(email='') |
+                Q(birth_date__isnull=True) |
+                Q(address='')
+            )
+        elif profile_status == 'incomplete':
+            queryset = queryset.filter(
+                Q(last_name='') |
+                Q(middle_name='') |
+                Q(email='') |
+                Q(birth_date__isnull=True) |
+                Q(address='')
             )
         return queryset
     
@@ -34,7 +52,11 @@ class ClientListView(LoginRequiredMixin, ListView):
 
         context['can_create_clients'] = can_create_clients(self.request.user)
         context['can_delete_clients'] = can_delete_clients(self.request.user)
-        context['search'] = self.request.GET.get('search', '')
+        context['search'] = self.request.GET.get('q') or self.request.GET.get('search', '')
+        context['profile_status_filter'] = self.request.GET.get('profile_status', '')
+        base_qs = Client.objects.all()
+        context['complete_count'] = sum(1 for client in base_qs if client.is_profile_complete)
+        context['incomplete_count'] = sum(1 for client in base_qs if not client.is_profile_complete)
         return context
 
 
@@ -95,7 +117,14 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['form_mode'] = 'create'
+        return kwargs
+
     def get_success_url(self):
+        if self.request.GET.get('return_to_order') == '1':
+            return f"{reverse('order_create')}?client={self.object.pk}"
         if 'save_and_add_another' in self.request.POST:
             return reverse('clients_create')
         return super().get_success_url()
@@ -105,6 +134,7 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
         context['title'] = 'Добавление нового клиента'
         context['button_text'] = 'Сохранить'
         context['is_create'] = True
+        context['return_to_order'] = self.request.GET.get('return_to_order') == '1'
         return context
 
 
@@ -195,6 +225,11 @@ class ClientUpdateView(LoginRequiredMixin, UpdateView):
         context['title'] = 'Редактирование клиента'
         context['button_text'] = 'Сохранить'
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['form_mode'] = 'edit'
+        return kwargs
 
 
 class ClientDeleteView(LoginRequiredMixin, DeleteView):

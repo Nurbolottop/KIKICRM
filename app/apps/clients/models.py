@@ -166,6 +166,21 @@ class Client(TimestampMixin, models.Model):
         parts = [self.last_name, self.first_name, self.middle_name]
         return ' '.join(filter(None, parts))
 
+    @property
+    def is_profile_complete(self):
+        required_fields = [
+            self.last_name,
+            self.middle_name,
+            self.email,
+            self.birth_date,
+            self.address,
+        ]
+        return all(bool(value) for value in required_fields)
+
+    @property
+    def profile_status_label(self):
+        return 'Информация заполнена' if self.is_profile_complete else 'Информация не заполнена'
+
     def save(self, *args, **kwargs):
         # Нормализация телефона
         if self.phone:
@@ -174,6 +189,11 @@ class Client(TimestampMixin, models.Model):
             self.phone_secondary = normalize_phone(self.phone_secondary)
         if self.whatsapp:
             self.whatsapp = normalize_phone(self.whatsapp)
+        self.category = (
+            self.ClientCategory.COMPANY
+            if self.organization
+            else self.ClientCategory.INDIVIDUAL
+        )
         super().save(*args, **kwargs)
 
     def get_avatar_url(self):

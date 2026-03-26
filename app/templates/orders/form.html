@@ -96,6 +96,13 @@
                                 {% if form.client.errors %}
                                 <div class="text-danger small">{{ form.client.errors.0 }}</div>
                                 {% endif %}
+                                {% if not selected_client %}
+                                <div class="mt-2">
+                                    <a href="{% url 'clients_create' %}?return_to_order=1" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-person-plus me-1"></i> Быстро добавить клиента
+                                    </a>
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label {% if form.category.field.required %}required{% endif %}">{{ form.category.label }}</label>

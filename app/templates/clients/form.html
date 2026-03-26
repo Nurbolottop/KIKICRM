@@ -58,6 +58,7 @@
         <div class="row">
             <!-- Left Column -->
             <div class="col-md-4">
+                {% if not is_create %}
                 <!-- Photo Section -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
@@ -81,6 +82,7 @@
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
                 
                 <!-- Classification Section -->
                 <div class="card mb-3">
@@ -88,6 +90,7 @@
                         <h6 class="mb-0">Классификация</h6>
                     </div>
                     <div class="card-body">
+                        {% if not is_create %}
                         <div class="mb-3">
                             <label for="{{ form.category.id_for_label }}" class="form-label">Категория <span class="text-danger">*</span></label>
                             {{ form.category }}
@@ -103,6 +106,7 @@
                                 <div class="text-danger small">{{ form.source.errors }}</div>
                             {% endif %}
                         </div>
+                        {% endif %}
                         
                         <div class="mb-3">
                             <label for="{{ form.gender.id_for_label }}" class="form-label">Пол</label>
@@ -124,6 +128,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            {% if not is_create %}
                             <div class="col-md-4 mb-3">
                                 <label for="{{ form.last_name.id_for_label }}" class="form-label">Фамилия</label>
                                 {{ form.last_name }}
@@ -145,6 +150,15 @@
                                     <div class="text-danger small">{{ form.middle_name.errors }}</div>
                                 {% endif %}
                             </div>
+                            {% else %}
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">Имя <span class="text-danger">*</span></label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <div class="mb-3">
@@ -174,6 +188,7 @@
                                     <div class="text-danger small">{{ form.phone.errors }}</div>
                                 {% endif %}
                             </div>
+                            {% if not is_create %}
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
                                 {{ form.email }}
@@ -181,6 +196,7 @@
                                     <div class="text-danger small">{{ form.email.errors }}</div>
                                 {% endif %}
                             </div>
+                            {% endif %}
                         </div>
                         
                         <div class="row">
@@ -194,6 +210,7 @@
                                     <div class="text-danger small">{{ form.whatsapp.errors }}</div>
                                 {% endif %}
                             </div>
+                            {% if not is_create %}
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.birth_date.id_for_label }}" class="form-label">Дата рождения</label>
                                 {{ form.birth_date }}
@@ -201,8 +218,10 @@
                                     <div class="text-danger small">{{ form.birth_date.errors }}</div>
                                 {% endif %}
                             </div>
+                            {% endif %}
                         </div>
                         
+                        {% if not is_create %}
                         <div class="mb-3">
                             <label for="{{ form.address.id_for_label }}" class="form-label">Адрес</label>
                             {{ form.address }}
@@ -210,9 +229,11 @@
                                 <div class="text-danger small">{{ form.address.errors }}</div>
                             {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 
+                {% if not is_create %}
                 <!-- Additional Info Section -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
@@ -228,17 +249,18 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
         
         <!-- Bottom Buttons -->
         <div class="d-flex justify-content-between mt-3">
-            <a href="{% url 'clients_list' %}" class="btn btn-outline-secondary">
+            <a href="{% if return_to_order %}{% url 'order_create' %}{% else %}{% url 'clients_list' %}{% endif %}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-lg"></i> Отмена
             </a>
             <div>
                 <button type="submit" name="save" class="btn btn-primary me-2">
-                    <i class="bi bi-check-lg"></i> Сохранить
+                    <i class="bi bi-check-lg"></i> {{ button_text|default:"Сохранить" }}
                 </button>
             </div>
         </div>

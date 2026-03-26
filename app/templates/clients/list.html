@@ -46,11 +46,38 @@
         {% endif %}
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <a href="{% url 'clients_list' %}{% if search %}?q={{ search }}{% endif %}" class="text-decoration-none">
+                <div class="crm-unified-stat-card p-3 h-100 {% if not profile_status_filter %}border-primary{% endif %}">
+                    <div class="fw-semibold text-dark">Все клиенты</div>
+                    <div class="text-muted small">{{ page_obj.paginator.count }} в текущей выборке</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a href="?profile_status=complete{% if search %}&q={{ search }}{% endif %}" class="text-decoration-none">
+                <div class="crm-unified-stat-card p-3 h-100 {% if profile_status_filter == 'complete' %}border-success{% endif %}">
+                    <div class="fw-semibold text-dark">Информация заполнена</div>
+                    <div class="text-muted small">{{ complete_count }} клиентов</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a href="?profile_status=incomplete{% if search %}&q={{ search }}{% endif %}" class="text-decoration-none">
+                <div class="crm-unified-stat-card p-3 h-100 {% if profile_status_filter == 'incomplete' %}border-warning{% endif %}">
+                    <div class="fw-semibold text-dark">Информация не заполнена</div>
+                    <div class="text-muted small">{{ incomplete_count }} клиентов</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- Search -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-8">
+                <div class="col-md-7">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-search text-muted"></i>
@@ -60,7 +87,14 @@
                                value="{{ request.GET.q }}">
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <select name="profile_status" class="form-select">
+                        <option value="">Все профили</option>
+                        <option value="complete" {% if profile_status_filter == 'complete' %}selected{% endif %}>Информация заполнена</option>
+                        <option value="incomplete" {% if profile_status_filter == 'incomplete' %}selected{% endif %}>Информация не заполнена</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-primary w-100">
                         <i class="bi bi-funnel"></i> Фильтровать
                     </button>
@@ -79,6 +113,7 @@
                         <th class="text-muted fw-semibold">ID</th>
                         <th class="text-muted fw-semibold">Клиент</th>
                         <th class="text-muted fw-semibold">Контакты</th>
+                        <th class="text-muted fw-semibold">Профиль</th>
                         <th class="text-muted fw-semibold">Источник</th>
                         <th class="text-muted fw-semibold">Дата создания</th>
                         <th class="text-muted fw-semibold" style="width: 100px;">Действия</th>
@@ -96,6 +131,11 @@
                         </td>
                         <td>
                             <span class="text-muted"><i class="bi bi-telephone me-1"></i>{{ client.phone }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if client.is_profile_complete %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                                {{ client.profile_status_label }}
+                            </span>
                         </td>
                         <td>
                             <span class="badge bg-soft-secondary text-secondary">{{ client.get_source_display }}</span>
@@ -138,6 +178,12 @@
                 <div class="crm-unified-mobile-row client-mobile-row">
                     <span class="crm-unified-mobile-label client-mobile-label">Телефон</span>
                     <span class="crm-unified-mobile-value client-mobile-value">{{ client.phone }}</span>
+                </div>
+                <div class="crm-unified-mobile-row client-mobile-row">
+                    <span class="crm-unified-mobile-label client-mobile-label">Профиль</span>
+                    <span class="crm-unified-mobile-value client-mobile-value">
+                        <span class="badge {% if client.is_profile_complete %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">{{ client.profile_status_label }}</span>
+                    </span>
                 </div>
                 <div class="crm-unified-mobile-row client-mobile-row">
                     <span class="crm-unified-mobile-label client-mobile-label">Создан</span>
@@ -215,6 +261,12 @@
 }
 .bg-soft-secondary {
     background-color: rgba(108, 117, 125, 0.1) !important;
+}
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.12) !important;
+}
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.16) !important;
 }
 .hover-primary:hover {
     color: #0d6efd !important;

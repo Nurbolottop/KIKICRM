@@ -8,6 +8,46 @@ from .models import Client
 class ClientForm(forms.ModelForm):
     """Форма для создания и редактирования клиента."""
 
+    def __init__(self, *args, **kwargs):
+        form_mode = kwargs.pop('form_mode', 'edit')
+        super().__init__(*args, **kwargs)
+
+        if 'first_name' in self.fields:
+            self.fields['first_name'].required = True
+        if 'phone' in self.fields:
+            self.fields['phone'].required = True
+
+        if form_mode == 'create':
+            hidden_fields = [
+                'photo',
+                'last_name',
+                'middle_name',
+                'category',
+                'source',
+                'email',
+                'birth_date',
+                'address',
+            ]
+            for name in hidden_fields:
+                if name in self.fields:
+                    self.fields[name].required = False
+                    self.fields[name].widget = forms.HiddenInput()
+
+            if 'category' in self.fields:
+                self.fields['category'].initial = Client.ClientCategory.INDIVIDUAL
+            if 'source' in self.fields:
+                self.fields['source'].initial = Client.ClientSource.WEBSITE
+
+    def clean_category(self):
+        category = self.cleaned_data.get('category')
+        organization = (self.cleaned_data.get('organization') or '').strip()
+        if organization:
+            return Client.ClientCategory.COMPANY
+        return category or Client.ClientCategory.INDIVIDUAL
+
+    def clean_source(self):
+        return self.cleaned_data.get('source') or Client.ClientSource.WEBSITE
+
     class Meta:
         model = Client
         fields = [
