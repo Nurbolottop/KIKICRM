@@ -62,7 +62,7 @@ class InventoryItemCreateView(LoginRequiredMixin, PermissionRequiredMixin, Creat
     permission_key = 'inventory.create'
     model = InventoryItem
     template_name = 'inventory/item_form.html'
-    fields = ['name', 'category', 'item_type', 'unit', 'quantity', 'min_quantity', 'price_per_unit', 'is_active']
+    fields = ['name', 'category', 'item_type', 'quantity', 'min_quantity', 'is_active']
     success_url = reverse_lazy('inventory_list')
     
     def get_context_data(self, **kwargs):
@@ -93,7 +93,7 @@ class InventoryItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Updat
     permission_key = 'inventory.edit'
     model = InventoryItem
     template_name = 'inventory/item_form.html'
-    fields = ['name', 'category', 'item_type', 'unit', 'min_quantity', 'price_per_unit', 'is_active']
+    fields = ['name', 'category', 'item_type', 'min_quantity', 'is_active']
     success_url = reverse_lazy('inventory_list')
     
     def get_context_data(self, **kwargs):
@@ -151,7 +151,7 @@ class InventoryTransactionCreateView(LoginRequiredMixin, PermissionRequiredMixin
     permission_key = 'inventory.transactions'
     model = InventoryTransaction
     template_name = 'inventory/transaction_form.html'
-    fields = ['item', 'transaction_type', 'quantity', 'order', 'employee', 'comment']
+    fields = ['item', 'transaction_type', 'quantity', 'comment']
     success_url = reverse_lazy('inventory_transactions')
     
     def get_context_data(self, **kwargs):

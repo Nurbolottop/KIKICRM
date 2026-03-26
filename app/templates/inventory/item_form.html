@@ -3,269 +3,254 @@
 {% block title %}{{ title }} - CRM KIKI{% endblock %}
 
 {% block content %}
-<div class="container-fluid inventory-form-page">
-    <div class="inventory-form-hero crm-unified-topbar">
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="inventory-form-title">{{ title }}</h1>
-            <p class="inventory-form-subtitle mb-0">Добавьте позицию склада с понятными остатками, единицами измерения и базовым контролем наличия.</p>
+            <h1 class="h3 mb-1">{{ title }}</h1>
+            <p class="text-muted mb-0 small">Добавьте позицию склада с остатками и единицами измерения</p>
         </div>
-        <a href="{% url 'inventory_list' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Назад к списку
+        <a href="{% url 'inventory_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Назад
         </a>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-xl-9 col-lg-10">
-            <form method="post" class="inventory-form-shell">
-                {% csrf_token %}
-
-                <div class="inventory-form-card">
-                    <div class="inventory-form-card-head">
-                        <div>
-                            <h5 class="mb-1">Основная информация</h5>
-                            <div class="text-muted small">Название, категория и тип инвентаря.</div>
-                        </div>
+    <form method="post" class="inventory-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Левая колонка - Основная информация -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="bi bi-box me-2 text-primary"></i>Основная информация
+                        </h6>
                     </div>
-                    <div class="inventory-form-card-body">
+                    <div class="card-body p-4">
+                        <!-- Название товара -->
                         <div class="mb-3">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">Название товара *</label>
+                            <label for="{{ form.name.id_for_label }}" class="form-label fw-medium">
+                                Название товара <span class="text-danger">*</span>
+                            </label>
                             {{ form.name }}
                             {% if form.name.errors %}
-                            <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                                <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
                             {% endif %}
                         </div>
 
+                        <!-- Категория и Тип -->
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория *</label>
+                                <label for="{{ form.category.id_for_label }}" class="form-label fw-medium">
+                                    Категория <span class="text-danger">*</span>
+                                </label>
                                 {{ form.category }}
                                 {% if form.category.errors %}
-                                <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
                                 {% endif %}
-                                <div class="inventory-help-text">Категории сейчас добавляются через Django admin.</div>
+                                <div class="form-text">Категории добавляются через админку</div>
                             </div>
                             <div class="col-md-6">
-                                <label for="{{ form.item_type.id_for_label }}" class="form-label">Тип инвентаря *</label>
+                                <label for="{{ form.item_type.id_for_label }}" class="form-label fw-medium">
+                                    Тип инвентаря <span class="text-danger">*</span>
+                                </label>
                                 {{ form.item_type }}
                                 {% if form.item_type.errors %}
-                                <div class="invalid-feedback d-block">{{ form.item_type.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ form.item_type.errors }}</div>
                                 {% endif %}
-                                <div class="inventory-type-hint">
-                                    <span class="inventory-chip inventory-chip-blue">Крупный — техника</span>
-                                    <span class="inventory-chip inventory-chip-slate">Мелкий — расходники, тряпки, насадки</span>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="inventory-form-card">
-                    <div class="inventory-form-card-head">
-                        <div>
-                            <h5 class="mb-1">Учет и стоимость</h5>
-                            <div class="text-muted small">Остаток, минимальный порог и закупочная цена.</div>
-                        </div>
+                <!-- Учет и стоимость -->
+                <div class="card border-0 shadow-sm mb-3" id="stock-settings-card">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="bi bi-calculator me-2 text-success"></i>Учет и стоимость
+                        </h6>
                     </div>
-                    <div class="inventory-form-card-body">
-                        <div class="row g-3 align-items-start">
-                            <div class="col-md-4">
-                                <label for="{{ form.unit.id_for_label }}" class="form-label">Единица измерения *</label>
-                                {{ form.unit }}
-                                {% if form.unit.errors %}
-                                <div class="invalid-feedback d-block">{{ form.unit.errors }}</div>
-                                {% endif %}
-                                <div class="inventory-help-text">Например: шт, литр, кг, упаковка</div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Текущее количество</label>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <!-- Текущее количество -->
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label fw-medium">
+                                    Текущее кол-во
+                                </label>
                                 {{ form.quantity }}
                                 {% if form.quantity.errors %}
-                                <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
                                 {% endif %}
-                                <div class="inventory-help-text">Для крупного инвентаря это количество единиц техники.</div>
+                                <div class="form-text">Начальный остаток</div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="{{ form.min_quantity.id_for_label }}" class="form-label">Минимальный остаток</label>
+
+                            <!-- Минимальный остаток -->
+                            <div class="col-md-6">
+                                <label for="{{ form.min_quantity.id_for_label }}" class="form-label fw-medium">
+                                    Мин. остаток
+                                </label>
                                 {{ form.min_quantity }}
                                 {% if form.min_quantity.errors %}
-                                <div class="invalid-feedback d-block">{{ form.min_quantity.errors }}</div>
+                                    <div class="invalid-feedback d-block">{{ form.min_quantity.errors }}</div>
                                 {% endif %}
-                                <div class="inventory-help-text">Нужен для предупреждений о низком остатке.</div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="{{ form.price_per_unit.id_for_label }}" class="form-label">Цена за единицу (сом)</label>
-                                {{ form.price_per_unit }}
-                                {% if form.price_per_unit.errors %}
-                                <div class="invalid-feedback d-block">{{ form.price_per_unit.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-8">
-                                <div class="inventory-status-box">
-                                    <div class="form-check form-switch m-0">
-                                        {{ form.is_active }}
-                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                            Активная позиция склада
-                                        </label>
-                                    </div>
-                                    <div class="text-muted small mt-2">Неактивные позиции скрываются из большинства рабочих списков и операций.</div>
-                                </div>
+                                <div class="form-text">Для алертов</div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="inventory-form-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-lg"></i> {{ button_text }}
-                    </button>
-                    <a href="{% url 'inventory_list' %}" class="btn btn-outline-secondary">
-                        Отмена
-                    </a>
+            <!-- Правая колонка - Статус и подсказки -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="bi bi-gear me-2 text-secondary"></i>Статус
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="form-check form-switch mb-3">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Активная позиция
+                            </label>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Неактивные позиции скрываются из списков и операций
+                        </p>
+                    </div>
                 </div>
-            </form>
+
+                <!-- Подсказки по типам -->
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="fw-semibold mb-3">Типы инвентаря</h6>
+                        
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-primary-subtle text-primary">
+                                    <i class="bi bi-hammer"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-2">
+                                <div class="fw-medium">Крупный</div>
+                                <div class="small text-muted">Техника, оборудование, пылесосы</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    <i class="bi bi-droplet"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-2">
+                                <div class="fw-medium">Мелкий</div>
+                                <div class="small text-muted">Расходники, химия, тряпки, насадки</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Кнопки -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <a href="{% url 'inventory_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Отмена
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg me-1"></i> {{ button_text }}
+            </button>
+        </div>
+    </form>
 </div>
 
 <style>
-    .inventory-form-page {
-        max-width: 1280px;
+    .inventory-form .form-control,
+    .inventory-form .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
     }
 
-    .inventory-form-hero {
-        margin-bottom: 1.5rem;
+    .inventory-form .form-control:focus,
+    .inventory-form .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 
-    .inventory-form-title {
-        margin-bottom: 0.35rem;
-        font-size: 1.9rem;
-        font-weight: 700;
-        color: #111827;
+    .inventory-form .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
     }
 
-    .inventory-form-subtitle {
-        color: #6b7280;
-        max-width: 720px;
-    }
-
-    .inventory-form-shell {
-        display: grid;
-        gap: 1rem;
-    }
-
-    .inventory-form-card {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-        overflow: hidden;
-    }
-
-    .inventory-form-card-head {
-        padding: 1rem 1.25rem;
-        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .inventory-form-card-body {
-        padding: 1.25rem;
-    }
-
-    .inventory-form-page .form-label {
-        font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 0.45rem;
-    }
-
-    .inventory-form-page .form-control,
-    .inventory-form-page .form-select {
-        border-radius: 12px;
-        border: 1px solid #d1d5db;
-        padding: 0.7rem 0.9rem;
-        box-shadow: none;
-    }
-
-    .inventory-form-page .form-control:focus,
-    .inventory-form-page .form-select:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-    }
-
-    .inventory-help-text {
-        margin-top: 0.45rem;
-        font-size: 0.84rem;
-        color: #6b7280;
-    }
-
-    .inventory-type-hint {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.6rem;
-    }
-
-    .inventory-chip {
-        display: inline-flex;
-        align-items: center;
-        border-radius: 999px;
-        padding: 0.35rem 0.7rem;
+    .inventory-form .form-text {
         font-size: 0.8rem;
-        font-weight: 600;
     }
 
-    .inventory-chip-blue {
-        background: rgba(59, 130, 246, 0.12);
-        color: #1d4ed8;
+    .inventory-form .form-check-input {
+        width: 2.2em;
+        height: 1.2em;
     }
 
-    .inventory-chip-slate {
-        background: rgba(100, 116, 139, 0.12);
-        color: #475569;
-    }
-
-    .inventory-status-box {
-        height: 100%;
-        border: 1px dashed #cbd5e1;
-        background: #f8fafc;
-        border-radius: 14px;
-        padding: 1rem;
-    }
-
-    .inventory-form-page .form-check-input {
-        width: 2.5rem;
-        height: 1.35rem;
-    }
-
-    .inventory-form-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        padding-top: 0.25rem;
-    }
-
-    .inventory-form-actions .btn {
+    .inventory-form .card {
         border-radius: 12px;
-        padding: 0.7rem 1.2rem;
-        font-weight: 600;
+    }
+
+    .inventory-form .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .inventory-form .is-hidden-for-large {
+        display: none !important;
     }
 
     @media (max-width: 768px) {
-        .inventory-form-title {
-            font-size: 1.45rem;
+        .inventory-form .card-body {
+            padding: 1.25rem !important;
         }
 
-        .inventory-form-card-head,
-        .inventory-form-card-body {
-            padding: 1rem;
+        .inventory-form .d-flex.justify-content-between {
+            flex-direction: column-reverse;
+            gap: 0.75rem;
         }
 
-        .inventory-form-actions {
-            flex-direction: column;
-        }
-
-        .inventory-form-actions .btn {
+        .inventory-form .d-flex.justify-content-between .btn {
             width: 100%;
         }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const itemTypeField = document.getElementById('{{ form.item_type.id_for_label }}');
+        const quantityField = document.getElementById('{{ form.quantity.id_for_label }}');
+        const minQuantityField = document.getElementById('{{ form.min_quantity.id_for_label }}');
+        const stockCard = document.getElementById('stock-settings-card');
+
+        if (!itemTypeField || !stockCard) {
+            return;
+        }
+
+        function toggleLargeInventoryFields() {
+            const isLarge = itemTypeField.value === 'LARGE';
+
+            stockCard.classList.toggle('is-hidden-for-large', isLarge);
+
+            if (isLarge) {
+                if (quantityField) {
+                    quantityField.value = '0';
+                }
+                if (minQuantityField) {
+                    minQuantityField.value = '0';
+                }
+            }
+        }
+
+        itemTypeField.addEventListener('change', toggleLargeInventoryFields);
+        toggleLargeInventoryFields();
+    });
+</script>
 {% endblock %}

@@ -5,43 +5,32 @@
 
 {% block extra_css %}
 <style>
+.bg-success-subtle { background-color: rgba(25, 135, 84, 0.1); }
+.bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1); }
+.bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1); }
+.bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1); }
+.bg-info-subtle { background-color: rgba(13, 202, 240, 0.1); }
+
 @media (max-width: 768px) {
-    .inventory-detail-topbar {
+    .inventory-header {
         flex-direction: column;
         align-items: stretch !important;
-        gap: 0.85rem;
+        gap: 1rem;
     }
-
-    .inventory-detail-actions {
+    .inventory-header-actions {
         width: 100%;
         flex-wrap: wrap;
     }
-
-    .inventory-detail-actions .btn {
+    .inventory-header-actions .btn {
         flex: 1 1 calc(50% - 0.5rem);
     }
-
-    .inventory-detail-card {
-        border-radius: 14px;
+    .inventory-stat-card .display-4 {
+        font-size: 2rem;
     }
 }
 
 @media (max-width: 576px) {
-    .inventory-detail-card .table.table-sm tr {
-        display: flex;
-        flex-direction: column;
-        padding: 0.65rem 0;
-        border-bottom: 1px solid #f3f4f6;
-    }
-
-    .inventory-detail-card .table.table-sm th,
-    .inventory-detail-card .table.table-sm td {
-        display: block;
-        width: 100%;
-        padding: 0.15rem 0;
-    }
-
-    .inventory-detail-actions .btn {
+    .inventory-header-actions .btn {
         flex: 1 1 100%;
     }
 }
@@ -50,9 +39,13 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4 inventory-detail-topbar">
-        <h1 class="h3 mb-0">{{ item.name }}</h1>
-        <div class="d-flex gap-2 inventory-detail-actions">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 inventory-header">
+        <div>
+            <h1 class="h3 mb-1">{{ item.name }}</h1>
+            <p class="text-muted mb-0 small">{{ item.category.name }}</p>
+        </div>
+        <div class="d-flex gap-2 inventory-header-actions">
             {% if request.user|can_manage_inventory_transactions %}
             <a href="{% url 'inventory_transaction_create' %}?item={{ item.id }}" class="btn btn-success">
                 <i class="bi bi-plus-lg"></i> Новая операция
@@ -69,127 +62,148 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4 inventory-detail-card">
-                <div class="card-header">
-                    <h5 class="mb-0">Информация о товаре</h5>
+    <div class="row g-4">
+        <!-- Left Column - Info -->
+        <div class="col-lg-4">
+            <!-- Main Stats Card -->
+            <div class="card border-0 shadow-sm inventory-stat-card mb-3">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-info-circle me-2 text-primary"></i>Остатки
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Категория:</th>
-                            <td>{{ item.category.name }}</td>
-                        </tr>
-                        <tr>
-                            <th>Единица:</th>
-                            <td>{{ item.unit }}</td>
-                        </tr>
-                        <tr>
-                            <th>Текущий остаток:</th>
-                            <td>
-                                <strong class="fs-5">{{ item.quantity }} {{ item.unit }}</strong>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Мин. остаток:</th>
-                            <td>{{ item.min_quantity }} {{ item.unit }}</td>
-                        </tr>
-                        <tr>
-                            <th>Цена за ед.:</th>
-                            <td>{{ item.price_per_unit }} сом</td>
-                        </tr>
-                        <tr>
-                            <th>Общая стоимость:</th>
-                            <td><strong>{{ item.get_stock_value|floatformat:2 }} сом</strong></td>
-                        </tr>
-                        <tr>
-                            <th>Статус:</th>
-                            <td>
-                                {% if item.quantity <= 0 %}
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <span class="text-muted small text-uppercase">Текущий остаток</span>
+                    </div>
+                    <div class="display-4 fw-bold mb-2 {% if item.quantity <= 0 %}text-danger{% elif item.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                        {{ item.quantity|floatformat:0 }}
+                    </div>
+                    <span class="text-muted">шт</span>
+                </div>
+            </div>
+
+            <!-- Details Card -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-gear me-2 text-secondary"></i>Параметры
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted">Мин. остаток</span>
+                            <span class="fw-medium">{{ item.min_quantity|floatformat:0 }} шт</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted">Тип инвентаря</span>
+                            {% if item.item_type == 'LARGE' %}
+                                <span class="badge bg-primary-subtle text-primary">Крупный</span>
+                            {% else %}
+                                <span class="badge bg-info-subtle text-info">Мелкий</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted">Статус</span>
+                            {% if item.quantity <= 0 %}
                                 <span class="badge bg-danger">Нет на складе</span>
-                                {% elif item.is_low_stock %}
+                            {% elif item.is_low_stock %}
                                 <span class="badge bg-warning">Низкий остаток</span>
-                                {% else %}
+                            {% else %}
                                 <span class="badge bg-success">В наличии</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Активен:</th>
-                            <td>
-                                {% if item.is_active %}
-                                <i class="bi bi-check-circle text-success"></i> Да
-                                {% else %}
-                                <i class="bi bi-x-circle text-danger"></i> Нет
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted">Активен</span>
+                            {% if item.is_active %}
+                                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Да</span>
+                            {% else %}
+                                <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Нет</span>
+                            {% endif %}
+                        </li>
+                    </ul>
                 </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="d-grid">
+                <a href="{% url 'inventory_transactions' %}?item={{ item.id }}" class="btn btn-outline-primary">
+                    <i class="bi bi-list-ul me-2"></i>Все операции
+                </a>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="card inventory-detail-card">
-                <div class="card-header">
-                    <h5 class="mb-0">Последние операции</h5>
+        <!-- Right Column - Transactions -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-clock-history me-2 text-success"></i>Последние операции
+                    </h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if recent_transactions %}
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
                                 <tr>
-                                    <th>Дата</th>
-                                    <th>Тип</th>
-                                    <th>Количество</th>
-                                    <th>Заказ</th>
-                                    <th>Сотрудник</th>
-                                    <th>Комментарий</th>
+                                    <th class="fw-medium small text-muted ps-4">Дата</th>
+                                    <th class="fw-medium small text-muted">Тип</th>
+                                    <th class="fw-medium small text-muted text-end">Количество</th>
+                                    <th class="fw-medium small text-muted">Заказ</th>
+                                    <th class="fw-medium small text-muted">Сотрудник</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for trans in recent_transactions %}
                                 <tr>
-                                    <td>{{ trans.created_at|date:"d.m.Y H:i" }}</td>
+                                    <td class="small ps-4">{{ trans.created_at|date:"d.m.Y H:i" }}</td>
                                     <td>
                                         {% if trans.transaction_type == 'IN' %}
-                                        <span class="badge bg-success">Приход</span>
+                                            <span class="badge bg-success-subtle text-success">
+                                                <i class="bi bi-arrow-down-circle me-1"></i>Приход
+                                            </span>
                                         {% elif trans.transaction_type == 'OUT' %}
-                                        <span class="badge bg-danger">Списание</span>
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                <i class="bi bi-arrow-up-circle me-1"></i>Списание
+                                            </span>
                                         {% else %}
-                                        <span class="badge bg-warning">Корректировка</span>
+                                            <span class="badge bg-warning-subtle text-warning">
+                                                <i class="bi bi-arrow-left-right me-1"></i>Корректировка
+                                            </span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <strong>{{ trans.get_quantity_change }}</strong> {{ item.unit }}
+                                    <td class="text-end">
+                                        <span class="fw-bold {% if trans.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ trans.get_quantity_change }}
+                                        </span>
+                                        <span class="small text-muted ms-1">шт</span>
                                     </td>
-                                    <td>
+                                    <td class="small">
                                         {% if trans.order %}
-                                        <a href="{% url 'order_detail' trans.order.id %}">{{ trans.order.order_code }}</a>
+                                            <a href="{% url 'order_detail' trans.order.id %}">{{ trans.order.order_code }}</a>
                                         {% else %}
-                                        —
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="small">
                                         {% if trans.employee %}
-                                        {{ trans.employee.user.full_name }}
+                                            {{ trans.employee.user.full_name }}
                                         {% else %}
-                                        —
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ trans.comment|truncatewords:10 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    <a href="{% url 'inventory_transactions' %}?item={{ item.id }}" class="btn btn-sm btn-outline-primary mt-2">
-                        Все операции →
-                    </a>
                     {% else %}
-                    <p class="text-muted text-center py-4">Операций пока нет</p>
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2.5rem;"></i>
+                        <p class="text-muted mt-3 mb-0">Операций пока нет</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>

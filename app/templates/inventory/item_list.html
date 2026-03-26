@@ -97,8 +97,6 @@
                             <th>Категория</th>
                             <th>Остаток</th>
                             <th>Мин. остаток</th>
-                            <th>Цена за ед.</th>
-                            <th>Стоимость</th>
                             <th>Статус</th>
                             <th>Действия</th>
                         </tr>
@@ -114,11 +112,9 @@
                             </td>
                             <td>{{ item.category.name }}</td>
                             <td>
-                                <strong>{{ item.quantity }} {{ item.unit }}</strong>
+                                <strong>{{ item.quantity }} шт</strong>
                             </td>
-                            <td>{{ item.min_quantity }} {{ item.unit }}</td>
-                            <td>{{ item.price_per_unit }} сом</td>
-                            <td>{{ item.get_stock_value|floatformat:2 }} сом</td>
+                            <td>{{ item.min_quantity }} шт</td>
                             <td>
                                 {% if item.quantity <= 0 %}
                                 <span class="badge bg-danger">Нет на складе</span>
@@ -195,15 +191,11 @@
             <div class="crm-unified-mobile-meta">
                 <div class="crm-unified-mobile-row inventory-mobile-row">
                     <span class="crm-unified-mobile-label inventory-mobile-label">Остаток</span>
-                    <span class="crm-unified-mobile-value inventory-mobile-value"><strong>{{ item.quantity }} {{ item.unit }}</strong></span>
+                    <span class="crm-unified-mobile-value inventory-mobile-value"><strong>{{ item.quantity }} шт</strong></span>
                 </div>
                 <div class="crm-unified-mobile-row inventory-mobile-row">
                     <span class="crm-unified-mobile-label inventory-mobile-label">Мин. остаток</span>
-                    <span class="crm-unified-mobile-value inventory-mobile-value">{{ item.min_quantity }} {{ item.unit }}</span>
-                </div>
-                <div class="crm-unified-mobile-row inventory-mobile-row">
-                    <span class="crm-unified-mobile-label inventory-mobile-label">Цена</span>
-                    <span class="crm-unified-mobile-value inventory-mobile-value">{{ item.price_per_unit }} сом</span>
+                    <span class="crm-unified-mobile-value inventory-mobile-value">{{ item.min_quantity }} шт</span>
                 </div>
                 <div class="crm-unified-mobile-row inventory-mobile-row">
                     <span class="crm-unified-mobile-label inventory-mobile-label">Статус</span>
