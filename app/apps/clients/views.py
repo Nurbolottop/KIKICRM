@@ -1,7 +1,7 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, ProtectedError
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views import View
@@ -246,3 +246,18 @@ class ClientDeleteView(LoginRequiredMixin, DeleteView):
         if not can_delete_clients(request.user):
             raise PermissionDenied('У вас нет прав на удаление клиентов.')
         return super().dispatch(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        try:
+            self.object.delete()
+            from django.contrib import messages
+            messages.success(request, 'Клиент успешно удален.')
+            return HttpResponseRedirect(self.success_url)
+        except ProtectedError:
+            from django.contrib import messages
+            messages.error(
+                request,
+                f'Невозможно удалить клиента "{self.object}" — у него есть связанные заказы.'
+            )
+            return HttpResponseRedirect(reverse('client_detail', kwargs={'pk': self.object.pk}))
