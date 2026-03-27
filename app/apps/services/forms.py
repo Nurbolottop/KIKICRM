@@ -7,7 +7,7 @@ class ServiceForm(forms.ModelForm):
     
     class Meta:
         model = Service
-        fields = ['name', 'description', 'image', 'price', 'service_deadline_hours', 'cleaner_salary', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'is_active']
+        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control', 
@@ -27,16 +27,11 @@ class ServiceForm(forms.ModelForm):
                 'placeholder': 'Цена в сомах',
                 'step': '0.01'
             }),
-            'service_deadline_hours': forms.NumberInput(attrs={
+            'room_count': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Дедлайн услуги (часы)',
-                'step': '0.5',
-                'min': '0'
-            }),
-            'cleaner_salary': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'ЗП клинеру',
-                'step': '0.01'
+                'placeholder': 'Количество комнат',
+                'min': '1',
+                'step': '1'
             }),
             'senior_cleaner_salary': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -55,7 +50,7 @@ class ServiceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _num_fields = ('price', 'service_deadline_hours', 'cleaner_salary',
+        _num_fields = ('price', 'room_count',
                        'senior_cleaner_salary', 'senior_cleaner_bonus')
         for fname in _num_fields:
             if fname not in self.fields:
@@ -72,16 +67,10 @@ class ServiceForm(forms.ModelForm):
             if fname in self.initial and self.initial[fname] is not None:
                 self.initial[fname] = str(self.initial[fname]).replace(',', '.')
 
-    def clean_service_deadline_hours(self):
-        value = self.cleaned_data.get('service_deadline_hours')
+    def clean_room_count(self):
+        value = self.cleaned_data.get('room_count')
         if value in (None, ''):
-            return 0
-        return value
-
-    def clean_cleaner_salary(self):
-        value = self.cleaned_data.get('cleaner_salary')
-        if value in (None, ''):
-            return 0
+            return 1
         return value
 
     def clean_senior_cleaner_salary(self):

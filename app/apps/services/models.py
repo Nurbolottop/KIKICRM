@@ -25,12 +25,6 @@ class Service(BaseModel):
         max_digits=10,
         decimal_places=2
     )
-    cleaner_salary = models.DecimalField(
-        'ЗП клинеру',
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
     senior_cleaner_salary = models.DecimalField(
         'ЗП ст. клинеру',
         max_digits=10,
@@ -43,11 +37,10 @@ class Service(BaseModel):
         decimal_places=2,
         default=0
     )
-    service_deadline_hours = models.DecimalField(
-        'Дедлайн услуги (часы)',
-        max_digits=10,
-        decimal_places=2,
-        default=0
+    room_count = models.PositiveIntegerField(
+        'Количество комнат',
+        default=1,
+        help_text='Для квартир: 1, 2, 3 и т.д. комнат'
     )
     checklist = models.JSONField(
         'Чеклист задач',

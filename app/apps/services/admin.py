@@ -9,8 +9,8 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'name',
+        'room_count',
         'price',
-        'cleaner_salary',
         'senior_cleaner_salary',
         'senior_cleaner_bonus',
         'is_active'
@@ -28,7 +28,7 @@ class ServiceAdmin(admin.ModelAdmin):
             'fields': ('name', 'description', 'image')
         }),
         ('Детали', {
-            'fields': ('price', 'cleaner_salary', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'checklist', 'is_active')
+            'fields': ('room_count', 'price', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'checklist', 'is_active')
         }),
         ('Системные', {
             'fields': ('created_at', 'updated_at'),

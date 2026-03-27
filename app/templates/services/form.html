@@ -48,25 +48,21 @@
                             {% endif %}
                         </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.senior_cleaner_salary.id_for_label }}" class="form-label">Оплата ст. клинеру (сом)</label>
-                            {{ form.senior_cleaner_salary }}
-                            {% if form.senior_cleaner_salary.errors %}
-                            <div class="text-danger">{{ form.senior_cleaner_salary.errors }}</div>
-                            {% endif %}
-                        </div>
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="totalDeadlineHours" class="form-label">Общий дедлайн (авто), ч</label>
-                                <input type="number" id="totalDeadlineHours" class="form-control" readonly>
+                                <label for="{{ form.senior_cleaner_salary.id_for_label }}" class="form-label">Оплата ст. клинеру (сом)</label>
+                                {{ form.senior_cleaner_salary }}
+                                {% if form.senior_cleaner_salary.errors %}
+                                <div class="text-danger">{{ form.senior_cleaner_salary.errors }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.service_deadline_hours.id_for_label }}" class="form-label">Дедлайн услуги, ч</label>
-                                {{ form.service_deadline_hours }}
-                                {% if form.service_deadline_hours.errors %}
-                                <div class="text-danger">{{ form.service_deadline_hours.errors }}</div>
+                                <label for="{{ form.room_count.id_for_label }}" class="form-label">Количество комнат</label>
+                                {{ form.room_count }}
+                                {% if form.room_count.errors %}
+                                <div class="text-danger">{{ form.room_count.errors }}</div>
                                 {% endif %}
+                                <div class="form-text">Для квартирных услуг: 1, 2, 3 и т.д.</div>
                             </div>
                         </div>
                         

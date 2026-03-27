@@ -87,7 +87,7 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
             service.name = request.POST.get('name', service.name)
             service.description = request.POST.get('description', service.description)
             service.price = request.POST.get('price', service.price)
-            service.service_deadline_hours = request.POST.get('service_deadline_hours', service.service_deadline_hours)
+            service.room_count = request.POST.get('room_count', service.room_count)
             service.senior_cleaner_salary = request.POST.get('senior_cleaner_salary', service.senior_cleaner_salary)
             service.senior_cleaner_bonus = request.POST.get('senior_cleaner_bonus', service.senior_cleaner_bonus)
             service.is_active = request.POST.get('is_active') == 'on'
@@ -125,7 +125,7 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
                     'name': service.name,
                     'description': service.description,
                     'price': str(service.price),
-                    'service_deadline_hours': str(service.service_deadline_hours),
+                    'room_count': service.room_count,
                     'senior_cleaner_salary': str(service.senior_cleaner_salary),
                     'senior_cleaner_bonus': str(service.senior_cleaner_bonus),
                     'is_active': service.is_active,
