@@ -61,6 +61,14 @@
                             <label class="text-muted small">Количество комнат</label>
                             <div class="h6 mb-0">{{ service.room_count|default:1 }} комн.</div>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small">Рекомендуемая команда</label>
+                            <div class="h6 mb-0">
+                                {% if service.senior_cleaner_count %}{{ service.senior_cleaner_count }} ст. клинер{% if service.senior_cleaner_count > 1 %}ов{% endif %}{% endif %}
+                                {% if service.cleaner_count %}{% if service.senior_cleaner_count %} + {% endif %}{{ service.cleaner_count }} клинер{% if service.cleaner_count > 1 %}ов{% endif %}{% endif %}
+                            </div>
+                        </div>
                         
                         {% if service.description %}
                         <div class="mb-3">
@@ -567,6 +575,8 @@ document.addEventListener('DOMContentLoaded', function() {
         { id: 'editPrice',               raw: '{{ service.price|default:0 }}' },
         { id: 'editRoomCount',           raw: '{{ service.room_count|default:1 }}' },
         { id: 'editSeniorCleanerSalary',  raw: '{{ service.senior_cleaner_salary|default:0 }}' },
+        { id: 'editSeniorCleanerCount',   raw: '{{ service.senior_cleaner_count|default:1 }}' },
+        { id: 'editCleanerCount',         raw: '{{ service.cleaner_count|default:2 }}' },
     ];
     _numFields.forEach(function(f) {
         var el = document.getElementById(f.id);
