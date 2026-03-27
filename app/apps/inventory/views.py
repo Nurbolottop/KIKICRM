@@ -59,11 +59,18 @@ class InventoryItemListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
 
 class InventoryItemCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """Создание нового товара."""
-    permission_key = 'inventory.create'
+    permission_key = 'inventory.edit'
     model = InventoryItem
     template_name = 'inventory/item_form.html'
     fields = ['name', 'category', 'item_type', 'quantity', 'min_quantity', 'is_active']
     success_url = reverse_lazy('inventory_list')
+    
+    def form_valid(self, form):
+        # Для крупного товара автоматически устанавливаем количество = 1
+        if form.instance.item_type == InventoryItemType.LARGE:
+            form.instance.quantity = 1
+        response = super().form_valid(form)
+        return response
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -147,15 +154,32 @@ class InventoryTransactionListView(LoginRequiredMixin, PermissionRequiredMixin, 
 
 
 class InventoryTransactionCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    """Создание операции со складом."""
+    """Создание операции со склада."""
     permission_key = 'inventory.transactions'
     model = InventoryTransaction
     template_name = 'inventory/transaction_form.html'
     fields = ['item', 'transaction_type', 'quantity', 'comment']
     success_url = reverse_lazy('inventory_transactions')
     
+    def get_initial(self):
+        """Автоматически выбираем товар из GET параметра item."""
+        initial = super().get_initial()
+        item_id = self.request.GET.get('item')
+        if item_id:
+            initial['item'] = item_id
+        return initial
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Новая операция'
         context['button_text'] = 'Создать'
+        
+        # Если товар выбран (из GET или формы), показываем его детали
+        item_id = self.request.GET.get('item') or self.request.POST.get('item')
+        if item_id:
+            try:
+                context['selected_item'] = InventoryItem.objects.select_related('category').get(pk=item_id)
+            except (InventoryItem.DoesNotExist, ValueError):
+                pass
+        
         return context

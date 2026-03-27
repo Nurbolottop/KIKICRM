@@ -162,7 +162,7 @@ def notify_new_expense(expense):
     
     text = (
         f"💰 <b>Новый расход</b>\n\n"
-        f"Сотрудник: {expense.employee.user.full_name}\n"
+        f"Сотрудник: {expense.user.full_name}\n"
         f"Категория: {expense.get_category_display()}\n"
         f"Сумма: {expense.amount} сом\n"
         f"Описание: {expense.description or '—'}"
@@ -178,7 +178,7 @@ def notify_expense_approved(expense):
     
     text = (
         f"✅ <b>Расход одобрен</b>\n\n"
-        f"Сотрудник: {expense.employee.user.full_name}\n"
+        f"Сотрудник: {expense.user.full_name}\n"
         f"Сумма: {expense.amount} сом\n"
         f"Категория: {expense.get_category_display()}"
     )
@@ -193,7 +193,7 @@ def notify_expense_rejected(expense):
     
     text = (
         f"❌ <b>Расход отклонен</b>\n\n"
-        f"Сотрудник: {expense.employee.user.full_name}\n"
+        f"Сотрудник: {expense.user.full_name}\n"
         f"Сумма: {expense.amount} сом\n"
         f"Категория: {expense.get_category_display()}"
     )
