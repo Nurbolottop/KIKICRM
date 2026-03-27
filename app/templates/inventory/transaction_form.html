@@ -239,11 +239,12 @@
     
     .inventory-transaction-form .form-control,
     .inventory-transaction-form .form-select {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        padding: 0.65rem 0.9rem;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 0.625rem 0.875rem;
         font-size: 0.95rem;
-        transition: all 0.2s ease;
+        height: 42px;
+        width: 100%;
     }
 
     .inventory-transaction-form .form-control:focus,
@@ -253,13 +254,17 @@
     }
 
     .inventory-transaction-form .form-label {
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        font-weight: 500;
         margin-bottom: 0.5rem;
+        color: #374151;
+        display: block;
     }
 
     .inventory-transaction-form .form-text {
         font-size: 0.8rem;
-        color: #6c757d;
+        color: #6b7280;
+        margin-top: 0.375rem;
     }
 
     .inventory-transaction-form .form-check-input:checked + .form-check-label .card {
@@ -268,14 +273,22 @@
 
     .inventory-transaction-form .input-group-text {
         background-color: #f8f9fa;
-        border-radius: 0 8px 8px 0;
-        border: 1px solid #dee2e6;
+        border-radius: 0 6px 6px 0;
+        border: 1px solid #ced4da;
         border-left: none;
+        height: 42px;
+        display: flex;
+        align-items: center;
+    }
+
+    .inventory-transaction-form .input-group .form-control {
+        border-radius: 6px 0 0 6px;
     }
 
     .inventory-transaction-form .card {
         transition: all 0.2s ease;
         cursor: pointer;
+        border-radius: 8px;
     }
 
     .inventory-transaction-form .card:hover {
@@ -291,6 +304,11 @@
     .inventory-transaction-form .form-check-input:checked + .form-check-label .card {
         background-color: rgba(13, 110, 253, 0.08);
         box-shadow: 0 0 0 2px #0d6efd;
+    }
+
+    .inventory-transaction-form textarea.form-control {
+        height: auto;
+        min-height: 100px;
     }
 
     @media (max-width: 768px) {
