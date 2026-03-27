@@ -13,6 +13,8 @@ class ServiceAdmin(admin.ModelAdmin):
         'price',
         'senior_cleaner_salary',
         'senior_cleaner_bonus',
+        'senior_cleaner_count',
+        'cleaner_count',
         'is_active'
     ]
     list_filter = [
@@ -28,7 +30,7 @@ class ServiceAdmin(admin.ModelAdmin):
             'fields': ('name', 'description', 'image')
         }),
         ('Детали', {
-            'fields': ('room_count', 'price', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'checklist', 'is_active')
+            'fields': ('room_count', 'price', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'checklist', 'is_active')
         }),
         ('Системные', {
             'fields': ('created_at', 'updated_at'),

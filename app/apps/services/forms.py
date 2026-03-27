@@ -7,7 +7,7 @@ class ServiceForm(forms.ModelForm):
     
     class Meta:
         model = Service
-        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'is_active']
+        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control', 
@@ -43,6 +43,18 @@ class ServiceForm(forms.ModelForm):
                 'placeholder': 'Доп. оплата ст. клинеру',
                 'step': '0.01'
             }),
+            'senior_cleaner_count': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Кол-во ст. клинеров',
+                'min': '0',
+                'step': '1'
+            }),
+            'cleaner_count': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Кол-во клинеров',
+                'min': '0',
+                'step': '1'
+            }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
@@ -51,7 +63,7 @@ class ServiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _num_fields = ('price', 'room_count',
-                       'senior_cleaner_salary', 'senior_cleaner_bonus')
+                       'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count')
         for fname in _num_fields:
             if fname not in self.fields:
                 continue
@@ -83,5 +95,17 @@ class ServiceForm(forms.ModelForm):
         value = self.cleaned_data.get('senior_cleaner_bonus')
         if value in (None, ''):
             return 0
+        return value
+
+    def clean_senior_cleaner_count(self):
+        value = self.cleaned_data.get('senior_cleaner_count')
+        if value in (None, ''):
+            return 1
+        return value
+
+    def clean_cleaner_count(self):
+        value = self.cleaned_data.get('cleaner_count')
+        if value in (None, ''):
+            return 2
         return value
 

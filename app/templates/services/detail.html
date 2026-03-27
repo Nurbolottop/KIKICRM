@@ -178,6 +178,16 @@
                             <input type="number" name="room_count" id="editRoomCount" class="form-control" min="1" step="1" value="{{ service.room_count|default:1 }}">
                         </div>
                         
+                        <div class="col-md-6">
+                            <label class="form-label">Кол-во ст. клинеров (рекомендуется)</label>
+                            <input type="number" name="senior_cleaner_count" id="editSeniorCleanerCount" class="form-control" min="0" step="1" value="{{ service.senior_cleaner_count|default:1 }}">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Кол-во клинеров (рекомендуется)</label>
+                            <input type="number" name="cleaner_count" id="editCleanerCount" class="form-control" min="0" step="1" value="{{ service.cleaner_count|default:2 }}">
+                        </div>
+                        
                         <div class="col-12">
                             <label class="form-label">Описание</label>
                             <textarea name="description" id="editDescription" class="form-control" rows="4">{{ service.description }}</textarea>

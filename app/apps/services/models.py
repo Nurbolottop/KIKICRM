@@ -42,6 +42,16 @@ class Service(BaseModel):
         default=1,
         help_text='Для квартир: 1, 2, 3 и т.д. комнат'
     )
+    senior_cleaner_count = models.PositiveIntegerField(
+        'Кол-во ст. клинеров',
+        default=1,
+        help_text='Рекомендуемое количество старших клинеров'
+    )
+    cleaner_count = models.PositiveIntegerField(
+        'Кол-во клинеров',
+        default=2,
+        help_text='Рекомендуемое количество обычных клинеров'
+    )
     checklist = models.JSONField(
         'Чеклист задач',
         default=list,

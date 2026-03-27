@@ -66,6 +66,25 @@
                             </div>
                         </div>
                         
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.senior_cleaner_count.id_for_label }}" class="form-label">Кол-во ст. клинеров (рекомендуется)</label>
+                                {{ form.senior_cleaner_count }}
+                                {% if form.senior_cleaner_count.errors %}
+                                <div class="text-danger">{{ form.senior_cleaner_count.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Сколько старших клинеров нужно на эту услугу</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cleaner_count.id_for_label }}" class="form-label">Кол-во клинеров (рекомендуется)</label>
+                                {{ form.cleaner_count }}
+                                {% if form.cleaner_count.errors %}
+                                <div class="text-danger">{{ form.cleaner_count.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Сколько обычных клинеров нужно на эту услугу</div>
+                            </div>
+                        </div>
+                        
                         <!-- Чеклист по комнатам -->
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
