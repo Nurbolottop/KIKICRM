@@ -70,9 +70,46 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <label class="form-label mb-0">Чеклист по комнатам</label>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="addRoomBlock()">
-                                    <i class="bi bi-plus-lg"></i> Добавить комнату
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="togglePasteChecklist()">
+                                        <i class="bi bi-clipboard"></i> Вставить из буфера
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="addRoomBlock()">
+                                        <i class="bi bi-plus-lg"></i> Добавить комнату
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Поле для вставки текста из буфера -->
+                            <div id="pasteChecklistBlock" class="card mb-3 border-primary d-none">
+                                <div class="card-header bg-primary-subtle">
+                                    <strong>Вставьте чеклист из сообщения</strong>
+                                </div>
+                                <div class="card-body">
+                                    <textarea id="pasteChecklistText" class="form-control mb-2" rows="8" placeholder="Вставьте текст с чеклистом...
+
+Пример:
+🍳 КУХНЯ (800 сом / 5 часов)
+Чек-лист:
+Мытьё поверхностей
+Мытьё плиты
+
+🛏 КОМНАТА (400 сом / 2 часа)
+Чек-лист:
+Пылесос
+Мытьё пола"></textarea>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="parseChecklistText()">
+                                            <i class="bi bi-magic"></i> Разобрать чеклист
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="togglePasteChecklist()">
+                                            Отмена
+                                        </button>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        Поддерживаются эмодзи (🍳🛏🚪🛁), названия комнат, суммы и часы.
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Контейнер для блоков комнат -->
@@ -439,6 +476,217 @@ document.addEventListener('keypress', function(e) {
         }
     }
 });
+
+// Функции для вставки чеклиста из буфера обмена
+function togglePasteChecklist() {
+    const block = document.getElementById('pasteChecklistBlock');
+    if (block.classList.contains('d-none')) {
+        block.classList.remove('d-none');
+        document.getElementById('pasteChecklistText').focus();
+    } else {
+        block.classList.add('d-none');
+    }
+}
+
+function parseChecklistText() {
+    const text = document.getElementById('pasteChecklistText').value.trim();
+    if (!text) {
+        alert('Вставьте текст чеклиста');
+        return;
+    }
+
+    const rooms = parseRoomsFromText(text);
+    if (rooms.length === 0) {
+        alert('Не удалось распознать комнаты. Убедитесь, что текст содержит названия комнат (например, 🍳 КУХНЯ или 🛏 КОМНАТА).');
+        return;
+    }
+
+    // Clear existing rooms
+    const container = document.getElementById('roomsContainer');
+    container.innerHTML = '';
+    roomCounter = 0;
+
+    // Add parsed rooms
+    rooms.forEach(room => {
+        addParsedRoomBlock(room);
+    });
+
+    // Hide paste block
+    togglePasteChecklist();
+
+    // Clear textarea
+    document.getElementById('pasteChecklistText').value = '';
+
+    alert(`Добавлено ${rooms.length} комнат(ы) с ${rooms.reduce((sum, r) => sum + r.tasks.length, 0)} задачами`);
+}
+
+function parseRoomsFromText(text) {
+    const rooms = [];
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+    // Room header patterns: emoji + room name, or room name with optional payment/hours
+    const roomHeaderRegex = /^(🍳|🛏|🚪|🛁|🧹|🧽|🛋|🚿|🧼|🪣|📦|🪟|🧺|🛀|🚽|🪞|🧴|🧷|🧹|🧽|🪠|🧯|🔥|⚡|💧|❄️|🔌|💡|🧰|🔧|🪛|🪜|🪝|🗑|♻️|🧤|🦠|🧫|🧪)?\s*([^\(]+)(?:\((\d+)\s*сом?[^\/]*\/\s*(\d+)\s*(?:ч|час|часов|hr|hours?)[^)]*\))?/i;
+    const paymentHoursRegex = /(\d+)\s*сом?(?:.*?\/(\d+)\s*(?:ч|час|часов|hr|hours?)|\s*\/\s*(\d+)\s*(?:ч|час|часов|hr|hours?).*?сом?\s*(\d+))/i;
+
+    let currentRoom = null;
+    let inChecklist = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Check if this is a room header line
+        const roomMatch = line.match(/^(🍳|🛏|🚪|🛁|🧹|🧽|🛋|🚿|🧼|🪣|📦|🪟|🧺|🛀|🚽|🪞|🧴|🧷|🧹|🧽|🪠|🧯|🔥|⚡|💧|❄️|🔌|💡|🧰|🔧|🪛|🪜|🪝|🗑|♻️|🧤|🦠|🧫|🧪)?\s*(КУХНЯ|КОМНАТА|КОРИДОР|ВАННА|ГОСТИНАЯ|СПАЛЬНЯ|САНУЗЕЛ|ТУАЛЕТ|ПРИХОЖАЯ|БАЛКОН|ЛОДЖИЯ|КЛАДОВКА|ГАРДЕРОБ|КАБИНЕТ|ДЕТСКАЯ|МАСТЕРСКАЯ|ПОДВАЛ|ЧЕРДАК|ГАРАЖ|ТЕРРАСА|ЗАЛ|ХОЛЛ|КУХНЯ-ГОСТИНАЯ|СТУДИЯ|КУХНЯ\/СТУДИЯ)(?:[^\(]*\((\d+)\s*сом?[^\/]*\/\s*(\d+)\s*(?:ч|час|часов|hr|hours?)[^)]*\))?/i);
+
+        if (roomMatch || line.match(/^(🍳|🛏|🚪|🛁|🧹|🧽|🛋|🚿|🧼)/)) {
+            // Save previous room if exists
+            if (currentRoom) {
+                rooms.push(currentRoom);
+            }
+
+            // Extract room name and payment/hours
+            let roomName = '';
+            let payment = 0;
+            let hours = 0;
+
+            if (roomMatch) {
+                roomName = roomMatch[2].trim();
+                payment = parseInt(roomMatch[3]) || 0;
+                hours = parseInt(roomMatch[4]) || 0;
+            } else {
+                // Try to extract from emoji line
+                const cleanLine = line.replace(/^(🍳|🛏|🚪|🛁|🧹|🧽|🛋|🚿|🧼|🪣|📦|🪟|🧺|🛀|🚽|🪞|🧴|🧷|🧹|🧽|🪠|🧯|🔥|⚡|💧|❄️|🔌|💡|🧰|🔧|🪛|🪜|🪝|🗑|♻️|🧤|🦠|🧫|🧪)\s*/, '');
+                roomName = cleanLine.split(/[\(\-]/)[0].trim();
+
+                // Look for payment/hours in parentheses
+                const phMatch = line.match(/\((\d+)\s*сом?[^\/]*\/\s*(\d+)\s*(?:ч|час|часов|hr|hours?)[^)]*\)/i);
+                if (phMatch) {
+                    payment = parseInt(phMatch[1]) || 0;
+                    hours = parseInt(phMatch[2]) || 0;
+                }
+            }
+
+            currentRoom = {
+                name: roomName,
+                payment: payment,
+                hours: hours,
+                tasks: []
+            };
+            inChecklist = false;
+            continue;
+        }
+
+        // Check for "Чек-лист:" marker
+        if (line.match(/чек-?лист:?/i)) {
+            inChecklist = true;
+            continue;
+        }
+
+        // Skip empty lines and markers
+        if (!line || line.match(/^(👨‍🔧|👩‍🔧|🧹|Команда:|Состав:|Клинер)/i)) {
+            continue;
+        }
+
+        // This is a task if we're in a room
+        if (currentRoom && line.length > 2) {
+            // Remove bullet points and clean
+            const task = line.replace(/^[\s•\-\*✓✔✅]+/, '').trim();
+            if (task && !task.match(/^(Чек-лист|Задачи|Пункты):?/i)) {
+                currentRoom.tasks.push(task);
+            }
+        }
+    }
+
+    // Don't forget the last room
+    if (currentRoom) {
+        rooms.push(currentRoom);
+    }
+
+    return rooms;
+}
+
+function addParsedRoomBlock(room) {
+    const container = document.getElementById('roomsContainer');
+    const roomIndex = roomCounter++;
+
+    const roomBlock = document.createElement('div');
+    roomBlock.className = 'room-block card mb-3 border';
+    roomBlock.dataset.roomIndex = roomIndex;
+
+    let tasksHtml = '';
+    room.tasks.forEach(task => {
+        tasksHtml += `
+            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                <span>${escapeHtml(task)}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomTask(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <input type="hidden" name="room_${roomIndex}_task[]" value="${escapeHtml(task)}">
+            </li>
+        `;
+    });
+
+    roomBlock.innerHTML = `
+        <div class="card-header bg-light py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-door-open"></i></span>
+                        <input type="text"
+                               name="room_name_${roomIndex}"
+                               class="form-control"
+                               value="${escapeHtml(room.name)}"
+                               placeholder="Название комнаты">
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Дедлайн (ч)</span>
+                        <input type="number"
+                               name="room_deadline_hours_${roomIndex}"
+                               class="form-control"
+                               min="0"
+                               step="0.5"
+                               value="${room.hours || ''}"
+                               placeholder="2">
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Оплата</span>
+                        <input type="number"
+                               name="room_payment_${roomIndex}"
+                               class="form-control"
+                               value="${room.payment || ''}"
+                               placeholder="сом">
+                    </div>
+                </div>
+                <div class="col-12 col-md-1 d-flex justify-content-md-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 w-md-auto" onclick="removeRoomBlock(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 mb-2">
+                <div class="col-12 col-md-8">
+                    <input type="text" class="form-control form-control-sm room-task-input" placeholder="Введите задачу">
+                </div>
+                <div class="col-12 col-md-4">
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="addRoomTask(this)">
+                        <i class="bi bi-plus-lg"></i> Добавить задачу
+                    </button>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush room-tasks-list">
+                ${tasksHtml}
+            </ul>
+        </div>
+    `;
+
+    container.appendChild(roomBlock);
+    scheduleTotalDeadlineUpdate();
+}
 
 document.addEventListener('input', function(e) {
     if (e.target && e.target.name && e.target.name.startsWith('room_deadline_hours_')) {
