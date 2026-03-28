@@ -94,8 +94,10 @@ class ExpenseCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         # Отправляем уведомление в Telegram
         try:
             notify_new_expense(self.object)
-        except Exception:
-            pass  # Не блокируем создание расхода если Telegram недоступен
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send expense notification: {e}", exc_info=True)
         return response
     
     def get_context_data(self, **kwargs):

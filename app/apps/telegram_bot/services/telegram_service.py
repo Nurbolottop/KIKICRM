@@ -157,7 +157,12 @@ def notify_new_order(order):
 def notify_new_expense(expense):
     """Отправляет уведомление о новом расходе в тему Расходы."""
     config = get_telegram_config()
-    if not config or not config.get('notifications_new_expense'):
+    print(f"[DEBUG] notify_new_expense called, config={config}")
+    if not config:
+        print("[DEBUG] Telegram config is None")
+        return False
+    if not config.get('notifications_new_expense'):
+        print(f"[DEBUG] notifications_new_expense is disabled or False: {config.get('notifications_new_expense')}")
         return False
     
     text = (
@@ -167,7 +172,10 @@ def notify_new_expense(expense):
         f"Сумма: {expense.amount} сом\n"
         f"Описание: {expense.description or '—'}"
     )
-    return send_telegram_message(text, thread_id=config.get('expenses_thread_id'))
+    print(f"[DEBUG] Sending expense notification, thread_id={config.get('expenses_thread_id')}")
+    result = send_telegram_message(text, thread_id=config.get('expenses_thread_id'))
+    print(f"[DEBUG] send_telegram_message result: {result}")
+    return result
 
 
 def notify_expense_approved(expense):
