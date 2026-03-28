@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .models import Expense
 from .forms import ExpenseForm
-from apps.telegram_bot.services.telegram_service import notify_new_expense, notify_expense_approved, notify_expense_rejected
 
 
 class ExpenseListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -90,14 +89,20 @@ class ExpenseCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         # Устанавливаем текущего пользователя автоматически
         form.instance.user = self.request.user
         
+        # Сохраняем объект
         response = super().form_valid(form)
+        
         # Отправляем уведомление в Telegram
+        print(f"[ExpenseCreateView] Expense #{self.object.id} created, sending notification...")
         try:
-            notify_new_expense(self.object)
+            from apps.telegram_bot.services.telegram_service import notify_new_expense
+            result = notify_new_expense(self.object)
+            print(f"[ExpenseCreateView] Notification result: {result}")
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send expense notification: {e}", exc_info=True)
+            import traceback
+            print(f"[ExpenseCreateView] ERROR sending notification: {e}")
+            print(traceback.format_exc())
+        
         return response
     
     def get_context_data(self, **kwargs):

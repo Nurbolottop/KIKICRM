@@ -28,8 +28,6 @@ def get_telegram_config():
             'cleaner_thread_id': str,
         }
     """
-
-    
     config = {
         'token': None,
         'chat_id': None,
@@ -46,7 +44,7 @@ def get_telegram_config():
     
     # Try to get from DB first
     try:
-        from .models import TelegramSettings
+        from ..models import TelegramSettings
         settings_obj = TelegramSettings.objects.filter(is_active=True).first()
         
         if settings_obj and settings_obj.bot_token and settings_obj.chat_id:
@@ -62,8 +60,9 @@ def get_telegram_config():
             config['alerts_thread_id'] = settings_obj.alerts_thread_id or None
             config['cleaner_thread_id'] = settings_obj.cleaner_thread_id or None
             return config
-    except Exception:
+    except Exception as e:
         # DB not available or table doesn't exist yet
+        print(f"[Telegram] DB error: {e}")
         pass
     
     # Fallback to ENV / Django settings
@@ -115,15 +114,24 @@ def send_telegram_message(text, thread_id=None):
         }
         
         # Add message_thread_id if provided
-        if thread_id not in (None, ''):
+        if thread_id:
             try:
-                payload["message_thread_id"] = int(thread_id)
-            except (TypeError, ValueError):
+                # Пробуем преобразовать в int, если это числовой ID
+                thread_id_int = int(thread_id)
+                payload["message_thread_id"] = thread_id_int
+                print(f"[Telegram] Using thread_id: {thread_id_int}")
+            except (ValueError, TypeError):
+                # Если не число, используем как есть (строка)
                 payload["message_thread_id"] = thread_id
+                print(f"[Telegram] Using thread_id (string): {thread_id}")
+        else:
+            print(f"[Telegram] No thread_id provided, sending to main chat")
         
+        print(f"[Telegram] Sending to chat_id: {chat_id}")
         response = requests.post(url, json=payload, timeout=10)
         
         if response.status_code == 200:
+            print(f"[Telegram] Message sent successfully")
             return True
         else:
             print(f"[Telegram] Error: {response.status_code} - {response.text}")
@@ -156,15 +164,24 @@ def notify_new_order(order):
 
 def notify_new_expense(expense):
     """Отправляет уведомление о новом расходе в тему Расходы."""
+    print(f"[Telegram] notify_new_expense called for expense #{expense.id}")
+    
     config = get_telegram_config()
-    print(f"[DEBUG] notify_new_expense called, config={config}")
+    
     if not config:
-        print("[DEBUG] Telegram config is None")
-        return False
-    if not config.get('notifications_new_expense'):
-        print(f"[DEBUG] notifications_new_expense is disabled or False: {config.get('notifications_new_expense')}")
+        print("[Telegram] ERROR: Telegram config is None")
         return False
     
+    print(f"[Telegram] Config loaded: token={'YES' if config.get('token') else 'NO'}, chat_id={config.get('chat_id')}")
+    print(f"[Telegram] notifications_new_expense = {config.get('notifications_new_expense')}")
+    print(f"[Telegram] expenses_thread_id = {config.get('expenses_thread_id')}")
+    
+    # Проверяем включены ли уведомления о расходах
+    if not config.get('notifications_new_expense'):
+        print("[Telegram] WARNING: notifications_new_expense is disabled")
+        return False
+    
+    # Формируем текст уведомления
     text = (
         f"💰 <b>Новый расход</b>\n\n"
         f"Сотрудник: {expense.user.full_name}\n"
@@ -172,9 +189,17 @@ def notify_new_expense(expense):
         f"Сумма: {expense.amount} сом\n"
         f"Описание: {expense.description or '—'}"
     )
-    print(f"[DEBUG] Sending expense notification, thread_id={config.get('expenses_thread_id')}")
-    result = send_telegram_message(text, thread_id=config.get('expenses_thread_id'))
-    print(f"[DEBUG] send_telegram_message result: {result}")
+    
+    # Отправляем уведомление в тему расходов
+    thread_id = config.get('expenses_thread_id')
+    if thread_id:
+        print(f"[Telegram] Sending to expenses_thread_id: {thread_id}")
+    else:
+        print(f"[Telegram] No expenses_thread_id, sending to main chat")
+    
+    result = send_telegram_message(text, thread_id=thread_id)
+    print(f"[Telegram] send_telegram_message result: {result}")
+    
     return result
 
 
