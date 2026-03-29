@@ -159,6 +159,8 @@ class OrderForm(forms.ModelForm):
             if not cleaned_data.get(field):
                 self.add_error(field, f'{label} обязателен для заполнения')
         return cleaned_data
+
+    def _is_operator(self, user):
         """Проверка является ли пользователь оператором."""
         if hasattr(user, 'role'):
             return user.role in ['OPERATOR']
