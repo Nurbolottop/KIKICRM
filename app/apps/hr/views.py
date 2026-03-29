@@ -126,12 +126,10 @@ def hr_employee_create(request):
         # Обрабатываем загрузку документов
         document_files = request.FILES.getlist('documents')
         document_types = request.POST.getlist('document_types')
-        document_numbers = request.POST.getlist('document_numbers')
 
         for i, doc_file in enumerate(document_files):
             if doc_file:
                 doc_type = document_types[i] if i < len(document_types) else DocumentType.PASSPORT
-                doc_number = document_numbers[i] if i < len(document_numbers) else ''
                 
                 # Проверяем, что тип документа валиден
                 if doc_type not in [dt[0] for dt in DocumentType.choices]:
@@ -140,7 +138,6 @@ def hr_employee_create(request):
                 EmployeeDocument.objects.create(
                     employee=employee,
                     document_type=doc_type,
-                    document_number=doc_number,
                     file=doc_file
                 )
 
