@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('apps.finance.urls')),
     path('cleaner_panel/', include('apps.cleaner_panel.urls')),
     path('', include('apps.telegram_bot.urls')),
+    path('reviews/', include('apps.reviews.urls')),
 ]
 
 if settings.DEBUG:

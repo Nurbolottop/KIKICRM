@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить отзыв | KIKI CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; }
+        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+        
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 2rem;
+            max-width: 700px;
+            margin: 2rem auto;
+        }
+        
+        .form-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+        }
+        
+        .review-type-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .review-type-option {
+            flex: 1;
+            cursor: pointer;
+        }
+        
+        .review-type-option input {
+            display: none;
+        }
+        
+        .review-type-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .review-type-option input:checked + .review-type-card.positive {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        
+        .review-type-option input:checked + .review-type-card.negative {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .review-type-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .review-type-card.positive i { color: #22c55e; }
+        .review-type-card.negative i { color: #ef4444; }
+        
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-back {
+            color: #6b7280;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-back:hover {
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-card">
+            <a href="{% url 'reviews_list' %}" class="btn-back">
+                <i class="bi bi-arrow-left"></i> Назад к списку
+            </a>
+            
+            <h4 class="form-title"><i class="bi bi-star-fill text-warning me-2"></i>Добавить отзыв</h4>
+            
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px;">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Выбор типа отзыва -->
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Тип отзыва</label>
+                    <div class="review-type-selector">
+                        <label class="review-type-option">
+                            <input type="radio" name="review_type" value="POSITIVE" checked>
+                            <div class="review-type-card positive">
+                                <i class="bi bi-emoji-smile"></i>
+                                <div class="fw-medium">Положительный</div>
+                                <small class="text-muted">Клиент доволен</small>
+                            </div>
+                        </label>
+                        <label class="review-type-option">
+                            <input type="radio" name="review_type" value="NEGATIVE">
+                            <div class="review-type-card negative">
+                                <i class="bi bi-emoji-frown"></i>
+                                <div class="fw-medium">Отрицательный</div>
+                                <small class="text-muted">Есть проблемы</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Выбор заказа -->
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Заказ *</label>
+                    <select name="order" class="form-select form-select-lg" required>
+                        <option value="">Выберите заказ...</option>
+                        {% for order in orders %}
+                        <option value="{{ order.id }}">
+                            #{{ order.order_code }} — {{ order.client.get_full_name|default:order.client.phone }} 
+                            ({{ order.service.name|default:"Услуга" }}, {{ order.price }} сом)
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Показаны последние 100 завершенных заказов
+                    </div>
+                </div>
+                
+                <!-- Описание -->
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Описание отзыва</label>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Опишите отзыв клиента...">{{ description|default:'' }}</textarea>
+                </div>
+                
+                <!-- Фото -->
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Фото / Скриншот</label>
+                    <input type="file" name="photo" class="form-control" accept="image/*">
+                    <div class="form-text text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Можно прикрепить фото отзыва или скриншот переписки
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-check-lg me-2"></i>Сохранить отзыв
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

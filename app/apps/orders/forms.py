@@ -87,11 +87,13 @@ class OrderForm(forms.ModelForm):
             # Устанавливаем пустые значения для числовых полей чтобы показывались placeholders
             self.fields['rooms_count'].initial = None
             self.fields['bathrooms_count'].initial = None
-            self.fields['windows_count'].initial = None
+            self.fields['windows_count'].initial = 0  # 0 - валидное значение (нет окон)
             self.fields['preliminary_price'].initial = None
             self.fields['area'].initial = None
             # Делаем поле площади необязательным
             self.fields['area'].required = False
+            # Делаем необязательные числовые поля необязательными
+            self.fields['windows_count'].required = False
             # Устанавливаем начальные статусы
             self.fields['status'].initial = 'PROCESSING'
             self.fields['operator_status'].initial = 'IN_PROGRESS'
@@ -135,7 +137,28 @@ class OrderForm(forms.ModelForm):
                 if name in self.fields:
                     self.fields[name].disabled = True
     
-    def _is_operator(self, user):
+    def clean_windows_count(self):
+        """Валидация количества окон - 0 это валидное значение."""
+        value = self.cleaned_data.get('windows_count')
+        if value is None or value == '':
+            return 0  # По умолчанию 0 окон
+        return value
+    
+    def clean(self):
+        """Общая валидация формы."""
+        cleaned_data = super().clean()
+        # Проверка обязательных полей
+        required_fields = {
+            'client': 'Клиент',
+            'service': 'Услуга',
+            'address': 'Адрес',
+            'scheduled_date': 'Дата уборки',
+            'scheduled_time': 'Время уборки',
+        }
+        for field, label in required_fields.items():
+            if not cleaned_data.get(field):
+                self.add_error(field, f'{label} обязателен для заполнения')
+        return cleaned_data
         """Проверка является ли пользователь оператором."""
         if hasattr(user, 'role'):
             return user.role in ['OPERATOR']

@@ -333,3 +333,59 @@ def notify_work_finished(order_employee):
         f"{duration}"
     )
     return send_telegram_message(text, thread_id=config.get('cleaner_thread_id'))
+
+
+def notify_new_review(review):
+    """Отправляет уведомление о новом отзыве в тему Отзывы."""
+    config = get_telegram_config()
+    if not config:
+        return False
+    
+    icon = "✅" if review.review_type == 'POSITIVE' else "❌"
+    review_type_text = "Положительный отзыв" if review.review_type == 'POSITIVE' else "Отрицательный отзыв"
+    
+    text = (
+        f"{icon} <b>{review_type_text}</b>\n\n"
+        f"Заказ: #{review.order.order_code}\n"
+        f"Клиент: {review.order.client.get_full_name|default:review.order.client.phone}\n"
+        f"Услуга: {review.order.service.name|default:'—'}\n"
+        f"Добавил: {review.created_by.full_name|default:review.created_by.phone}\n"
+    )
+    
+    if review.description:
+        text += f"\n💬 Отзыв:\n{review.description}"
+    
+    thread_id = config.get('reviews_thread_id')
+    token = config.get('token')
+    chat_id = config.get('chat_id')
+    
+    # Если есть фото — отправляем фото с подписью
+    if review.photo:
+        try:
+            url = f"https://api.telegram.org/bot{token}/sendPhoto"
+            
+            payload = {
+                "chat_id": chat_id,
+                "caption": text,
+                "parse_mode": "HTML"
+            }
+            
+            if thread_id:
+                try:
+                    payload["message_thread_id"] = int(thread_id)
+                except (ValueError, TypeError):
+                    payload["message_thread_id"] = thread_id
+            
+            with open(review.photo.path, 'rb') as photo_file:
+                files = {'photo': photo_file}
+                response = requests.post(url, data=payload, files=files, timeout=15)
+            
+            if response.status_code == 200:
+                return True
+            else:
+                pass
+        except Exception:
+            pass
+    
+    # Отправляем текстовое уведомление
+    return send_telegram_message(text, thread_id=thread_id)

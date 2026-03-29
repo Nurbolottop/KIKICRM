@@ -130,7 +130,9 @@ class Order(TimeStampedModel):
     windows_count = models.PositiveIntegerField(
         'Количество окон',
         default=0,
-        blank=True
+        blank=True,
+        null=True,
+        help_text='0 — это валидное значение (нет окон)'
     )
     bathrooms_count = models.PositiveIntegerField(
         'Количество санузлов',

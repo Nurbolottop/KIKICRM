@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отзывы | KIKI CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; }
+        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
+        .page-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+        
+        .review-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .review-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #f0f0f5;
+            padding: 1rem 1.25rem;
+        }
+        
+        .review-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .review-type-badge.positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .review-type-badge.negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .filter-bar {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-create {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-create:hover {
+            background: var(--primary-dark);
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #e5e7eb;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1"><i class="bi bi-star-fill text-warning me-2"></i>Отзывы клиентов</h4>
+                <p class="text-muted mb-0">Управление отзывами о заказах</p>
+            </div>
+            <a href="{% url 'review_create' %}" class="btn-create">
+                <i class="bi bi-plus-lg"></i> Добавить отзыв
+            </a>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px;">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Фильтры -->
+        <div class="filter-bar">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="small text-muted mb-1">Тип отзыва</label>
+                    <select name="type" class="form-select">
+                        <option value="">Все</option>
+                        <option value="POSITIVE" {% if review_type == 'POSITIVE' %}selected{% endif %}>Положительные</option>
+                        <option value="NEGATIVE" {% if review_type == 'NEGATIVE' %}selected{% endif %}>Отрицательные</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted mb-1">Заказ</label>
+                    <input type="text" name="order" class="form-control" placeholder="Код заказа" value="{{ order_code }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="small text-muted mb-1">Поиск</label>
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по описанию..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Список отзывов -->
+        {% if page_obj %}
+        <div class="row g-3">
+            {% for review in page_obj %}
+            <div class="col-md-6 col-lg-4">
+                <div class="review-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="review-type-badge {% if review.review_type == 'POSITIVE' %}positive{% else %}negative{% endif %}">
+                            {% if review.review_type == 'POSITIVE' %}
+                            <i class="bi bi-emoji-smile"></i> Положительный
+                            {% else %}
+                            <i class="bi bi-emoji-frown"></i> Отрицательный
+                            {% endif %}
+                        </span>
+                        <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-2">
+                            <a href="{% url 'review_detail' review.pk %}">Заказ #{{ review.order.order_code }}</a>
+                        </h6>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-person me-1"></i>{{ review.order.client.get_full_name|default:review.order.client.phone }}
+                        </p>
+                        {% if review.description %}
+                        <p class="mb-0 text-truncate">{{ review.description }}</p>
+                        {% endif %}
+                        {% if review.photo %}
+                        <div class="mt-2">
+                            <span class="badge bg-info"><i class="bi bi-image me-1"></i>Есть фото</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-person-circle me-1"></i>{{ review.created_by.full_name|default:review.created_by.phone }}
+                        </small>
+                        <a href="{% url 'review_detail' review.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&search={{ search }}{% endif %}">←</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&search={{ search }}{% endif %}">→</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h5>Нет отзывов</h5>
+            <p>Пока не добавлено ни одного отзыва.</p>
+            <a href="{% url 'review_create' %}" class="btn-create mt-3">
+                <i class="bi bi-plus-lg"></i> Добавить первый отзыв
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -67,6 +67,13 @@ class TelegramSettings(models.Model):
         help_text='ID темы Telegram для уведомлений об изменении статуса заказов'
     )
     
+    reviews_thread_id = models.CharField(
+        'ID темы отзывов',
+        max_length=100,
+        blank=True,
+        help_text='ID темы Telegram для отзывов клиентов'
+    )
+    
     # Legacy notification flags (for backward compatibility)
     notifications_new_order = models.BooleanField(
         'Новый заказ',

@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'apps.finance',
     'apps.cleaner_panel',
     'apps.telegram_bot',
+    'apps.reviews',
 ]
 
 # =============================================================================
