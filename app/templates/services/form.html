@@ -15,6 +15,18 @@
                     <form method="post" enctype="multipart/form-data" id="serviceForm">
                         {% csrf_token %}
                         
+                        <!-- Тип услуги -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.service_type.id_for_label }}" class="form-label">Тип услуги</label>
+                                {{ form.service_type }}
+                                {% if form.service_type.errors %}
+                                <div class="text-danger">{{ form.service_type.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Выберите тип: Уборка (квартиры) или Химчистка (мебель)</div>
+                            </div>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.name.id_for_label }}" class="form-label">Название</label>
@@ -713,8 +725,49 @@ document.addEventListener('input', function(e) {
     }
 });
 
+// Функция для переключения видимости полей в зависимости от типа услуги
+function toggleServiceTypeFields() {
+    const serviceTypeSelect = document.getElementById('serviceTypeSelect');
+    if (!serviceTypeSelect) return;
+    
+    const isDryCleaning = serviceTypeSelect.value === 'DRY_CLEANING';
+    
+    // Поля комнат (room_count)
+    const roomCountField = document.getElementById('roomCountField');
+    const roomCountLabel = roomCountField ? roomCountField.closest('.mb-3') : null;
+    if (roomCountLabel) {
+        roomCountLabel.style.display = isDryCleaning ? 'none' : '';
+    }
+    
+    // Чеклист по комнатам (скрываем для химчистки)
+    const checklistSection = document.querySelector('.mb-4:has(#roomsContainer)');
+    if (checklistSection) {
+        checklistSection.style.display = isDryCleaning ? 'none' : '';
+    }
+    
+    // Альтернативный поиск чеклиста
+    const roomsContainer = document.getElementById('roomsContainer');
+    if (roomsContainer) {
+        const checklistContainer = roomsContainer.closest('.mb-4');
+        if (checklistContainer) {
+            checklistContainer.style.display = isDryCleaning ? 'none' : '';
+        }
+    }
+    
+    // Для химчистки можно показывать упрощенный чеклист или описание задач
+    // Пока просто скрываем room-based чеклист
+}
+
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     scheduleTotalDeadlineUpdate();
+    toggleServiceTypeFields(); // Проверить начальное состояние
+    
+    // Слушатель изменения типа услуги
+    const serviceTypeSelect = document.getElementById('serviceTypeSelect');
+    if (serviceTypeSelect) {
+        serviceTypeSelect.addEventListener('change', toggleServiceTypeFields);
+    }
 });
 </script>
 {% endblock %}

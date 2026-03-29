@@ -163,7 +163,7 @@ def notify_new_order(order):
 
 
 def notify_new_expense(expense):
-    """Отправляет уведомление о новом расходе в тему Расходы."""
+    """Отправляет уведомление о новом расходе в тему Расходы с фото чека."""
     print(f"[Telegram] notify_new_expense called for expense #{expense.id}")
     
     config = get_telegram_config()
@@ -181,22 +181,66 @@ def notify_new_expense(expense):
         print("[Telegram] WARNING: notifications_new_expense is disabled")
         return False
     
-    # Формируем текст уведомления
+    # Формируем детальную информацию о расходе
+    order_info = ""
+    if expense.order:
+        order_info = f"\n📋 Заказ: #{expense.order.id} ({expense.order.order_code})"
+    
+    date_info = expense.expense_date.strftime('%d.%m.%Y') if expense.expense_date else '—'
+    
     text = (
-        f"💰 <b>Новый расход</b>\n\n"
-        f"Сотрудник: {expense.user.full_name}\n"
-        f"Категория: {expense.get_category_display()}\n"
-        f"Сумма: {expense.amount} сом\n"
-        f"Описание: {expense.description or '—'}"
+        f"💰 <b>НОВЫЙ РАСХОД</b>\n\n"
+        f"👤 Сотрудник: {expense.user.full_name}\n"
+        f"📁 Категория: {expense.get_category_display()}\n"
+        f"💵 Сумма: <b>{expense.amount} сом</b>\n"
+        f"📅 Дата расхода: {date_info}\n"
+        f"📝 Описание: {expense.description or '—'}"
+        f"{order_info}"
     )
     
-    # Отправляем уведомление в тему расходов
+    # Отправляем уведомление
     thread_id = config.get('expenses_thread_id')
-    if thread_id:
-        print(f"[Telegram] Sending to expenses_thread_id: {thread_id}")
-    else:
-        print(f"[Telegram] No expenses_thread_id, sending to main chat")
+    token = config.get('token')
+    chat_id = config.get('chat_id')
     
+    print(f"[Telegram] Sending expense notification...")
+    
+    # Если есть фото чека — отправляем фото с подписью
+    if expense.photo:
+        try:
+            url = f"https://api.telegram.org/bot{token}/sendPhoto"
+            
+            # Подготавливаем параметры
+            payload = {
+                "chat_id": chat_id,
+                "caption": text,
+                "parse_mode": "HTML"
+            }
+            
+            # Добавляем thread_id если есть
+            if thread_id:
+                try:
+                    payload["message_thread_id"] = int(thread_id)
+                except (ValueError, TypeError):
+                    payload["message_thread_id"] = thread_id
+            
+            # Отправляем фото
+            with open(expense.photo.path, 'rb') as photo_file:
+                files = {'photo': photo_file}
+                response = requests.post(url, data=payload, files=files, timeout=15)
+            
+            if response.status_code == 200:
+                print(f"[Telegram] Expense notification with photo sent successfully")
+                return True
+            else:
+                print(f"[Telegram] Error sending photo: {response.status_code} - {response.text}")
+                # Пробуем отправить без фото
+                print(f"[Telegram] Retrying without photo...")
+        except Exception as e:
+            print(f"[Telegram] Error reading photo: {e}")
+            print(f"[Telegram] Retrying without photo...")
+    
+    # Отправляем текстовое уведомление (без фото или если фото не удалось отправить)
     result = send_telegram_message(text, thread_id=thread_id)
     print(f"[Telegram] send_telegram_message result: {result}")
     
