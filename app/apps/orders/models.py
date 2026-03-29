@@ -424,7 +424,7 @@ class OrderEmployee(models.Model):
         'Роль в заказе',
         max_length=100,
         blank=True,
-        help_text='Например: cleaner, senior_cleaner, helper'
+        help_text='Например: cleaner, senior_cleaner, trainee (стажер)'
     )
     assigned_at = models.DateTimeField(
         'Дата назначения',

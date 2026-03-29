@@ -14,6 +14,7 @@ class UserRole(models.TextChoices):
     HR = 'HR', 'HR'
     SENIOR_CLEANER = 'SENIOR_CLEANER', 'Старший клинер'
     CLEANER = 'CLEANER', 'Клинер'
+    TRAINEE = 'TRAINEE', 'Стажер'
 
 
 class UserManager(BaseUserManager):

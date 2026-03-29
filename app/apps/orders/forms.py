@@ -90,6 +90,8 @@ class OrderForm(forms.ModelForm):
             self.fields['windows_count'].initial = None
             self.fields['preliminary_price'].initial = None
             self.fields['area'].initial = None
+            # Делаем поле площади необязательным
+            self.fields['area'].required = False
             # Устанавливаем начальные статусы
             self.fields['status'].initial = 'PROCESSING'
             self.fields['operator_status'].initial = 'IN_PROGRESS'

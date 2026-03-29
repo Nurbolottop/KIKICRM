@@ -3,21 +3,9 @@ from django.db import models
 from apps.common.models import BaseModel
 
 
-class ServiceType(models.TextChoices):
-    """Типы услуг."""
-    CLEANING = 'CLEANING', 'Уборка'
-    DRY_CLEANING = 'DRY_CLEANING', 'Химчистка'
-
-
 class Service(BaseModel):
     """Модель услуги CRM KIKI."""
 
-    service_type = models.CharField(
-        'Тип услуги',
-        max_length=20,
-        choices=ServiceType.choices,
-        default=ServiceType.CLEANING
-    )
     name = models.CharField(
         'Название услуги',
         max_length=150

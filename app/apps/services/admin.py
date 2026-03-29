@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Service, ExtraService, ServiceType
+from .models import Service, ExtraService
 
 
 @admin.register(Service)
@@ -9,7 +9,6 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'name',
-        'service_type',
         'room_count',
         'price',
         'senior_cleaner_salary',
@@ -19,8 +18,7 @@ class ServiceAdmin(admin.ModelAdmin):
         'is_active'
     ]
     list_filter = [
-        'is_active',
-        'service_type'
+        'is_active'
     ]
     search_fields = [
         'name'
@@ -29,7 +27,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Основная информация', {
-            'fields': ('service_type', 'name', 'description', 'image')
+            'fields': ('name', 'description', 'image')
         }),
         ('Детали', {
             'fields': ('room_count', 'price', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'checklist', 'is_active')

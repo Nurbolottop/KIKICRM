@@ -84,7 +84,6 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
                 return JsonResponse({'ok': False, 'error': 'not_found'}, status=404)
             
             # Update fields
-            service.service_type = request.POST.get('service_type', service.service_type)
             service.name = request.POST.get('name', service.name)
             service.description = request.POST.get('description', service.description)
             service.price = request.POST.get('price', service.price)
@@ -125,7 +124,6 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
                 'ok': True,
                 'service': {
                     'id': service.id,
-                    'service_type': service.service_type,
                     'name': service.name,
                     'description': service.description,
                     'price': str(service.price),

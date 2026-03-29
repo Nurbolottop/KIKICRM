@@ -115,6 +115,35 @@ def hr_employee_create(request):
             role=role,
         )
 
+        # Создаем запись Employee для пользователя
+        from apps.employees.models import Employee, EmployeeDocument, DocumentType
+        employee = Employee.objects.create(
+            user=user,
+            status='ACTIVE',
+            employee_code=None
+        )
+
+        # Обрабатываем загрузку документов
+        document_files = request.FILES.getlist('documents')
+        document_types = request.POST.getlist('document_types')
+        document_numbers = request.POST.getlist('document_numbers')
+
+        for i, doc_file in enumerate(document_files):
+            if doc_file:
+                doc_type = document_types[i] if i < len(document_types) else DocumentType.PASSPORT
+                doc_number = document_numbers[i] if i < len(document_numbers) else ''
+                
+                # Проверяем, что тип документа валиден
+                if doc_type not in [dt[0] for dt in DocumentType.choices]:
+                    doc_type = DocumentType.PASSPORT
+                
+                EmployeeDocument.objects.create(
+                    employee=employee,
+                    document_type=doc_type,
+                    document_number=doc_number,
+                    file=doc_file
+                )
+
         login_url = request.build_absolute_uri('/accounts/login/')
 
         return render(request, 'hr_panel/employee_create.html', {
@@ -163,7 +192,16 @@ def hr_employee_detail(request, pk):
         return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
 
     emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER])
-    return render(request, 'hr_panel/employee_detail.html', {'emp': emp})
+    
+    # Получаем документы сотрудника
+    documents = []
+    try:
+        if hasattr(emp, 'employee'):
+            documents = emp.employee.documents.all()
+    except:
+        pass
+    
+    return render(request, 'hr_panel/employee_detail.html', {'emp': emp, 'documents': documents})
 
 
 @login_required

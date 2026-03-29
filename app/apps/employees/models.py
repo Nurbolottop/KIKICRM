@@ -159,3 +159,88 @@ class EmployeeEarning(models.Model):
 
     def __str__(self):
         return f'{self.employee} — {self.amount} сом (#{self.order.order_code or self.order.id})'
+
+
+class DocumentType(models.TextChoices):
+    """Типы документов удостоверяющих личность."""
+    PASSPORT = 'PASSPORT', 'Паспорт'
+    ID_CARD = 'ID_CARD', 'ID карта'
+    CERTIFICATE = 'CERTIFICATE', 'Свидетельство'
+    OTHER = 'OTHER', 'Другой документ'
+
+
+class EmployeeDocument(models.Model):
+    """Документы сотрудника (паспорт, удостоверение и т.д.)."""
+
+    employee = models.ForeignKey(
+        'employees.Employee',
+        on_delete=models.CASCADE,
+        related_name='documents',
+        verbose_name='Сотрудник'
+    )
+    document_type = models.CharField(
+        'Тип документа',
+        max_length=20,
+        choices=DocumentType.choices,
+        default=DocumentType.PASSPORT
+    )
+    document_number = models.CharField(
+        'Номер документа',
+        max_length=50,
+        blank=True,
+        default='',
+        help_text='Номер паспорта или другого документа'
+    )
+    file = models.FileField(
+        'Файл документа',
+        upload_to='employees/documents/%Y/%m/',
+        help_text='Скан или фото документа'
+    )
+    issued_by = models.CharField(
+        'Кем выдан',
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Орган, выдавший документ'
+    )
+    issue_date = models.DateField(
+        'Дата выдачи',
+        blank=True,
+        null=True
+    )
+    expiry_date = models.DateField(
+        'Дата окончания срока',
+        blank=True,
+        null=True,
+        help_text='Для паспортов и других документов со сроком действия'
+    )
+    is_active = models.BooleanField(
+        'Активен',
+        default=True,
+        help_text='Основной/действующий документ'
+    )
+    notes = models.TextField(
+        'Заметки',
+        blank=True,
+        default='',
+        help_text='Дополнительная информация о документе'
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        'Дата обновления',
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = 'Документ сотрудника'
+        verbose_name_plural = 'Документы сотрудников'
+        ordering = ['-is_active', '-created_at']
+
+    def __str__(self):
+        doc_type = self.get_document_type_display()
+        if self.document_number:
+            return f'{self.employee} — {doc_type} №{self.document_number}'
+        return f'{self.employee} — {doc_type}'

@@ -209,6 +209,46 @@
             </div>
         </div>
 
+        <!-- Документы сотрудника -->
+        <div class="hr-profile-card">
+            <div class="hr-actions-title"><i class="bi bi-file-earmark-text"></i> Документы удостоверяющие личность</div>
+            {% if documents %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Номер</th>
+                            <th>Файл</th>
+                            <th>Дата загрузки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">{{ doc.get_document_type_display }}</span>
+                            </td>
+                            <td>{{ doc.document_number|default:"—" }}</td>
+                            <td>
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Просмотр
+                                </a>
+                            </td>
+                            <td class="text-muted small">{{ doc.created_at|date:"d.m.Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-muted text-center py-4">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                Нет загруженных документов
+            </div>
+            {% endif %}
+        </div>
+
         <div class="hr-actions-card">
             <div class="hr-actions-title"><i class="bi bi-gear"></i> Управление</div>
             <div class="hr-action-row">

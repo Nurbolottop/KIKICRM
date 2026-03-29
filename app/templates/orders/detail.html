@@ -552,6 +552,74 @@
             </div>
             {% endif %}
 
+            <!-- Блок: Назначенные сотрудники -->
+            {% if assigned_senior_cleaner or assigned_cleaners or assigned_trainees %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h6 class="text-muted text-uppercase mb-0">
+                        <i class="bi bi-people-fill"></i> Назначенные сотрудники
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if assigned_senior_cleaner %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Старший клинер</label>
+                        <div class="d-flex align-items-center mt-1">
+                            <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="ms-2">
+                                <p class="mb-0 fw-medium small">{{ assigned_senior_cleaner.employee.user.full_name|default:assigned_senior_cleaner.employee.user.phone }}</p>
+                                {% if assigned_senior_cleaner.employee.employee_code %}
+                                <span class="badge bg-light text-dark" style="font-size: 0.7rem;">{{ assigned_senior_cleaner.employee.employee_code }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if assigned_cleaners %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Клинеры</label>
+                        {% for cleaner in assigned_cleaners %}
+                        <div class="d-flex align-items-center mt-1">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div class="ms-2">
+                                <p class="mb-0 fw-medium small">{{ cleaner.employee.user.full_name|default:cleaner.employee.user.phone }}</p>
+                                {% if cleaner.employee.employee_code %}
+                                <span class="badge bg-light text-dark" style="font-size: 0.7rem;">{{ cleaner.employee.employee_code }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if assigned_trainees %}
+                    <div>
+                        <label class="text-muted small">Стажеры</label>
+                        {% for trainee in assigned_trainees %}
+                        <div class="d-flex align-items-center mt-1">
+                            <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="ms-2">
+                                <p class="mb-0 fw-medium small">{{ trainee.employee.user.full_name|default:trainee.employee.user.phone }}</p>
+                                {% if trainee.employee.employee_code %}
+                                <span class="badge bg-light text-dark" style="font-size: 0.7rem;">{{ trainee.employee.employee_code }}</span>
+                                {% endif %}
+                                <span class="badge bg-info" style="font-size: 0.7rem;">Стажер</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Блок: Действия -->
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 pt-3">
@@ -878,10 +946,59 @@
                         </div>
                     </div>
                     
-                    <!-- Step 4: Notes -->
+                    <!-- Step 4: Trainees -->
+                    <div class="p-4 border-bottom">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-info rounded-pill me-2">4</span>
+                            <h6 class="mb-0 fw-bold text-info">Стажеры</h6>
+                            <span class="badge bg-secondary ms-2">Опционально</span>
+                        </div>
+                        
+                        <p class="text-muted small mb-3">Выберите стажеров для обучения на заказе</p>
+                        
+                        <div class="row g-2" id="trainees-container">
+                            {% for trainee in trainees %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check card border-0 shadow-sm">
+                                    <input class="form-check-input d-none trainee-checkbox" type="checkbox" 
+                                           name="trainees" id="trainee_{{ trainee.id }}" value="{{ trainee.id }}" {% if trainee.id in assigned_trainee_ids %}checked{% endif %}>
+                                    <label class="form-check-label card-body p-2 cursor-pointer" for="trainee_{{ trainee.id }}">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-person-badge fs-5"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-2">
+                                                <h6 class="mb-0 small fw-medium">{{ trainee.full_name|default:trainee.phone }}</h6>
+                                                {% if trainee.employee.employee_code %}
+                                                <span class="badge bg-light text-dark small">{{ trainee.employee.employee_code }}</span>
+                                                {% endif %}
+                                                <span class="badge bg-info ms-1">Стажер</span>
+                                            </div>
+                                            <div class="flex-shrink-0 check-icon d-none">
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Нет доступных стажеров. Добавьте пользователя с ролью "Стажер".
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Notes -->
                     <div class="p-4">
                         <div class="d-flex align-items-center mb-3">
-                            <span class="badge bg-secondary rounded-pill me-2">4</span>
+                            <span class="badge bg-secondary rounded-pill me-2">5</span>
                             <h6 class="mb-0 fw-bold text-secondary">Комментарий для клинеров</h6>
                         </div>
                         
@@ -898,10 +1015,10 @@
                         </div>
                     </div>
 
-                    <!-- Step 5: Extra Tasks -->
+                    <!-- Step 6: Extra Tasks -->
                     <div class="p-4 border-top">
                         <div class="d-flex align-items-center mb-3">
-                            <span class="badge bg-dark rounded-pill me-2">5</span>
+                            <span class="badge bg-dark rounded-pill me-2">6</span>
                             <h6 class="mb-0 fw-bold text-dark">Доп. задачи</h6>
                             <span class="badge bg-secondary ms-2">Опционально</span>
                         </div>
@@ -1098,6 +1215,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const checkbox = card.querySelector('.cleaner-checkbox');
             if (checkbox) {
                 console.log('Toggling cleaner:', checkbox.value);
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    // Handle trainee card clicks using event delegation
+    const traineeContainer = document.getElementById('trainees-container');
+    console.log('Trainee container found:', traineeContainer);
+    if (traineeContainer) {
+        traineeContainer.addEventListener('click', function(e) {
+            const card = e.target.closest('.card');
+            if (!card) return;
+            const checkbox = card.querySelector('.trainee-checkbox');
+            if (checkbox) {
+                console.log('Toggling trainee:', checkbox.value);
                 checkbox.checked = !checkbox.checked;
                 checkbox.dispatchEvent(new Event('change'));
             }

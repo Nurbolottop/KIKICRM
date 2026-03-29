@@ -383,6 +383,9 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         context['cleaners'] = User.objects.filter(
             role='CLEANER'
         ).select_related('employee')
+        context['trainees'] = User.objects.filter(
+            role='TRAINEE'
+        ).select_related('employee')
 
         # Assigned employees and notes (for display)
         senior_assignment = order.order_employees.select_related('employee__user').filter(
@@ -399,6 +402,15 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         )
         context['assigned_cleaner_user_ids'] = list(
             context['assigned_cleaners'].values_list('employee__user_id', flat=True)
+        )
+        
+        # Назначенные стажеры
+        context['assigned_trainees'] = order.order_employees.select_related('employee__user').filter(
+            role_on_order='trainee',
+            finished_at__isnull=True
+        )
+        context['assigned_trainee_ids'] = list(
+            context['assigned_trainees'].values_list('employee__user_id', flat=True)
         )
         context['notes_for_cleaners'] = (senior_assignment.notes if senior_assignment else '')
         context['inventory_usages'] = order.inventory_usages.select_related(
@@ -506,6 +518,21 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         ).distinct()
         context['cleaners'] = cleaner_users
         
+        # Список стажеров: только пользователи с ролью TRAINEE
+        trainee_users = User.objects.filter(
+            role='TRAINEE',
+            is_active=True,
+        ).distinct()
+        context['trainees'] = trainee_users
+        
+        # Текущие назначенные стажеры
+        assigned_trainees = order.order_employees.filter(
+            role_on_order='trainee',
+            finished_at__isnull=True
+        )
+        context['assigned_trainees'] = assigned_trainees
+        context['assigned_trainee_ids'] = [at.employee.user_id for at in assigned_trainees]
+        
         # Комментарий для клинеров (из заметок старшего клинера)
         if assigned_senior:
             context['notes_for_cleaners'] = assigned_senior.notes or ''
@@ -535,6 +562,7 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
             # Получаем данные из POST
             senior_cleaner_id = self.request.POST.get('senior_cleaner')
             cleaners_ids = self.request.POST.getlist('cleaners')
+            trainees_ids = self.request.POST.getlist('trainees')
             notes_for_cleaners = self.request.POST.get('notes_for_cleaners', '')
             extra_task_titles = self.request.POST.getlist('extra_task_title')
             extra_task_rooms = self.request.POST.getlist('extra_task_room')
@@ -604,6 +632,29 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                 ).exclude(employee_id__in=selected_cleaners).delete()
             else:
                 order.order_employees.filter(role_on_order='cleaner').delete()
+            
+            # Назначаем стажеров
+            selected_trainees = []
+            for trainee_id in trainees_ids:
+                try:
+                    trainee = get_or_create_employee_from_user(trainee_id)
+                    selected_trainees.append(trainee.pk)
+                    OrderEmployee.objects.update_or_create(
+                        order=order,
+                        employee=trainee,
+                        defaults={'role_on_order': 'trainee'}
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not assign trainee {trainee_id}: {e}")
+                    continue
+            
+            # Удаляем стажеров, которых сняли
+            if selected_trainees:
+                order.order_employees.filter(
+                    role_on_order='trainee'
+                ).exclude(employee_id__in=selected_trainees).delete()
+            else:
+                order.order_employees.filter(role_on_order='trainee').delete()
             
             # Обновляем доп. задачи: удаляем старые и создаем новые
             if extra_task_titles:
@@ -769,6 +820,7 @@ class ManagerMoveToProcessView(LoginRequiredMixin, View):
         final_price = request.POST.get('final_price')
         senior_cleaner_id = request.POST.get('senior_cleaner')
         cleaners_ids = request.POST.getlist('cleaners')
+        trainees_ids = request.POST.getlist('trainees')
         notes_for_cleaners = request.POST.get('notes_for_cleaners', '')
         extra_task_titles = request.POST.getlist('extra_task_title')
         extra_task_rooms = request.POST.getlist('extra_task_room')
@@ -843,6 +895,29 @@ class ManagerMoveToProcessView(LoginRequiredMixin, View):
                     ).exclude(employee_id__in=selected_cleaners).delete()
                 else:
                     order.order_employees.filter(role_on_order='cleaner').delete()
+
+                # Назначаем стажеров
+                selected_trainees = []
+                for trainee_id in trainees_ids:
+                    try:
+                        trainee = get_or_create_employee_from_user(trainee_id)
+                        selected_trainees.append(trainee.pk)
+                        OrderEmployee.objects.update_or_create(
+                            order=order,
+                            employee=trainee,
+                            defaults={'role_on_order': 'trainee'}
+                        )
+                    except Exception as e:
+                        logger.warning(f"Could not assign trainee {trainee_id}: {e}")
+                        continue
+
+                # Удаляем стажеров, которых сняли
+                if selected_trainees:
+                    order.order_employees.filter(
+                        role_on_order='trainee'
+                    ).exclude(employee_id__in=selected_trainees).delete()
+                else:
+                    order.order_employees.filter(role_on_order='trainee').delete()
 
                 # Доп. задачи (создаем как OrderTask)
                 if extra_task_titles:
