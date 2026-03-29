@@ -18,12 +18,13 @@ def hr_dashboard(request):
     if not is_hr(request.user):
         return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
 
-    cleaners = User.objects.filter(role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER])
+    cleaners = User.objects.filter(role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
     total = cleaners.count()
     active = cleaners.filter(is_active=True).count()
     inactive = cleaners.filter(is_active=False).count()
     seniors = cleaners.filter(role=UserRole.SENIOR_CLEANER).count()
     regulars = cleaners.filter(role=UserRole.CLEANER).count()
+    trainees = cleaners.filter(role=UserRole.TRAINEE).count()
 
     return render(request, 'hr_panel/dashboard.html', {
         'total': total,
@@ -41,7 +42,7 @@ def hr_employees(request):
         return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
 
     queryset = User.objects.filter(
-        role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER]
+        role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE]
     ).order_by('full_name')
 
     search = request.GET.get('search', '')
@@ -96,7 +97,7 @@ def hr_employee_create(request):
                 'default_password': default_password,
             })
 
-        if role not in [UserRole.CLEANER, UserRole.SENIOR_CLEANER]:
+        if role not in [UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE]:
             role = UserRole.CLEANER
 
         if User.objects.filter(phone=phone).exists():
@@ -188,7 +189,7 @@ def hr_employee_detail(request, pk):
     if not is_hr(request.user):
         return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
 
-    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER])
+    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
     
     # Получаем документы сотрудника
     documents = []
@@ -210,7 +211,7 @@ def hr_toggle_active(request, pk):
     if request.method != 'POST':
         return redirect('hr_employees')
 
-    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER])
+    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
     emp.is_active = not emp.is_active
     emp.save(update_fields=['is_active'])
 
@@ -228,11 +229,14 @@ def hr_promote(request, pk):
     if request.method != 'POST':
         return redirect('hr_employees')
 
-    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER])
+    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
 
     if emp.role == UserRole.CLEANER:
         emp.role = UserRole.SENIOR_CLEANER
         msg = f'{emp.full_name} повышен до Старшего клинера.'
+    elif emp.role == UserRole.TRAINEE:
+        emp.role = UserRole.CLEANER
+        msg = f'{emp.full_name} повышен до Клинера (был стажером).'
     else:
         emp.role = UserRole.CLEANER
         msg = f'{emp.full_name} понижен до Клинера.'

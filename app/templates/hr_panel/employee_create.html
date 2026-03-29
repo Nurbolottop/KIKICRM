@@ -247,6 +247,7 @@
                     <select name="role" class="form-select">
                         <option value="CLEANER" {% if role == 'CLEANER' or not role %}selected{% endif %}>Клинер</option>
                         <option value="SENIOR_CLEANER" {% if role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
+                        <option value="TRAINEE" {% if role == 'TRAINEE' %}selected{% endif %}>Стажер</option>
                     </select>
                 </div>
 
