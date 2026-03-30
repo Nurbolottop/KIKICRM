@@ -645,6 +645,9 @@
         <button class="section-tab" onclick="showSection('history-section', this)">
             <i class="bi bi-clock-history"></i> История
         </button>
+        <button class="section-tab" onclick="showSection('reviews-section', this)">
+            <i class="bi bi-star-fill"></i> Отзывы
+        </button>
     </div>
 
     <!-- Панель Заказов -->
@@ -752,6 +755,42 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Панель Отзывов -->
+    <div id="reviews-section" class="section-panel hidden">
+        <div class="section-header">
+            <h3 class="section-title">Отзывы клиента</h3>
+            <button class="btn-accent" data-bs-toggle="modal" data-bs-target="#addReviewModal">
+                <i class="bi bi-plus-lg"></i> Добавить отзыв
+            </button>
+        </div>
+        <div class="scroll-area">
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="comment-modern">
+                    <img src="{{ client.get_avatar_url }}" alt="" class="comment-avatar-modern">
+                    <div class="comment-body-modern">
+                        <div class="comment-header-modern">
+                            <span class="comment-author-modern">{{ review.author|default:"Аноним" }}</span>
+                            <span class="comment-time-modern">{{ review.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <div class="comment-text-modern">{{ review.description }}</div>
+                        {% if review.photo %}
+                        <div class="mt-3">
+                            <img src="{{ review.photo.url }}" alt="Фото отзыва" class="img-fluid rounded" style="max-height: 200px; cursor: pointer;" onclick="window.open('{{ review.photo.url }}', '_blank')">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box">
+                    <i class="bi bi-star"></i>
+                    <p>Нет отзывов</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <!-- Модальное окно -->
@@ -774,6 +813,35 @@
             <div class="modal-footer" style="border-top: none; padding: 20px 25px;">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 12px; padding: 12px 24px;">Отмена</button>
                 <button type="button" class="btn btn-primary" onclick="addNote()" style="border-radius: 12px; padding: 12px 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 600;">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для отзыва -->
+<div class="modal fade" id="addReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 24px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #f3f4f6; padding: 25px;">
+                <h5 class="modal-title fw-bold fs-5">Добавить отзыв</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 25px;">
+                <form id="reviewForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Текст отзыва</label>
+                        <textarea class="form-control" name="description" rows="4" style="border-radius: 16px; border: 2px solid #e5e7eb; padding: 15px;" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Фотография (опционально)</label>
+                        <input type="file" name="photo" class="form-control" accept="image/*" style="border-radius: 16px; border: 2px solid #e5e7eb; padding: 12px;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: none; padding: 20px 25px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 12px; padding: 12px 24px;">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="addReview()" style="border-radius: 12px; padding: 12px 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 600;">Добавить отзыв</button>
             </div>
         </div>
     </div>
@@ -813,6 +881,37 @@ function addNote() {
             document.getElementById('noteText').value = '';
             location.reload();
         }
+    });
+}
+
+function addReview() {
+    const form = document.getElementById('reviewForm');
+    const formData = new FormData(form);
+    const csrfToken = form.querySelector('input[name=csrfmiddlewaretoken]').value;
+
+    const description = formData.get('description');
+    if (!description || !description.trim()) {
+        alert('Введите текст отзыва');
+        return;
+    }
+
+    fetch("{% url 'clients_add_review' client.id %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+        },
+        body: formData
+    }).then(r => r.json()).then(data => {
+        if (data && data.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('addReviewModal')).hide();
+            form.reset();
+            location.reload();
+        } else {
+            alert('Ошибка при добавлении отзыва');
+        }
+    }).catch(err => {
+        console.error(err);
+        alert('Ошибка при добавлении отзыва');
     });
 }
 </script>

@@ -6,8 +6,8 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views import View
 from datetime import timedelta
-from .models import Client, ClientNote
-from .forms import ClientForm
+from .models import Client, ClientNote, ClientReview
+from .forms import ClientForm, ClientReviewForm
 
 
 class ClientListView(LoginRequiredMixin, ListView):
@@ -202,6 +202,10 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
             {'date': client.created_at, 'action': 'Клиент создан', 'icon': 'user-plus'},
         ]
 
+        # Отзывы клиента
+        context['reviews'] = client.reviews.select_related('author').all()
+        context['review_form'] = ClientReviewForm()
+
         return context
 
 
@@ -261,3 +265,35 @@ class ClientDeleteView(LoginRequiredMixin, DeleteView):
                 f'Невозможно удалить клиента "{self.object}" — у него есть связанные заказы.'
             )
             return HttpResponseRedirect(reverse('client_detail', kwargs={'pk': self.object.pk}))
+
+
+class ClientAddReviewView(LoginRequiredMixin, View):
+    """View для добавления отзыва клиента."""
+
+    def post(self, request, pk):
+        client = Client.objects.filter(pk=pk).first()
+        if not client:
+            return JsonResponse({'ok': False, 'error': 'not_found'}, status=404)
+
+        form = ClientReviewForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return JsonResponse({'ok': False, 'error': 'invalid', 'errors': form.errors}, status=400)
+
+        review = form.save(commit=False)
+        review.client = client
+        review.author = request.user
+        review.save()
+
+        author_name = request.user.get_full_name() if hasattr(request.user, 'get_full_name') else str(request.user)
+        return JsonResponse(
+            {
+                'ok': True,
+                'review': {
+                    'id': review.id,
+                    'author': author_name or str(request.user),
+                    'date': review.created_at.isoformat(),
+                    'description': review.description,
+                    'photo_url': review.photo.url if review.photo else None,
+                },
+            }
+        )

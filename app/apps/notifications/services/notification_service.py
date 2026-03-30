@@ -4,6 +4,21 @@
 from apps.notifications.services.telegram_service import TelegramService
 
 
+# Русские названия месяцев
+RUSSIAN_MONTHS = {
+    1: 'января', 2: 'февраля', 3: 'марта', 4: 'апреля',
+    5: 'мая', 6: 'июня', 7: 'июля', 8: 'августа',
+    9: 'сентября', 10: 'октября', 11: 'ноября', 12: 'декабря'
+}
+
+
+def format_date_russian(date_obj):
+    """Форматирует дату с русским названием месяца."""
+    if not date_obj:
+        return '—'
+    return f"{date_obj.day} {RUSSIAN_MONTHS.get(date_obj.month, '')}"
+
+
 class NotificationService:
     """Сервис для отправки уведомлений о событиях CRM."""
 
@@ -12,7 +27,7 @@ class NotificationService:
         """Уведомление о создании нового заказа."""
 
         # Format date
-        scheduled_date = order.scheduled_date.strftime('%d %B') if order.scheduled_date else '—'
+        scheduled_date = format_date_russian(order.scheduled_date)
         scheduled_time = order.scheduled_time.strftime('%H:%M') if order.scheduled_time else '—'
         
         # Client info

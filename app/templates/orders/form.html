@@ -698,6 +698,25 @@
                                 {% endif %}
                             </div>
                         </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ form.prepayment_amount.label }}</label>
+                                {% if is_manager %}
+                                    <div class="field-readonly">
+                                        <i class="bi bi-cash-coin text-muted"></i>
+                                        <span>{{ form.instance.prepayment_amount|default:"—" }} сом</span>
+                                    </div>
+                                {% else %}
+                                    <div class="input-group">
+                                        {{ form.prepayment_amount }}
+                                        <span class="input-group-text">сом</span>
+                                    </div>
+                                {% endif %}
+                                {% if form.prepayment_amount.errors %}
+                                <div class="text-danger small">{{ form.prepayment_amount.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

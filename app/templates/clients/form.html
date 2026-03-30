@@ -277,3 +277,43 @@
     </form>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+// Автоматическая очистка номера при вставке из WhatsApp
+function cleanPhoneInput(input) {
+    input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // Удаляем все не-цифровые символы
+        let digits = pastedText.replace(/\D/g, '');
+        
+        // Удаляем префикс 996 если он есть в начале
+        if (digits.startsWith('996')) {
+            digits = digits.slice(3);
+        }
+        
+        // Ограничиваем до 9 цифр (количество цифр после кода страны)
+        digits = digits.slice(0, 9);
+        
+        // Вставляем очищенный номер
+        this.value = digits;
+    });
+    
+    // Ограничиваем ввод только цифрами при ручном наборе
+    input.addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 9);
+    });
+}
+
+// Применяем к полям телефона и WhatsApp
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('{{ form.phone.id_for_label }}');
+    const whatsappInput = document.getElementById('{{ form.whatsapp.id_for_label }}');
+    
+    if (phoneInput) cleanPhoneInput(phoneInput);
+    if (whatsappInput) cleanPhoneInput(whatsappInput);
+});
+</script>
+{% endblock %}

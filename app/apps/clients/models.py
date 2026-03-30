@@ -229,3 +229,42 @@ class ClientNote(TimestampMixin, models.Model):
         verbose_name = _('Заметка клиента')
         verbose_name_plural = _('Заметки клиентов')
         ordering = ['-created_at']
+
+
+class ClientReview(TimestampMixin, models.Model):
+    """
+    Модель отзыва клиента.
+    """
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name=_('Клиент')
+    )
+    author = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='client_reviews',
+        verbose_name=_('Автор')
+    )
+    description = models.TextField(
+        _('Описание отзыва'),
+        help_text=_('Текст отзыва клиента')
+    )
+    photo = models.ImageField(
+        _('Фотография'),
+        upload_to='client_reviews/',
+        null=True,
+        blank=True,
+        help_text=_('Фотография от клиента (опционально)')
+    )
+
+    class Meta:
+        verbose_name = _('Отзыв клиента')
+        verbose_name_plural = _('Отзывы клиентов')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Отзыв от {self.client.get_full_name()} ({self.created_at.strftime('%d.%m.%Y')})"

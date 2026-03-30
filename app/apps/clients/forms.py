@@ -174,3 +174,30 @@ class ClientForm(forms.ModelForm):
             'address': 'Адрес',
             'notes': 'Примечания',
         }
+
+
+class ClientReviewForm(forms.ModelForm):
+    """Форма для создания отзыва клиента."""
+
+    class Meta:
+        model = ClientReview
+        fields = ['description', 'photo']
+        widgets = {
+            'description': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 4,
+                    'placeholder': 'Введите текст отзыва клиента...',
+                }
+            ),
+            'photo': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control',
+                    'accept': 'image/*',
+                }
+            ),
+        }
+        labels = {
+            'description': 'Описание отзыва',
+            'photo': 'Фотография',
+        }
