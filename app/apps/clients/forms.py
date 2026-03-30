@@ -2,7 +2,7 @@
 Формы для приложения Клиенты.
 """
 from django import forms
-from .models import Client
+from .models import Client, ClientReview
 
 
 class ClientForm(forms.ModelForm):
