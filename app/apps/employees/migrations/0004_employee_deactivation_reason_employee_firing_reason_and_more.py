@@ -31,26 +31,31 @@ class Migration(migrations.Migration):
             name='notes',
             field=models.TextField(blank=True, default='', help_text='Внутренние заметки о сотруднике', verbose_name='Заметки'),
         ),
-        migrations.CreateModel(
-            name='EmployeeDocument',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('document_type', models.CharField(choices=[('PASSPORT', 'Паспорт'), ('ID_CARD', 'ID карта'), ('CERTIFICATE', 'Свидетельство'), ('OTHER', 'Другой документ')], default='PASSPORT', max_length=20, verbose_name='Тип документа')),
-                ('document_number', models.CharField(blank=True, default='', help_text='Номер паспорта или другого документа', max_length=50, verbose_name='Номер документа')),
-                ('file', models.FileField(help_text='Скан или фото документа', upload_to='employees/documents/%Y/%m/', verbose_name='Файл документа')),
-                ('issued_by', models.CharField(blank=True, default='', help_text='Орган, выдавший документ', max_length=255, verbose_name='Кем выдан')),
-                ('issue_date', models.DateField(blank=True, null=True, verbose_name='Дата выдачи')),
-                ('expiry_date', models.DateField(blank=True, help_text='Для паспортов и других документов со сроком действия', null=True, verbose_name='Дата окончания срока')),
-                ('is_active', models.BooleanField(default=True, help_text='Основной/действующий документ', verbose_name='Активен')),
-                ('notes', models.TextField(blank=True, default='', help_text='Дополнительная информация о документе', verbose_name='Заметки')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Дата обновления')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='employees.employee', verbose_name='Сотрудник')),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.CreateModel(
+                    name='EmployeeDocument',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('document_type', models.CharField(choices=[('PASSPORT', 'Паспорт'), ('ID_CARD', 'ID карта'), ('CERTIFICATE', 'Свидетельство'), ('OTHER', 'Другой документ')], default='PASSPORT', max_length=20, verbose_name='Тип документа')),
+                        ('document_number', models.CharField(blank=True, default='', help_text='Номер паспорта или другого документа', max_length=50, verbose_name='Номер документа')),
+                        ('file', models.FileField(help_text='Скан или фото документа', upload_to='employees/documents/%Y/%m/', verbose_name='Файл документа')),
+                        ('issued_by', models.CharField(blank=True, default='', help_text='Орган, выдавший документ', max_length=255, verbose_name='Кем выдан')),
+                        ('issue_date', models.DateField(blank=True, null=True, verbose_name='Дата выдачи')),
+                        ('expiry_date', models.DateField(blank=True, help_text='Для паспортов и других документов со сроком действия', null=True, verbose_name='Дата окончания срока')),
+                        ('is_active', models.BooleanField(default=True, help_text='Основной/действующий документ', verbose_name='Активен')),
+                        ('notes', models.TextField(blank=True, default='', help_text='Дополнительная информация о документе', verbose_name='Заметки')),
+                        ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
+                        ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Дата обновления')),
+                        ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='employees.employee', verbose_name='Сотрудник')),
+                    ],
+                    options={
+                        'verbose_name': 'Документ сотрудника',
+                        'verbose_name_plural': 'Документы сотрудников',
+                        'ordering': ['-is_active', '-created_at'],
+                    },
+                ),
             ],
-            options={
-                'verbose_name': 'Документ сотрудника',
-                'verbose_name_plural': 'Документы сотрудников',
-                'ordering': ['-is_active', '-created_at'],
-            },
+            database_operations=[],
         ),
     ]
