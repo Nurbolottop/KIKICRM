@@ -54,7 +54,9 @@
         .btn-hr:hover { background: var(--hr-primary-dark); color: white; }
 
     </style>
-    {% block extra_css %}{% endblock %}
+    <style>
+        {% block extra_css %}{% endblock %}
+    </style>
     <style>
         @media (max-width: 768px) {
             .hr-sidebar { width: 100%; height: auto; position: relative; }
