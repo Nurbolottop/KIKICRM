@@ -54,6 +54,12 @@ class Employee(models.Model):
         blank=True,
         null=True
     )
+    contract_end_date = models.DateField(
+        'Дата окончания контракта',
+        blank=True,
+        null=True,
+        help_text='Срок найма/окончания договора'
+    )
     fire_date = models.DateField(
         'Дата увольнения',
         blank=True,

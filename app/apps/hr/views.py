@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth import logout
 
 from apps.accounts.models import User, UserRole
+from apps.employees.models import Employee, EmployeeDocument, DocumentType
 from .models import HRSettings
 
 
@@ -213,16 +214,33 @@ def hr_employee_detail(request, pk):
 
 @login_required
 def hr_employee_edit(request, pk):
-    """Редактирование клинера."""
+    """Редактирование клинера (ФИО, телефон, роль, паспорт, контракт)."""
     if not is_hr(request.user):
         return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
 
     emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
+    employee, _ = Employee.objects.get_or_create(user=emp)
+    
+    # Пытаемся найти основной документ (обычно первый активный паспорт или ID)
+    doc = employee.documents.filter(is_active=True).first()
+    if not doc:
+        doc = employee.documents.first()
 
     if request.method == 'POST':
         full_name = request.POST.get('full_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         role = request.POST.get('role', emp.role)
+        
+        # Данные сотрудника
+        hire_date = request.POST.get('hire_date') or None
+        contract_end_date = request.POST.get('contract_end_date') or None
+        
+        # Данные документа
+        doc_type = request.POST.get('document_type', DocumentType.PASSPORT)
+        doc_number = request.POST.get('document_number', '').strip()
+        issued_by = request.POST.get('issued_by', '').strip()
+        issue_date = request.POST.get('issue_date') or None
+        expiry_date = request.POST.get('expiry_date') or None
 
         if not full_name or not phone:
             messages.error(request, 'Заполните все обязательные поля.')
@@ -230,14 +248,39 @@ def hr_employee_edit(request, pk):
             if User.objects.filter(phone=phone).exclude(pk=pk).exists():
                 messages.error(request, 'Пользователь с таким телефоном уже существует.')
             else:
+                # Обновляем пользователя
                 emp.full_name = full_name
                 emp.phone = phone
                 emp.role = role
-                emp.save()
+                emp.save(update_fields=['full_name', 'phone', 'role'])
+
+                # Обновляем сотрудника
+                employee.hire_date = hire_date
+                employee.contract_end_date = contract_end_date
+                employee.save(update_fields=['hire_date', 'contract_end_date'])
+
+                # Обновляем или создаем документ
+                if doc_number:
+                    if not doc:
+                        doc = EmployeeDocument(employee=employee, is_active=True)
+                    
+                    doc.document_type = doc_type
+                    doc.document_number = doc_number
+                    doc.issued_by = issued_by
+                    doc.issue_date = issue_date
+                    doc.expiry_date = expiry_date
+                    doc.save()
+
                 messages.success(request, f'Данные {emp.full_name} обновлены.')
                 return redirect('hr_employee_detail', pk=pk)
 
-    return render(request, 'hr_panel/employee_edit.html', {'emp': emp, 'UserRole': UserRole})
+    return render(request, 'hr_panel/employee_edit.html', {
+        'emp': emp, 
+        'employee': employee,
+        'doc': doc,
+        'UserRole': UserRole,
+        'DocumentType': DocumentType
+    })
 
 
 @login_required

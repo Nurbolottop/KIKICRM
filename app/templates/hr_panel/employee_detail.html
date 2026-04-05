@@ -135,8 +135,12 @@
                 <div class="emp-card-title"><i class="bi bi-card-text"></i> Общая информация</div>
                 <div class="info-grid">
                     <div>
-                        <div class="info-label">Дата регистрации</div>
-                        <div class="info-value">{{ emp.date_joined|date:"d.m.Y H:i" }}</div>
+                        <div class="info-label">Дата приема</div>
+                        <div class="info-value">{{ emp.employee.hire_date|date:"d.m.Y"|default:"—" }}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Срок найма</div>
+                        <div class="info-value">{{ emp.employee.contract_end_date|date:"d.m.Y"|default:"—" }}</div>
                     </div>
                     <div>
                         <div class="info-label">Второй телефон</div>

@@ -29,25 +29,85 @@
     <div class="hr-form-card">
         <form method="post">
             {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label">Полное имя *</label>
-                <input type="text" name="full_name" class="form-control" required value="{{ emp.full_name }}">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Номер телефона (для входа) *</label>
-                <input type="text" name="phone" class="form-control" placeholder="+996XXXXXXXXX" required value="{{ emp.phone }}">
-            </div>
+            
             <div class="mb-4">
-                <label class="form-label">Роль *</label>
-                <select name="role" class="form-select">
-                    <option value="CLEANER" {% if emp.role == 'CLEANER' %}selected{% endif %}>Клинер</option>
-                    <option value="SENIOR_CLEANER" {% if emp.role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
-                    <option value="TRAINEE" {% if emp.role == 'TRAINEE' %}selected{% endif %}>Стажер</option>
-                </select>
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle text-primary"></i> Основная информация
+                </h5>
+                <div class="mb-3">
+                    <label class="form-label">Полное имя *</label>
+                    <input type="text" name="full_name" class="form-control" required value="{{ emp.full_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Номер телефона (для входа) *</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+996XXXXXXXXX" required value="{{ emp.phone }}">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label">Роль *</label>
+                    <select name="role" class="form-select">
+                        <option value="CLEANER" {% if emp.role == 'CLEANER' %}selected{% endif %}>Клинер</option>
+                        <option value="SENIOR_CLEANER" {% if emp.role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
+                        <option value="TRAINEE" {% if emp.role == 'TRAINEE' %}selected{% endif %}>Стажер</option>
+                    </select>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-hr w-100 py-2">
-                <i class="bi bi-save me-1"></i> Сохранить изменения
+            <hr class="my-4 opacity-50">
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-primary"></i> Данные контракта
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Дата приема</label>
+                        <input type="date" name="hire_date" class="form-control" value="{{ employee.hire_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Срок найма/окончания</label>
+                        <input type="date" name="contract_end_date" class="form-control" value="{{ employee.contract_end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 opacity-50">
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-badge text-primary"></i> Паспортные данные
+                </h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Тип документа</label>
+                        <select name="document_type" class="form-select">
+                            {% for code, label in DocumentType.choices %}
+                                <option value="{{ code }}" {% if doc.document_type == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Номер документа</label>
+                        <input type="text" name="document_number" class="form-control" placeholder="ID1234567" value="{{ doc.document_number }}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Кем выдан</label>
+                    <input type="text" name="issued_by" class="form-control" placeholder="МКК 50-50" value="{{ doc.issued_by }}">
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Дата выдачи</label>
+                        <input type="date" name="issue_date" class="form-control" value="{{ doc.issue_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Дата окончания</label>
+                        <input type="date" name="expiry_date" class="form-control" value="{{ doc.expiry_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-hr w-100 py-2 mt-2">
+                <i class="bi bi-save me-1"></i> Сохранить все изменения
             </button>
         </form>
     </div>
