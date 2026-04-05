@@ -1,286 +1,235 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ emp.full_name|default:"Сотрудник" }} | HR Панель | KIKI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        :root { --hr-primary: #6366f1; --hr-primary-dark: #4f46e5; }
-        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+{% extends 'hr_panel/base_hr.html' %}
 
-        .hr-sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
-            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
-            padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column;
-        }
-        .hr-sidebar-brand {
-            color: white; font-size: 1.2rem; font-weight: 700;
-            padding: 0 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 0.6rem; text-decoration: none;
-        }
-        .hr-sidebar-nav { padding: 1rem 0; flex: 1; }
-        .hr-nav-link {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65);
-            text-decoration: none; font-size: 0.92rem; transition: all 0.15s;
-            border-left: 3px solid transparent;
-        }
-        .hr-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
-        .hr-nav-link.active {
-            color: white; background: rgba(255,255,255,0.12);
-            border-left-color: var(--hr-primary);
-        }
-        .hr-nav-link i { font-size: 1.15rem; width: 22px; text-align: center; }
-        .hr-sidebar-footer {
-            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .hr-sidebar-user {
-            color: rgba(255,255,255,0.8); font-size: 0.85rem;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .hr-logout {
-            color: rgba(255,255,255,0.5); font-size: 0.82rem;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
-            margin-top: 0.5rem;
-        }
-        .hr-logout:hover { color: white; }
+{% block title %}{{ emp.full_name }}{% endblock %}
 
-        .hr-main { margin-left: 240px; padding: 2rem; max-width: 900px; }
-        .hr-back {
-            color: #6b7280; text-decoration: none; font-size: 0.92rem;
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.45rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb;
-            transition: all 0.15s; margin-bottom: 1.5rem;
-        }
-        .hr-back:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+{% block extra_css %}
+    .emp-header {
+        background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+        padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        display: flex; align-items: center; gap: 1.5rem;
+    }
+    .emp-avatar-lg {
+        width: 80px; height: 80px; border-radius: 20px;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; font-weight: 700;
+    }
+    .emp-info h1 { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
+    .emp-info p { color: #6b7280; margin: 0.25rem 0 0; }
 
-        .hr-profile-card {
-            background: white; border: 1px solid #f0f0f5; border-radius: 16px;
-            padding: 2rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 1.5rem;
-        }
-        .hr-profile-top { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; }
-        .hr-avatar-big {
-            width: 72px; height: 72px; border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #818cf8);
-            color: white; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 1.6rem; flex-shrink: 0;
-        }
-        .hr-profile-name { font-size: 1.4rem; font-weight: 700; color: #1f2937; margin: 0; }
-        .hr-role-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-top: 0.4rem; }
-        .role-SENIOR_CLEANER { background: #ede9fe; color: #5b21b6; }
-        .role-CLEANER { background: #f3f4f6; color: #374151; }
+    .emp-card {
+        background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+        padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .emp-card-title { font-size: 1.1rem; font-weight: 700; color: #111827; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .info-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.2rem; }
+    .info-value { font-weight: 600; color: #1f2937; }
 
-        .hr-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.75rem; }
-        .hr-info-item { background: #f9fafb; border-radius: 10px; padding: 0.85rem 1rem; }
-        .hr-info-label { font-size: 0.78rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 0.25rem; }
-        .hr-info-value { font-size: 0.95rem; color: #1f2937; font-weight: 500; }
-        .hr-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
-        .hr-status-dot.active { background: #22c55e; }
-        .hr-status-dot.inactive { background: #ef4444; }
+    .hr-role-badge { display: inline-block; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    .role-SENIOR_CLEANER { background: #ede9fe; color: #5b21b6; }
+    .role-CLEANER { background: #f3f4f6; color: #374151; }
+    .role-TRAINEE { background: #e0f2fe; color: #0369a1; }
 
-        .hr-actions-card {
-            background: white; border: 1px solid #f0f0f5; border-radius: 14px;
-            padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .hr-actions-title { font-size: 1rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-        .hr-action-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .btn-hr-action {
-            padding: 0.7rem 1.25rem; border-radius: 10px; font-weight: 600;
-            font-size: 0.9rem; border: none; cursor: pointer; display: inline-flex;
-            align-items: center; gap: 0.5rem; transition: all 0.15s;
-        }
-        .btn-hr-activate { background: #dcfce7; color: #166534; }
-        .btn-hr-activate:hover { background: #bbf7d0; }
-        .btn-hr-deactivate { background: #fee2e2; color: #991b1b; }
-        .btn-hr-deactivate:hover { background: #fecaca; }
-        .btn-hr-promote { background: #ede9fe; color: #5b21b6; }
-        .btn-hr-promote:hover { background: #ddd6fe; }
-        .btn-hr-demote { background: #f3f4f6; color: #374151; }
-        .btn-hr-demote:hover { background: #e5e7eb; }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
+    .status-active { background: #dcfce7; color: #16a34a; }
+    .status-inactive { background: #f1f5f9; color: #64748b; }
+    .status-fired { background: #fee2e2; color: #dc2626; }
+    .status-blacklisted { background: #111827; color: #fff; }
 
-        @media (max-width: 768px) {
-            .hr-sidebar { width: 100%; height: auto; position: relative; }
-            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
-            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
-            .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
-            .hr-main { margin-left: 0; padding: 1rem; }
-            .hr-sidebar-footer { display: none; }
-            .hr-info-grid { grid-template-columns: 1fr; }
-            .hr-profile-card,
-            .hr-actions-card { padding: 1rem; border-radius: 14px; }
-            .hr-profile-top { gap: 1rem; }
-            .hr-action-row form { width: 100%; }
-            .btn-hr-action { width: 100%; justify-content: center; }
-        }
+    .doc-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 10px; text-decoration: none; color: #374151; transition: all 0.15s; }
+    .doc-link:hover { border-color: #6366f1; background: #f8f9ff; color: #6366f1; }
 
-        @media (max-width: 576px) {
-            .hr-sidebar-brand { padding: 0 1rem 1rem; }
-            .hr-nav-link { padding: 0.55rem 0.8rem; font-size: 0.86rem; }
-            .hr-main { padding: 0.8rem; }
-            .hr-back { width: 100%; justify-content: center; }
-            .hr-profile-top { flex-direction: column; align-items: flex-start; }
-            .hr-profile-name { font-size: 1.15rem; }
-            .hr-avatar-big { width: 64px; height: 64px; font-size: 1.35rem; }
-        }
-    </style>
-</head>
-<body>
-    <aside class="hr-sidebar">
-        <a href="{% url 'hr_dashboard' %}" class="hr-sidebar-brand">
-            <i class="bi bi-people-fill"></i> <span>HR Панель</span>
+    .reason-box { background: #fffcf0; border: 1px solid #fef3c7; border-radius: 10px; padding: 1rem; margin-top: 1rem; color: #92400e; font-size: 0.9rem; }
+    
+    @media (max-width: 576px) {
+        .emp-header { flex-direction: column; text-align: center; }
+        .emp-actions { display: grid; grid-template-columns: 1fr; gap: 0.5rem; width: 100%; }
+        .emp-actions .btn { width: 100%; }
+    }
+{% endblock %}
+
+{% block content %}
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <a href="{% url 'hr_employees' %}" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Назад к списку
         </a>
-        <nav class="hr-sidebar-nav">
-            <a href="{% url 'hr_dashboard' %}" class="hr-nav-link">
-                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+        <div class="emp-actions d-flex gap-2">
+            <a href="{% url 'hr_employee_edit' emp.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i> Изменить
             </a>
-            <a href="{% url 'hr_employees' %}" class="hr-nav-link active">
-                <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
-            </a>
-            <a href="{% url 'hr_employee_create' %}" class="hr-nav-link">
-                <i class="bi bi-person-plus"></i> <span>Добавить клинера</span>
-            </a>
-            <a href="{% url 'hr_settings' %}" class="hr-nav-link">
-                <i class="bi bi-gear"></i> <span>Настройки</span>
-            </a>
-        </nav>
-        <div class="hr-sidebar-footer">
-            <div class="hr-sidebar-user">
-                <i class="bi bi-person-circle"></i>
-                <div>{{ request.user.full_name|default:request.user.phone }} <span class="badge bg-info" style="font-size:0.7rem;">HR</span></div>
-            </div>
-            <a href="{% url 'login' %}" class="hr-logout"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="bi bi-box-arrow-left"></i> Выйти
-            </a>
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
-        </div>
-    </aside>
-
-    <main class="hr-main">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px;">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <a href="{% url 'hr_employees' %}" class="hr-back">
-            <i class="bi bi-arrow-left"></i> Назад к списку
-        </a>
-
-        <div class="hr-profile-card">
-            <div class="hr-profile-top">
-                <div class="hr-avatar-big">
-                    {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
-                </div>
-                <div>
-                    <h2 class="hr-profile-name">{{ emp.full_name|default:"Без имени" }}</h2>
-                    <span class="hr-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span>
-                </div>
-            </div>
-
-            <div class="hr-info-grid">
-                <div class="hr-info-item">
-                    <div class="hr-info-label">Телефон</div>
-                    <div class="hr-info-value">{{ emp.phone }}</div>
-                </div>
-                <div class="hr-info-item">
-                    <div class="hr-info-label">Статус аккаунта</div>
-                    <div class="hr-info-value">
-                        {% if emp.is_active %}
-                        <span class="hr-status-dot active"></span>Активен
-                        {% else %}
-                        <span class="hr-status-dot inactive"></span>Неактивен
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="hr-info-item">
-                    <div class="hr-info-label">Дата регистрации</div>
-                    <div class="hr-info-value">{{ emp.date_joined|date:"d.m.Y" }}</div>
-                </div>
-                <div class="hr-info-item">
-                    <div class="hr-info-label">Последний вход</div>
-                    <div class="hr-info-value">{{ emp.last_login|date:"d.m.Y H:i"|default:"—" }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Документы сотрудника -->
-        <div class="hr-profile-card">
-            <div class="hr-actions-title"><i class="bi bi-file-earmark-text"></i> Документы удостоверяющие личность</div>
-            {% if documents %}
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th>Тип</th>
-                            <th>Номер</th>
-                            <th>Файл</th>
-                            <th>Дата загрузки</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for doc in documents %}
-                        <tr>
-                            <td>
-                                <span class="badge bg-secondary">{{ doc.get_document_type_display }}</span>
-                            </td>
-                            <td>{{ doc.document_number|default:"—" }}</td>
-                            <td>
-                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Просмотр
-                                </a>
-                            </td>
-                            <td class="text-muted small">{{ doc.created_at|date:"d.m.Y" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            {% if emp.role == 'TRAINEE' %}
+            <form action="{% url 'hr_promote' emp.pk %}" method="post">{% csrf_token %}<button class="btn btn-outline-primary"><i class="bi bi-star me-1"></i> Сделать клинером</button></form>
+            {% elif emp.role == 'CLEANER' %}
+            <form action="{% url 'hr_promote' emp.pk %}" method="post">{% csrf_token %}<button class="btn btn-outline-primary"><i class="bi bi-star-fill me-1"></i> Сделать старшим</button></form>
             {% else %}
-            <div class="text-muted text-center py-4">
-                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                Нет загруженных документов
-            </div>
+            <form action="{% url 'hr_promote' emp.pk %}" method="post">{% csrf_token %}<button class="btn btn-outline-warning"><i class="bi bi-arrow-down-circle me-1"></i> Понизить до клинера</button></form>
+            {% endif %}
+            
+            {% if emp.employee.status != 'FIRED' %}
+                {% if emp.is_active %}
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deactivateModal">
+                    <i class="bi bi-person-x me-1"></i> Деактивировать
+                </button>
+                {% else %}
+                <form action="{% url 'hr_toggle_active' emp.pk %}" method="post">{% csrf_token %}<button class="btn btn-outline-success"><i class="bi bi-person-check me-1"></i> Активировать</button></form>
+                {% endif %}
+                
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#dismissModal">
+                    <i class="bi bi-slash-circle me-1"></i> Уволить
+                </button>
+            {% else %}
+                <form action="{% url 'hr_toggle_active' emp.pk %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success"><i class="bi bi-person-check me-1"></i> Восстановить сотрудника</button>
+                </form>
             {% endif %}
         </div>
+    </div>
 
-        <div class="hr-actions-card">
-            <div class="hr-actions-title"><i class="bi bi-gear"></i> Управление</div>
-            <div class="hr-action-row">
-                <form method="post" action="{% url 'hr_toggle_active' emp.pk %}">
-                    {% csrf_token %}
-                    {% if emp.is_active %}
-                    <button type="submit" class="btn-hr-action btn-hr-deactivate" onclick="return confirm('Деактивировать аккаунт {{ emp.full_name }}?')">
-                        <i class="bi bi-x-circle"></i> Деактивировать
-                    </button>
-                    {% else %}
-                    <button type="submit" class="btn-hr-action btn-hr-activate">
-                        <i class="bi bi-check-circle"></i> Активировать
-                    </button>
+    <div class="emp-header">
+        <div class="emp-avatar-lg">
+            {% if emp.full_name %}{{ emp.full_name|truncatechars:1 }}{% else %}<i class="bi bi-person"></i>{% endif %}
+        </div>
+        <div class="emp-info flex-grow-1">
+            <h1>{{ emp.full_name|default:"Без имени" }}</h1>
+            <p>{{ emp.phone }}</p>
+            <div class="mt-2">
+                <span class="hr-role-badge role-{{ emp.role }}">{{ emp.get_role_display }}</span>
+                {% if emp.employee.status == 'FIRED' %}
+                    <span class="status-badge status-fired"><i class="bi bi-slash-circle"></i> Уволен</span>
+                    {% if emp.employee.is_blacklisted %}
+                        <span class="status-badge status-blacklisted"><i class="bi bi-exclamation-octagon"></i> ЧС</span>
                     {% endif %}
-                </form>
+                {% elif emp.is_active %}
+                    <span class="status-badge status-active"><i class="bi bi-check-circle"></i> Активен</span>
+                {% else %}
+                    <span class="status-badge status-inactive"><i class="bi bi-x-circle"></i> Неактивен</span>
+                    {% if emp.employee.is_blacklisted %}
+                        <span class="status-badge status-blacklisted"><i class="bi bi-exclamation-octagon"></i> ЧС</span>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-                <form method="post" action="{% url 'hr_promote' emp.pk %}">
+    {% if emp.employee.status == 'FIRED' and emp.employee.firing_reason %}
+    <div class="reason-box mb-4">
+        <strong><i class="bi bi-info-circle me-1"></i> Причина увольнения:</strong><br>
+        {{ emp.employee.firing_reason }}
+        {% if emp.employee.fire_date %}
+            <div class="small mt-1 opacity-75">Дата увольнения: {{ emp.employee.fire_date|date:"d.m.Y" }}</div>
+        {% endif %}
+    </div>
+    {% elif not emp.is_active and emp.employee.deactivation_reason %}
+    <div class="reason-box mb-4">
+        <strong><i class="bi bi-info-circle me-1"></i> Причина деактивации:</strong><br>
+        {{ emp.employee.deactivation_reason }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="emp-card">
+                <div class="emp-card-title"><i class="bi bi-card-text"></i> Общая информация</div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Дата регистрации</div>
+                        <div class="info-value">{{ emp.date_joined|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Второй телефон</div>
+                        <div class="info-value">{{ emp.employee.phone_secondary|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="emp-card">
+                <div class="emp-card-title"><i class="bi bi-files"></i> Документы</div>
+                {% if documents %}
+                <div class="row g-3">
+                    {% for doc in documents %}
+                    <div class="col-sm-6">
+                        <a href="{{ doc.file.url }}" target="_blank" class="doc-link">
+                            <i class="bi bi-file-earmark-pdf fs-4"></i>
+                            <div>
+                                <div class="fw-bold">{{ doc.get_document_type_display }}</div>
+                                <div class="small text-muted">№ {{ doc.document_number|default:"скан" }}</div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Документы не загружены.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="emp-card">
+                <div class="emp-card-title"><i class="bi bi-journal-text"></i> Заметки</div>
+                <p class="text-muted small">{{ emp.employee.notes|default:"Внутренних заметок нет." }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0" style="border-radius: 14px;">
+                <form action="{% url 'hr_toggle_active' emp.pk %}" method="post">
                     {% csrf_token %}
-                    {% if emp.role == 'CLEANER' %}
-                    <button type="submit" class="btn-hr-action btn-hr-promote" onclick="return confirm('Повысить {{ emp.full_name }} до Старшего клинера?')">
-                        <i class="bi bi-arrow-up-circle"></i> Повысить до Ст. клинера
-                    </button>
-                    {% else %}
-                    <button type="submit" class="btn-hr-action btn-hr-demote" onclick="return confirm('Понизить {{ emp.full_name }} до Клинера?')">
-                        <i class="bi bi-arrow-down-circle"></i> Понизить до Клинера
-                    </button>
-                    {% endif %}
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Деактивировать аккаунт</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted">Укажите причину деактивации аккаунта сотрудника {{ emp.full_name }}.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Причина деактивации</label>
+                            <textarea name="reason" class="form-control" rows="3" placeholder="Напр: Временный отпуск, личные причины..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-danger px-4">Подтвердить</button>
+                    </div>
                 </form>
             </div>
         </div>
-    </main>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="modal fade" id="dismissModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0" style="border-radius: 14px;">
+                <form action="{% url 'hr_dismiss_employee' emp.pk %}" method="post">
+                    {% csrf_token %}
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Увольнение сотрудника</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted">Вы уверены, что хотите уволить сотрудника {{ emp.full_name }}? Это действие деактивирует его аккаунт.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Причина увольнения</label>
+                            <textarea name="reason" class="form-control" rows="3" required placeholder="Опишите причину увольнения..."></textarea>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_blacklisted" id="blacklistSwitch">
+                            <label class="form-check-label fw-semibold text-danger" for="blacklistSwitch">
+                                Добавить в черный список
+                            </label>
+                        </div>
+                        <div class="small text-muted">Сотрудники в черном списке помечаются специальным значком.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-danger px-4">Уволить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

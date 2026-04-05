@@ -1,216 +1,118 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Панель | KIKI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        :root { --hr-primary: #6366f1; --hr-primary-dark: #4f46e5; }
-        body { background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; }
+{% extends 'hr_panel/base_hr.html' %}
 
-        .hr-sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
-            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
-            padding: 1.5rem 0; z-index: 100; display: flex; flex-direction: column;
-        }
-        .hr-sidebar-brand {
-            color: white; font-size: 1.2rem; font-weight: 700;
-            padding: 0 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 0.6rem; text-decoration: none;
-        }
-        .hr-sidebar-nav { padding: 1rem 0; flex: 1; }
-        .hr-nav-link {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.7rem 1.25rem; color: rgba(255,255,255,0.65);
-            text-decoration: none; font-size: 0.92rem; transition: all 0.15s;
-            border-left: 3px solid transparent;
-        }
-        .hr-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
-        .hr-nav-link.active {
-            color: white; background: rgba(255,255,255,0.12);
-            border-left-color: var(--hr-primary);
-        }
-        .hr-nav-link i { font-size: 1.15rem; width: 22px; text-align: center; }
-        .hr-sidebar-footer {
-            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .hr-sidebar-user {
-            color: rgba(255,255,255,0.8); font-size: 0.85rem;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .hr-sidebar-user .badge { font-size: 0.7rem; }
-        .hr-logout {
-            color: rgba(255,255,255,0.5); font-size: 0.82rem;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
-            margin-top: 0.5rem;
-        }
-        .hr-logout:hover { color: white; }
+{% block title %}Dashboard{% endblock %}
 
-        .hr-main { margin-left: 240px; padding: 2rem; }
-        .hr-page-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem; }
+{% block extra_css %}
+    .hr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .hr-stat-card {
+        background: white; border-radius: 14px; padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f5;
+        transition: box-shadow 0.15s;
+    }
+    .hr-stat-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .hr-stat-icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; margin-bottom: 0.85rem;
+    }
+    .hr-stat-icon.total { background: #eef2ff; color: #6366f1; }
+    .hr-stat-icon.active { background: #dcfce7; color: #16a34a; }
+    .hr-stat-icon.inactive { background: #fee2e2; color: #dc2626; }
+    .hr-stat-icon.senior { background: #fef3c7; color: #d97706; }
+    .hr-stat-icon.regular { background: #e0e7ff; color: #4f46e5; }
+    .hr-stat-icon.fired { background: #fee2e2; color: #b91c1c; }
+    .hr-stat-icon.blacklisted { background: #f3f4f6; color: #111827; }
+    .hr-stat-value { font-size: 1.6rem; font-weight: 700; color: #1f2937; }
+    .hr-stat-label { font-size: 0.82rem; color: #6b7280; margin-top: 0.15rem; }
 
-        .hr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .hr-stat-card {
-            background: white; border-radius: 14px; padding: 1.25rem 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f5;
-            transition: box-shadow 0.15s;
-        }
-        .hr-stat-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
-        .hr-stat-icon {
-            width: 42px; height: 42px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; margin-bottom: 0.85rem;
-        }
-        .hr-stat-icon.total { background: #eef2ff; color: #6366f1; }
-        .hr-stat-icon.active { background: #dcfce7; color: #16a34a; }
-        .hr-stat-icon.inactive { background: #fee2e2; color: #dc2626; }
-        .hr-stat-icon.senior { background: #fef3c7; color: #d97706; }
-        .hr-stat-icon.regular { background: #e0e7ff; color: #4f46e5; }
-        .hr-stat-value { font-size: 1.6rem; font-weight: 700; color: #1f2937; }
-        .hr-stat-label { font-size: 0.82rem; color: #6b7280; margin-top: 0.15rem; }
+    .hr-quick-actions {
+        background: white; border-radius: 14px; padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f5;
+    }
+    .hr-quick-title {
+        font-size: 1rem; font-weight: 700; color: #1f2937;
+        margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .hr-action-btn {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 0.85rem 1rem; border-radius: 10px;
+        text-decoration: none; color: #374151; font-weight: 500;
+        transition: all 0.15s; border: 1px solid #e5e7eb;
+        margin-bottom: 0.5rem;
+    }
+    .hr-action-btn:hover { background: #f8f9ff; border-color: #c7d2fe; color: #4f46e5; }
+    .hr-action-btn i { font-size: 1.2rem; color: var(--hr-primary); }
 
-        .hr-quick-actions {
-            background: white; border-radius: 14px; padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f5;
-        }
-        .hr-quick-title {
-            font-size: 1rem; font-weight: 700; color: #1f2937;
-            margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
-        }
-        .hr-action-btn {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.85rem 1rem; border-radius: 10px;
-            text-decoration: none; color: #374151; font-weight: 500;
-            transition: all 0.15s; border: 1px solid #e5e7eb;
-            margin-bottom: 0.5rem;
-        }
-        .hr-action-btn:hover { background: #f8f9ff; border-color: #c7d2fe; color: #4f46e5; }
-        .hr-action-btn i { font-size: 1.2rem; color: var(--hr-primary); }
+    @media (max-width: 768px) {
+        .hr-page-title { font-size: 1.25rem; margin-bottom: 1rem; }
+        .hr-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+        .hr-stat-card { padding: 1rem; border-radius: 12px; }
+        .hr-stat-value { font-size: 1.35rem; }
+        .hr-quick-actions { padding: 1rem; }
+        .hr-action-btn { width: 100%; justify-content: flex-start; }
+    }
 
-        @media (max-width: 768px) {
-            .hr-sidebar { width: 100%; height: auto; position: relative; }
-            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
-            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
-            .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
-            .hr-main { margin-left: 0; padding: 1rem; }
-            .hr-sidebar-footer { display: none; }
-            .hr-page-title { font-size: 1.25rem; margin-bottom: 1rem; }
-            .hr-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
-            .hr-stat-card { padding: 1rem; border-radius: 12px; }
-            .hr-stat-value { font-size: 1.35rem; }
-            .hr-quick-actions { padding: 1rem; }
-            .hr-action-btn { width: 100%; justify-content: flex-start; }
-        }
+    @media (max-width: 576px) {
+        .hr-stats { grid-template-columns: 1fr; }
+        .hr-stat-icon { width: 38px; height: 38px; margin-bottom: 0.65rem; }
+        .hr-action-btn { padding: 0.8rem 0.9rem; }
+    }
+{% endblock %}
 
-        @media (max-width: 576px) {
-            .hr-sidebar-brand { padding: 0 1rem 1rem; }
-            .hr-nav-link { padding: 0.55rem 0.8rem; font-size: 0.86rem; }
-            .hr-main { padding: 0.8rem; }
-            .hr-stats { grid-template-columns: 1fr; }
-            .hr-stat-icon { width: 38px; height: 38px; margin-bottom: 0.65rem; }
-            .hr-action-btn { padding: 0.8rem 0.9rem; }
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar -->
-    <aside class="hr-sidebar">
-        <a href="{% url 'hr_dashboard' %}" class="hr-sidebar-brand">
-            <i class="bi bi-people-fill"></i>
-            <span>HR Панель</span>
+{% block content %}
+    <h1 class="hr-page-title">Dashboard</h1>
+
+    <div class="hr-stats">
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon total"><i class="bi bi-people"></i></div>
+            <div class="hr-stat-value">{{ total }}</div>
+            <div class="hr-stat-label">Всего клинеров</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon active"><i class="bi bi-check-circle"></i></div>
+            <div class="hr-stat-value">{{ active }}</div>
+            <div class="hr-stat-label">Активные</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon inactive"><i class="bi bi-x-circle"></i></div>
+            <div class="hr-stat-value">{{ inactive }}</div>
+            <div class="hr-stat-label">Неактивные</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon senior"><i class="bi bi-star"></i></div>
+            <div class="hr-stat-value">{{ seniors }}</div>
+            <div class="hr-stat-label">Старшие клинеры</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon regular"><i class="bi bi-person"></i></div>
+            <div class="hr-stat-value">{{ regulars }}</div>
+            <div class="hr-stat-label">Клинеры</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon fired"><i class="bi bi-person-x"></i></div>
+            <div class="hr-stat-value">{{ fired }}</div>
+            <div class="hr-stat-label">Уволены</div>
+        </div>
+        <div class="hr-stat-card">
+            <div class="hr-stat-icon blacklisted"><i class="bi bi-exclamation-octagon"></i></div>
+            <div class="hr-stat-value">{{ blacklisted }}</div>
+            <div class="hr-stat-label">В черном списке</div>
+        </div>
+    </div>
+
+    <div class="hr-quick-actions">
+        <div class="hr-quick-title"><i class="bi bi-lightning"></i> Быстрые действия</div>
+        <a href="{% url 'hr_employee_create' %}" class="hr-action-btn">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>Создать нового клинера</span>
         </a>
-        <nav class="hr-sidebar-nav">
-            <a href="{% url 'hr_dashboard' %}" class="hr-nav-link active">
-                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
-            </a>
-            <a href="{% url 'hr_employees' %}" class="hr-nav-link">
-                <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
-            </a>
-            <a href="{% url 'hr_employee_create' %}" class="hr-nav-link">
-                <i class="bi bi-person-plus"></i> <span>Добавить клинера</span>
-            </a>
-            <a href="{% url 'hr_settings' %}" class="hr-nav-link">
-                <i class="bi bi-gear"></i> <span>Настройки</span>
-            </a>
-        </nav>
-        <div class="hr-sidebar-footer">
-            <div class="hr-sidebar-user">
-                <i class="bi bi-person-circle"></i>
-                <div>
-                    {{ request.user.full_name|default:request.user.phone }}
-                    <span class="badge bg-info">HR</span>
-                </div>
-            </div>
-            <a href="{% url 'login' %}?next={% url 'hr_dashboard' %}" class="hr-logout"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="bi bi-box-arrow-left"></i> Выйти
-            </a>
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
-                {% csrf_token %}
-            </form>
-        </div>
-    </aside>
-
-    <!-- Main -->
-    <main class="hr-main">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:10px;">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <h1 class="hr-page-title">Dashboard</h1>
-
-        <div class="hr-stats">
-            <div class="hr-stat-card">
-                <div class="hr-stat-icon total"><i class="bi bi-people"></i></div>
-                <div class="hr-stat-value">{{ total }}</div>
-                <div class="hr-stat-label">Всего клинеров</div>
-            </div>
-            <div class="hr-stat-card">
-                <div class="hr-stat-icon active"><i class="bi bi-check-circle"></i></div>
-                <div class="hr-stat-value">{{ active }}</div>
-                <div class="hr-stat-label">Активные</div>
-            </div>
-            <div class="hr-stat-card">
-                <div class="hr-stat-icon inactive"><i class="bi bi-x-circle"></i></div>
-                <div class="hr-stat-value">{{ inactive }}</div>
-                <div class="hr-stat-label">Неактивные</div>
-            </div>
-            <div class="hr-stat-card">
-                <div class="hr-stat-icon senior"><i class="bi bi-star"></i></div>
-                <div class="hr-stat-value">{{ seniors }}</div>
-                <div class="hr-stat-label">Старшие клинеры</div>
-            </div>
-            <div class="hr-stat-card">
-                <div class="hr-stat-icon regular"><i class="bi bi-person"></i></div>
-                <div class="hr-stat-value">{{ regulars }}</div>
-                <div class="hr-stat-label">Клинеры</div>
-            </div>
-        </div>
-
-        <div class="hr-quick-actions">
-            <div class="hr-quick-title"><i class="bi bi-lightning"></i> Быстрые действия</div>
-            <a href="{% url 'hr_employee_create' %}" class="hr-action-btn">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Создать нового клинера</span>
-            </a>
-            <a href="{% url 'hr_employees' %}" class="hr-action-btn">
-                <i class="bi bi-list-ul"></i>
-                <span>Посмотреть всех сотрудников</span>
-            </a>
-            <a href="{% url 'hr_employees' %}?status=inactive" class="hr-action-btn">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span>Неактивные аккаунты</span>
-            </a>
-        </div>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+        <a href="{% url 'hr_employees' %}" class="hr-action-btn">
+            <i class="bi bi-list-ul"></i>
+            <span>Посмотреть всех сотрудников</span>
+        </a>
+        <a href="{% url 'hr_employees' %}?status=inactive" class="hr-action-btn">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>Неактивные аккаунты</span>
+        </a>
+    </div>
+{% endblock %}

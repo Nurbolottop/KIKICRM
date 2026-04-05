@@ -1,0 +1,54 @@
+{% extends 'hr_panel/base_hr.html' %}
+
+{% block title %}Редактировать: {{ emp.full_name }}{% endblock %}
+
+{% block extra_css %}
+    .hr-form-card {
+        background: white; border: 1px solid #f0f0f5; border-radius: 14px;
+        padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        max-width: 600px; margin: 0 auto;
+    }
+    .form-label { font-weight: 500; color: #374151; font-size: 0.9rem; margin-bottom: 0.4rem; }
+    .form-control, .form-select {
+        border-radius: 10px; border: 1px solid #e5e7eb;
+        padding: 0.65rem 0.85rem; font-size: 0.95rem;
+    }
+{% endblock %}
+
+{% block content %}
+    <div class="mb-4">
+        <a href="{% url 'hr_employee_detail' emp.pk %}" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Назад в профиль
+        </a>
+    </div>
+
+    <div class="hr-page-title text-center">
+        <span><i class="bi bi-pencil me-2"></i>Редактировать сотрудника</span>
+    </div>
+
+    <div class="hr-form-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Полное имя *</label>
+                <input type="text" name="full_name" class="form-control" required value="{{ emp.full_name }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Номер телефона (для входа) *</label>
+                <input type="text" name="phone" class="form-control" placeholder="+996XXXXXXXXX" required value="{{ emp.phone }}">
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Роль *</label>
+                <select name="role" class="form-select">
+                    <option value="CLEANER" {% if emp.role == 'CLEANER' %}selected{% endif %}>Клинер</option>
+                    <option value="SENIOR_CLEANER" {% if emp.role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
+                    <option value="TRAINEE" {% if emp.role == 'TRAINEE' %}selected{% endif %}>Стажер</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-hr w-100 py-2">
+                <i class="bi bi-save me-1"></i> Сохранить изменения
+            </button>
+        </form>
+    </div>
+{% endblock %}

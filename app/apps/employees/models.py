@@ -63,7 +63,22 @@ class Employee(models.Model):
         'Заметки',
         blank=True,
         default='',
-        help_text='Внутние заметки о сотруднике'
+        help_text='Внутренние заметки о сотруднике'
+    )
+    is_blacklisted = models.BooleanField(
+        'В черном списке',
+        default=False,
+        db_index=True
+    )
+    deactivation_reason = models.TextField(
+        'Причина деактивации',
+        blank=True,
+        default=''
+    )
+    firing_reason = models.TextField(
+        'Причина увольнения',
+        blank=True,
+        default=''
     )
 
     # Временные метки

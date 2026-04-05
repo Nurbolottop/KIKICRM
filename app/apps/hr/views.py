@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.utils import timezone
+from django.contrib.auth import logout
 
 from apps.accounts.models import User, UserRole
 from .models import HRSettings
@@ -26,12 +28,19 @@ def hr_dashboard(request):
     regulars = cleaners.filter(role=UserRole.CLEANER).count()
     trainees = cleaners.filter(role=UserRole.TRAINEE).count()
 
+    from apps.employees.models import Employee, EmployeeStatus
+    fired = Employee.objects.filter(user__in=cleaners, status=EmployeeStatus.FIRED).count()
+    blacklisted = Employee.objects.filter(user__in=cleaners, is_blacklisted=True).count()
+
     return render(request, 'hr_panel/dashboard.html', {
         'total': total,
         'active': active,
         'inactive': inactive,
         'seniors': seniors,
         'regulars': regulars,
+        'trainees': trainees,
+        'fired': fired,
+        'blacklisted': blacklisted,
     })
 
 
@@ -203,6 +212,35 @@ def hr_employee_detail(request, pk):
 
 
 @login_required
+def hr_employee_edit(request, pk):
+    """Редактирование клинера."""
+    if not is_hr(request.user):
+        return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
+
+    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        role = request.POST.get('role', emp.role)
+
+        if not full_name or not phone:
+            messages.error(request, 'Заполните все обязательные поля.')
+        else:
+            if User.objects.filter(phone=phone).exclude(pk=pk).exists():
+                messages.error(request, 'Пользователь с таким телефоном уже существует.')
+            else:
+                emp.full_name = full_name
+                emp.phone = phone
+                emp.role = role
+                emp.save()
+                messages.success(request, f'Данные {emp.full_name} обновлены.')
+                return redirect('hr_employee_detail', pk=pk)
+
+    return render(request, 'hr_panel/employee_edit.html', {'emp': emp, 'UserRole': UserRole})
+
+
+@login_required
 def hr_toggle_active(request, pk):
     """Активировать/деактивировать аккаунт клинера."""
     if not is_hr(request.user):
@@ -212,12 +250,62 @@ def hr_toggle_active(request, pk):
         return redirect('hr_employees')
 
     emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
+    
+    reason = request.POST.get('reason', '').strip()
+    
     emp.is_active = not emp.is_active
     emp.save(update_fields=['is_active'])
+
+    if not emp.is_active:
+        from apps.employees.models import Employee
+        employee, _ = Employee.objects.get_or_create(user=emp)
+        employee.deactivation_reason = reason
+        employee.save(update_fields=['deactivation_reason'])
 
     status_text = 'активирован' if emp.is_active else 'деактивирован'
     messages.success(request, f'Аккаунт {emp.full_name} {status_text}.')
     return redirect('hr_employee_detail', pk=pk)
+
+
+@login_required
+def hr_dismiss_employee(request, pk):
+    """Уволить сотрудника."""
+    if not is_hr(request.user):
+        return render(request, 'hr_panel/error.html', {'message': 'Доступ только для HR менеджера.'})
+
+    if request.method != 'POST':
+        return redirect('hr_employee_detail', pk=pk)
+
+    emp = get_object_or_404(User, pk=pk, role__in=[UserRole.CLEANER, UserRole.SENIOR_CLEANER, UserRole.TRAINEE])
+    
+    reason = request.POST.get('reason', '').strip()
+    is_blacklisted = request.POST.get('is_blacklisted') == 'on'
+
+    from apps.employees.models import Employee, EmployeeStatus
+    employee, _ = Employee.objects.get_or_create(user=emp)
+    
+    emp.is_active = False
+    emp.save(update_fields=['is_active'])
+
+    employee.status = EmployeeStatus.FIRED
+    employee.firing_reason = reason
+    employee.is_blacklisted = is_blacklisted
+    employee.fire_date = timezone.now().date()
+    employee.save()
+
+    msg = f'Сотрудник {emp.full_name} уволен.'
+    if is_blacklisted:
+        msg += ' Добавлен в черный список.'
+    
+    messages.success(request, msg)
+    return redirect('hr_employee_detail', pk=pk)
+
+
+@login_required
+def hr_logout(request):
+    """Выход из аккаунта (для HR)."""
+    logout(request)
+    return redirect('login')
 
 
 @login_required
