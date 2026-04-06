@@ -76,54 +76,6 @@
         <input type="hidden" name="handed_to_manager" value="{{ form.instance.handed_to_manager|yesno:'True,False' }}">
         {% endif %}
 
-        {% if is_operator %}
-        <div class="row g-4 mb-0">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Основные данные заказа</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label {% if form.client.field.required %}required{% endif %}">{{ form.client.label }}</label>
-                                {% if selected_client %}
-                                    {{ form.client }}
-                                    <input type="text" class="form-control" value="{{ selected_client.get_full_name }}" disabled>
-                                {% else %}
-                                    {{ form.client }}
-                                {% endif %}
-                                {% if form.client.errors %}
-                                <div class="text-danger small">{{ form.client.errors.0 }}</div>
-                                {% endif %}
-                                {% if not selected_client %}
-                                <div class="mt-2">
-                                    <a href="{% url 'clients_create' %}?return_to_order=1" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-person-plus me-1"></i> Быстро добавить клиента
-                                    </a>
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label {% if form.category.field.required %}required{% endif %}">{{ form.category.label }}</label>
-                                {{ form.category }}
-                                {% if form.category.errors %}
-                                <div class="text-danger small">{{ form.category.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label {% if form.service.field.required %}required{% endif %}">{{ form.service.label }}</label>
-                                {{ form.service }}
-                                {% if form.service.errors %}
-                                <div class="text-danger small">{{ form.service.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
         
         <div class="row g-4">
             <!-- SECTION 1: Manager Data (FIRST - for manager to edit) -->
@@ -475,6 +427,13 @@
                                 {% endif %}
                                 {% if form.client.errors %}
                                 <div class="text-danger small">{{ form.client.errors.0 }}</div>
+                                {% endif %}
+                                {% if not selected_client and not is_manager %}
+                                <div class="mt-2">
+                                    <a href="{% url 'clients_create' %}?return_to_order=1" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-person-plus me-1"></i> Быстро добавить клиента
+                                    </a>
+                                </div>
                                 {% endif %}
                             </div>
                             <div class="col-md-4">
