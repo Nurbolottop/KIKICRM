@@ -11,6 +11,11 @@ from apps.employees.models import Employee, EmployeeDocument, DocumentType
 from .models import HRSettings
 
 
+def is_hr(user):
+    """Проверка что пользователь HR."""
+    return user.is_authenticated and user.role == UserRole.HR
+
+
 def calculate_contract_end(hire_date, months):
     """Рассчитывает дату окончания контракта."""
     if not hire_date or not months:
