@@ -64,8 +64,12 @@
                         <input type="date" name="hire_date" class="form-control" value="{{ employee.hire_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Срок найма/окончания</label>
-                        <input type="date" name="contract_end_date" class="form-control" value="{{ employee.contract_end_date|date:'Y-m-d' }}">
+                        <label class="form-label">Срок найма</label>
+                        <select name="contract_term" class="form-select">
+                            <option value="3" {% if employee.contract_term == 3 %}selected{% endif %}>3 месяца</option>
+                            <option value="6" {% if employee.contract_term == 6 %}selected{% endif %}>6 месяцев</option>
+                            <option value="12" {% if employee.contract_term == 12 %}selected{% endif %}>1 год</option>
+                        </select>
                     </div>
                 </div>
             </div>

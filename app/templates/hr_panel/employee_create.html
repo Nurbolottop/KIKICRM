@@ -63,6 +63,21 @@
                 <label class="form-label">Пароль {% if not default_password %}*{% endif %}</label>
                 <input type="text" name="password" class="form-control" placeholder="{% if default_password %}Оставьте пустым для: {{ default_password }}{% else %}Минимум 6 символов{% endif %}">
             </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Дата приема *</label>
+                    <input type="date" name="hire_date" class="form-control" required value="{{ hire_date }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Срок найма *</label>
+                    <select name="contract_term" class="form-select" required>
+                        <option value="3">3 месяца</option>
+                        <option value="6">6 месяцев</option>
+                        <option value="12" selected>1 год</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label class="form-label">Роль *</label>
                 <select name="role" class="form-select">

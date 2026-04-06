@@ -54,11 +54,22 @@ class Employee(models.Model):
         blank=True,
         null=True
     )
+    contract_term = models.IntegerField(
+        'Срок найма',
+        choices=[
+            (3, '3 месяца'),
+            (6, '6 месяцев'),
+            (12, '1 год'),
+        ],
+        blank=True,
+        null=True,
+        help_text='Срок действия договора в месяцах'
+    )
     contract_end_date = models.DateField(
         'Дата окончания контракта',
         blank=True,
         null=True,
-        help_text='Срок найма/окончания договора'
+        help_text='Автоматически рассчитывается на основе даты приема и срока найма'
     )
     fire_date = models.DateField(
         'Дата увольнения',

@@ -1,8 +1,9 @@
+import datetime
+from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from django.utils import timezone
 from django.contrib.auth import logout
 
 from apps.accounts.models import User, UserRole
@@ -10,9 +11,22 @@ from apps.employees.models import Employee, EmployeeDocument, DocumentType
 from .models import HRSettings
 
 
-def is_hr(user):
-    """Проверка что пользователь HR."""
-    return user.is_authenticated and user.role == UserRole.HR
+def calculate_contract_end(hire_date, months):
+    """Рассчитывает дату окончания контракта."""
+    if not hire_date or not months:
+        return None
+    try:
+        months = int(months)
+        # Преобразуем строку в объект date если нужно
+        if isinstance(hire_date, str):
+            hire_date = datetime.datetime.strptime(hire_date, '%Y-%m-%d').date()
+            
+        year = hire_date.year + (hire_date.month + months - 1) // 12
+        month = (hire_date.month + months - 1) % 12 + 1
+        day = min(hire_date.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
+        return datetime.date(year, month, day)
+    except:
+        return None
 
 
 @login_required
@@ -128,10 +142,18 @@ def hr_employee_create(request):
 
         # Создаем запись Employee для пользователя
         from apps.employees.models import Employee, EmployeeDocument, DocumentType
+        
+        hire_date = request.POST.get('hire_date') or None
+        contract_term = request.POST.get('contract_term') or None
+        contract_end_date = calculate_contract_end(hire_date, contract_term)
+
         employee = Employee.objects.create(
             user=user,
             status='ACTIVE',
-            employee_code=None
+            employee_code=None,
+            hire_date=hire_date,
+            contract_term=contract_term,
+            contract_end_date=contract_end_date
         )
 
         # Обрабатываем загрузку документов
@@ -233,7 +255,8 @@ def hr_employee_edit(request, pk):
         
         # Данные сотрудника
         hire_date = request.POST.get('hire_date') or None
-        contract_end_date = request.POST.get('contract_end_date') or None
+        contract_term = request.POST.get('contract_term') or None
+        contract_end_date = calculate_contract_end(hire_date, contract_term)
         
         # Данные документа
         doc_type = request.POST.get('document_type', DocumentType.PASSPORT)
@@ -256,8 +279,9 @@ def hr_employee_edit(request, pk):
 
                 # Обновляем сотрудника
                 employee.hire_date = hire_date
+                employee.contract_term = contract_term
                 employee.contract_end_date = contract_end_date
-                employee.save(update_fields=['hire_date', 'contract_end_date'])
+                employee.save(update_fields=['hire_date', 'contract_term', 'contract_end_date'])
 
                 # Обновляем или создаем документ
                 if doc_number:

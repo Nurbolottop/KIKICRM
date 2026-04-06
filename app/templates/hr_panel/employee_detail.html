@@ -140,7 +140,14 @@
                     </div>
                     <div>
                         <div class="info-label">Срок найма</div>
-                        <div class="info-value">{{ emp.employee.contract_end_date|date:"d.m.Y"|default:"—" }}</div>
+                        <div class="info-value">
+                            {% if emp.employee.contract_term %}
+                                {{ emp.employee.get_contract_term_display }}
+                                <span class="text-muted small ms-1">(до {{ emp.employee.contract_end_date|date:"d.m.Y" }})</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
                     </div>
                     <div>
                         <div class="info-label">Второй телефон</div>
