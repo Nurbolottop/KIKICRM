@@ -59,12 +59,34 @@
     </style>
     <style>
         @media (max-width: 768px) {
-            .hr-sidebar { width: 100%; height: auto; position: relative; }
-            .hr-sidebar-nav { display: flex; overflow-x: auto; padding: 0.5rem; }
-            .hr-nav-link { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 0.5rem 1rem; }
+            .hr-sidebar { width: 100%; height: auto; position: sticky; top: 0; }
+            .hr-sidebar-brand { padding: 0.75rem 1rem; border-bottom: none; }
+            .hr-sidebar-nav { 
+                display: flex; 
+                flex-wrap: nowrap;
+                overflow-x: auto; 
+                padding: 0 0.5rem 0.5rem; 
+                scrollbar-width: none; 
+                -ms-overflow-style: none;
+            }
+            .hr-sidebar-nav::-webkit-scrollbar { display: none; }
+            .hr-nav-link { 
+                white-space: nowrap; 
+                border-left: none; 
+                border-bottom: 3px solid transparent; 
+                padding: 0.6rem 1rem; 
+                flex-shrink: 0;
+            }
             .hr-nav-link.active { border-bottom-color: var(--hr-primary); border-left-color: transparent; }
             .hr-main { margin-left: 0; padding: 1rem; }
-            .hr-sidebar-footer { display: none; }
+            .hr-sidebar-footer { 
+                display: flex; 
+                padding: 0.5rem 1rem; 
+                justify-content: space-between; 
+                align-items: center;
+                background: rgba(0,0,0,0.1);
+            }
+            .hr-logout { margin-top: 0; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; }
         }
     </style>
 </head>
@@ -79,6 +101,16 @@
             <a href="{% url 'hr_dashboard' %}" class="hr-nav-link {% if request.resolver_match.url_name == 'hr_dashboard' %}active{% endif %}">
                 <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
             </a>
+            
+            {% if request.user.role == 'FOUNDER' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'orders_list' %}" class="hr-nav-link">
+                <i class="bi bi-clipboard-check"></i> <span>Заказы</span>
+            </a>
+            <a href="{% url 'clients_list' %}" class="hr-nav-link">
+                <i class="bi bi-people"></i> <span>Клиенты</span>
+            </a>
+            {% endif %}
+
             <a href="{% url 'hr_employees' %}" class="hr-nav-link {% if 'employee' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-person-badge"></i> <span>Сотрудники</span>
             </a>
@@ -87,6 +119,10 @@
             </a>
             <a href="{% url 'hr_settings' %}" class="hr-nav-link {% if request.resolver_match.url_name == 'hr_settings' %}active{% endif %}">
                 <i class="bi bi-gear"></i> <span>Настройки</span>
+            </a>
+            
+            <a href="{% url 'dashboard' %}" class="hr-nav-link opacity-75">
+                <i class="bi bi-arrow-left-circle"></i> <span>Главная CRM</span>
             </a>
         </nav>
         <div class="hr-sidebar-footer">
