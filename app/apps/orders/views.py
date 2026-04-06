@@ -310,13 +310,27 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return context
     
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
+        user = self.request.user
+        form.instance.created_by = user
+
         response = super().form_valid(form)
-        # Отправляем уведомление в Telegram
-        try:
-            NotificationService.new_order(self.object)
-        except Exception:
-            pass  # Не блокируем создание заказа если Telegram недоступен
+        
+        # Автоматическая передача менеджеру, если создатель - оператор
+        if self._is_operator(user):
+            try:
+                OrderStatusService.transfer_to_manager(self.object, user)
+            except Exception as e:
+                logger.error(f"Error in automatic order transfer: {e}")
+
+        # Отправляем уведомление о создании заказа в Telegram (если еще не отправлено сервисом выше)
+        # Примечание: transfer_to_manager уже отправляет уведомление о передаче.
+        # Если это не оператор, отправляем обычное уведомление о новом заказе.
+        if not self._is_operator(user):
+            try:
+                NotificationService.new_order(self.object)
+            except Exception:
+                pass  # Не блокируем создание заказа если Telegram недоступен
+        
         return response
 
     def form_invalid(self, form):

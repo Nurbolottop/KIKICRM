@@ -506,9 +506,13 @@
                             </div>
                         </div>
 
-                        <!-- Особые пожелания -->
+                        <!-- Доп. услуги и Особые пожелания -->
                         <div class="row g-3 mt-3">
-                            <div class="col-12">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.work_scope.label }}</label>
+                                {{ form.work_scope }}
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">{{ form.comment.label }}</label>
                                 {{ form.comment }}
                             </div>
@@ -757,17 +761,6 @@
                                     </div>
                                 {% else %}
                                     {{ form.bathrooms_count }}
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{{ form.work_scope.label }}</label>
-                                {% if is_manager %}
-                                    <div class="field-readonly">
-                                        <i class="bi bi-card-text text-muted"></i>
-                                        <span>{{ form.instance.work_scope|default:"—" }}</span>
-                                    </div>
-                                {% else %}
-                                    {{ form.work_scope }}
                                 {% endif %}
                             </div>
                         </div>

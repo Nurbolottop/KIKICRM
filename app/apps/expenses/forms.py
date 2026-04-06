@@ -34,11 +34,7 @@ class ExpenseForm(forms.ModelForm):
         from datetime import timedelta
         from apps.orders.models import Order
         
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-        self.fields['order'].queryset = Order.objects.filter(
-            status__in=['IN_WORK', 'ON_REVIEW', 'COMPLETED'],
-            created_at__gte=thirty_days_ago
-        ).order_by('-created_at')
+        self.fields['order'].queryset = Order.objects.all().order_by('-created_at')
         self.fields['order'].required = False
         self.fields['category'].required = False
 

@@ -39,7 +39,7 @@ class OrderForm(forms.ModelForm):
             'windows_count': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}),
             'bathrooms_count': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '1'}),
             'after_renovation': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'work_scope': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Пример: 50м², 2 комнаты, кухня, балкон'}),
+            'work_scope': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Напр: помыть балкон, потолок санузла и т.д.'}),
             'lead_channel': forms.Select(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
             'prepayment_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}),
@@ -64,12 +64,12 @@ class OrderForm(forms.ModelForm):
             'windows_count': 'Количество окон',
             'bathrooms_count': 'Количество санузлов',
             'after_renovation': 'После ремонта',
-            'work_scope': 'Объём работы',
+            'work_scope': 'Доп. услуги',
             'lead_channel': 'Канал привлечения',
             'priority': 'Приоритет',
             'prepayment_amount': 'Сумма предоплаты',
             'price': 'Итоговая стоимость',
-            'comment': 'Заметки',
+            'comment': 'Особые пожелания',
         }
     
     def __init__(self, *args, **kwargs):
