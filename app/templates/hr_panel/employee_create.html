@@ -63,21 +63,6 @@
                 <label class="form-label">Пароль {% if not default_password %}*{% endif %}</label>
                 <input type="text" name="password" class="form-control" placeholder="{% if default_password %}Оставьте пустым для: {{ default_password }}{% else %}Минимум 6 символов{% endif %}">
             </div>
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Дата приема *</label>
-                    <input type="date" name="hire_date" class="form-control" required value="{{ hire_date }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Срок найма *</label>
-                    <select name="contract_term" class="form-select" required>
-                        <option value="3">3 месяца</option>
-                        <option value="6">6 месяцев</option>
-                        <option value="12" selected>1 год</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="mb-4">
                 <label class="form-label">Роль *</label>
                 <select name="role" class="form-select">
@@ -85,22 +70,6 @@
                     <option value="SENIOR_CLEANER" {% if role == 'SENIOR_CLEANER' %}selected{% endif %}>Старший клинер</option>
                     <option value="TRAINEE" {% if role == 'TRAINEE' %}selected{% endif %}>Стажер</option>
                 </select>
-            </div>
-            
-            <div class="mb-4">
-                <label class="form-label">Документы (паспорт, удостоверение)</label>
-                <div id="documents-container">
-                    <div class="document-row mb-2 d-flex gap-2">
-                        <select name="document_types" class="form-select" style="max-width: 150px;">
-                            <option value="PASSPORT">Паспорт</option>
-                            <option value="ID_CARD">ID карта</option>
-                        </select>
-                        <input type="file" name="documents" class="form-control">
-                    </div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addDocumentRow()">
-                    <i class="bi bi-plus-circle me-1"></i> Еще документ
-                </button>
             </div>
 
             <button type="submit" class="btn btn-hr w-100 py-2">
@@ -112,19 +81,4 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-        function addDocumentRow() {
-            const container = document.getElementById('documents-container');
-            const row = document.createElement('div');
-            row.className = 'document-row mb-2 d-flex gap-2';
-            row.innerHTML = `
-                <select name="document_types" class="form-select" style="max-width: 150px;">
-                    <option value="PASSPORT">Паспорт</option>
-                    <option value="ID_CARD">ID карта</option>
-                </select>
-                <input type="file" name="documents" class="form-control">
-            `;
-            container.appendChild(row);
-        }
-    </script>
 {% endblock %}

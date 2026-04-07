@@ -146,38 +146,10 @@ def hr_employee_create(request):
         )
 
         # Создаем запись Employee для пользователя
-        from apps.employees.models import Employee, EmployeeDocument, DocumentType
-        
-        hire_date = request.POST.get('hire_date') or None
-        contract_term = request.POST.get('contract_term') or None
-        contract_end_date = calculate_contract_end(hire_date, contract_term)
-
         employee = Employee.objects.create(
             user=user,
-            status='ACTIVE',
-            employee_code=None,
-            hire_date=hire_date,
-            contract_term=contract_term,
-            contract_end_date=contract_end_date
+            status='ACTIVE'
         )
-
-        # Обрабатываем загрузку документов
-        document_files = request.FILES.getlist('documents')
-        document_types = request.POST.getlist('document_types')
-
-        for i, doc_file in enumerate(document_files):
-            if doc_file:
-                doc_type = document_types[i] if i < len(document_types) else DocumentType.PASSPORT
-                
-                # Проверяем, что тип документа валиден
-                if doc_type not in [dt[0] for dt in DocumentType.choices]:
-                    doc_type = DocumentType.PASSPORT
-                
-                EmployeeDocument.objects.create(
-                    employee=employee,
-                    document_type=doc_type,
-                    file=doc_file
-                )
 
         login_url = request.build_absolute_uri('/accounts/login/')
 
@@ -286,19 +258,19 @@ def hr_employee_edit(request, pk):
                 employee.hire_date = hire_date
                 employee.contract_term = contract_term
                 employee.contract_end_date = contract_end_date
-                employee.save(update_fields=['hire_date', 'contract_term', 'contract_end_date'])
-
-                # Обновляем или создаем документ
-                if doc_number:
-                    if not doc:
-                        doc = EmployeeDocument(employee=employee, is_active=True)
-                    
-                    doc.document_type = doc_type
-                    doc.document_number = doc_number
-                    doc.issued_by = issued_by
-                    doc.issue_date = issue_date
-                    doc.expiry_date = expiry_date
-                    doc.save()
+                
+                # Загрузка файла договора
+                if 'contract_file' in request.FILES:
+                    employee.contract_file = request.FILES['contract_file']
+                
+                # Обновляем паспортные данные в модели Employee
+                employee.passport_type = doc_type
+                employee.passport_number = doc_number
+                employee.passport_issued_by = issued_by
+                employee.passport_issue_date = issue_date
+                employee.passport_expiry_date = expiry_date
+                
+                employee.save()
 
                 messages.success(request, f'Данные {emp.full_name} обновлены.')
                 return redirect('hr_employee_detail', pk=pk)

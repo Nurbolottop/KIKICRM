@@ -315,21 +315,18 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
         response = super().form_valid(form)
         
-        # Автоматическая передача менеджеру, если создатель - оператор
+        # 1. Отправляем уведомление о создании заказа (всегда)
+        try:
+            NotificationService.new_order(self.object)
+        except Exception as e:
+            logger.error(f"Error sending new order notification: {e}")
+
+        # 2. Автоматическая передача менеджеру, если создатель - оператор
         if self._is_operator(user):
             try:
                 OrderStatusService.transfer_to_manager(self.object, user)
             except Exception as e:
                 logger.error(f"Error in automatic order transfer: {e}")
-
-        # Отправляем уведомление о создании заказа в Telegram (если еще не отправлено сервисом выше)
-        # Примечание: transfer_to_manager уже отправляет уведомление о передаче.
-        # Если это не оператор, отправляем обычное уведомление о новом заказе.
-        if not self._is_operator(user):
-            try:
-                NotificationService.new_order(self.object)
-            except Exception:
-                pass  # Не блокируем создание заказа если Telegram недоступен
         
         return response
 
@@ -1081,5 +1078,24 @@ class SeniorSendForReviewView(LoginRequiredMixin, View):
             messages.error(request, str(e))
         except ValueError as e:
             messages.error(request, str(e))
+        
+        return redirect('order_detail', pk=order.pk)
+
+
+class OrderResendNotificationView(LoginRequiredMixin, View):
+    """Повторная отправка уведомления о заказе в Telegram."""
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        
+        # Проверяем права (оператор, менеджер, админ)
+        if not can_create_orders(request.user):
+            raise PermissionDenied('У вас нет прав на отправку уведомлений.')
+        
+        try:
+            NotificationService.new_order(order)
+            messages.success(request, f'Уведомление о заказе {order.order_code} отправлено повторно.')
+        except Exception as e:
+            messages.error(request, f'Ошибка при отправке уведомления: {e}')
         
         return redirect('order_detail', pk=order.pk)

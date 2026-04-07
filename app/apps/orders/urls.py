@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:pk>/transfer-to-manager/', views.OrderTransferToManagerView.as_view(), name='order_transfer_to_manager'),
     path('<int:pk>/reject/', views.OrderRejectByOperatorView.as_view(), name='order_reject'),
     path('<int:pk>/confirm-success/', views.OrderConfirmSuccessView.as_view(), name='order_confirm_success'),
+    path('<int:pk>/resend-notification/', views.OrderResendNotificationView.as_view(), name='order_resend_notification'),
     
     # Manager status URLs
     path('<int:pk>/manager-accept/', views.ManagerAcceptOrderView.as_view(), name='manager_accept'),

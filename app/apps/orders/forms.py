@@ -94,6 +94,8 @@ class OrderForm(forms.ModelForm):
             self.fields['area'].required = False
             # Делаем необязательные числовые поля необязательными
             self.fields['windows_count'].required = False
+            self.fields['rooms_count'].required = False
+            self.fields['bathrooms_count'].required = False
             # Устанавливаем начальные статусы
             self.fields['status'].initial = 'PROCESSING'
             self.fields['operator_status'].initial = 'IN_PROGRESS'
@@ -147,6 +149,11 @@ class OrderForm(forms.ModelForm):
     def clean(self):
         """Общая валидация формы."""
         cleaned_data = super().clean()
+        
+        # Получаем услугу для условной валидации
+        service = cleaned_data.get('service')
+        is_dry_cleaning = service and 'химчистка' in service.name.lower()
+
         # Проверка обязательных полей
         required_fields = {
             'client': 'Клиент',
@@ -155,9 +162,18 @@ class OrderForm(forms.ModelForm):
             'scheduled_date': 'Дата уборки',
             'scheduled_time': 'Время уборки',
         }
+        
+        # Для обычных услуг (не химчистка) комнаты и санузлы обязательны
+        if not is_dry_cleaning:
+            required_fields.update({
+                'rooms_count': 'Количество комнат',
+                'bathrooms_count': 'Количество санузлов',
+            })
+
         for field, label in required_fields.items():
             if not cleaned_data.get(field):
                 self.add_error(field, f'{label} обязателен для заполнения')
+        
         return cleaned_data
 
     def _is_operator(self, user):

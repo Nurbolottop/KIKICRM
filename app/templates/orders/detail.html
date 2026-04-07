@@ -710,6 +710,15 @@
                         </form>
                         {% endif %}
                         
+                        {% if user.role == 'OPERATOR' or user.role == 'ADMIN' or user.role == 'SUPER_ADMIN' or user.is_superuser %}
+                        <form method="post" action="{% url 'order_resend_notification' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-info w-100 mb-1">
+                                <i class="bi bi-telegram"></i> Отправить в Telegram
+                            </button>
+                        </form>
+                        {% endif %}
+
                         {% if can_edit_order %}
                         <a href="{% url 'order_update' order.id %}" class="btn btn-outline-primary">
                             <i class="bi bi-pencil"></i> Редактировать

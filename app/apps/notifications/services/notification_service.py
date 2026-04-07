@@ -50,7 +50,7 @@ class NotificationService:
         property_type_display = order.get_property_type_display() if hasattr(order, 'get_property_type_display') else 'квартира'
         
         # Extra services from order.work_scope or order.extra_services
-        extra_services = order.work_scope if hasattr(order, 'work_scope') and order.work_scope else '—'
+        extra_services = order.work_scope if hasattr(order, 'work_scope') and order.work_scope else 'Нет'
         
         # Notes from order.comment
         notes = order.comment if hasattr(order, 'comment') and order.comment else '—'

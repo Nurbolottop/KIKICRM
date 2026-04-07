@@ -157,13 +157,52 @@
             </div>
 
             <div class="emp-card">
-                <div class="emp-card-title"><i class="bi bi-files"></i> Документы</div>
-                {% if documents %}
+                <div class="emp-card-title"><i class="bi bi-person-badge"></i> Паспортные данные</div>
+                {% if emp.employee.passport_number %}
+                <div class="info-grid mb-3">
+                    <div>
+                        <div class="info-label">Тип и номер</div>
+                        <div class="info-value">{{ emp.employee.get_passport_type_display }}: {{ emp.employee.passport_number }}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Кем выдан</div>
+                        <div class="info-value">{{ emp.employee.passport_issued_by|default:"—" }}</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Дата выдачи</div>
+                        <div class="info-value">{{ emp.employee.passport_issue_date|date:"d.m.Y"|default:"—" }}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Дата окончания</div>
+                        <div class="info-value">{{ emp.employee.passport_expiry_date|date:"d.m.Y"|default:"—" }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0 small">Паспортные данные не заполнены.</p>
+                {% endif %}
+            </div>
+
+            <div class="emp-card">
+                <div class="emp-card-title"><i class="bi bi-files"></i> Документы и Договор</div>
                 <div class="row g-3">
+                    {% if emp.employee.contract_file %}
+                    <div class="col-sm-6">
+                        <a href="{{ emp.employee.contract_file.url }}" target="_blank" class="doc-link border-primary border-opacity-25 bg-primary bg-opacity-10">
+                            <i class="bi bi-file-earmark-pdf fs-4 text-primary"></i>
+                            <div>
+                                <div class="fw-bold text-primary">Договор найма</div>
+                                <div class="small text-muted">Основной файл</div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
                     {% for doc in documents %}
                     <div class="col-sm-6">
                         <a href="{{ doc.file.url }}" target="_blank" class="doc-link">
-                            <i class="bi bi-file-earmark-pdf fs-4"></i>
+                            <i class="bi bi-file-earmark-image fs-4"></i>
                             <div>
                                 <div class="fw-bold">{{ doc.get_document_type_display }}</div>
                                 <div class="small text-muted">№ {{ doc.document_number|default:"скан" }}</div>
@@ -172,8 +211,9 @@
                     </div>
                     {% endfor %}
                 </div>
-                {% else %}
-                <p class="text-muted mb-0">Документы не загружены.</p>
+                
+                {% if not emp.employee.contract_file and not documents %}
+                <p class="text-muted mb-0 small">Файлы не загружены.</p>
                 {% endif %}
             </div>
         </div>

@@ -466,17 +466,6 @@
                             </div>
                         </div>
 
-                        <!-- Доп. услуги и Особые пожелания -->
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-6">
-                                <label class="form-label">{{ form.work_scope.label }}</label>
-                                {{ form.work_scope }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{{ form.comment.label }}</label>
-                                {{ form.comment }}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -516,7 +505,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="container_property_type">
                                 <label class="form-label">{{ form.property_type.label }}</label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
@@ -637,7 +626,7 @@
                                 <div class="text-danger small">{{ form.preliminary_price.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="container_rooms_count">
                                 <label class="form-label {% if form.rooms_count.field.required %}required{% endif %}">{{ form.rooms_count.label }}</label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
@@ -651,7 +640,7 @@
                                 <div class="text-danger small">{{ form.rooms_count.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="container_area">
                                 <label class="form-label {% if form.area.field.required %}required{% endif %}">{{ form.area.label }}</label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
@@ -688,19 +677,37 @@
                                 {% endif %}
                             </div>
                         </div>
+
+                        <!-- Доп. услуги и Особые пожелания -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.work_scope.label }}</label>
+                                {{ form.work_scope }}
+                                {% if form.work_scope.errors %}
+                                <div class="text-danger small">{{ form.work_scope.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.comment.label }}</label>
+                                {{ form.comment }}
+                                {% if form.comment.errors %}
+                                <div class="text-danger small">{{ form.comment.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Block 5: Property Details (Operator fields) -->
-            <div class="col-12">
+            <div class="col-12" id="card_property_details">
                 <div class="card border-0 shadow-sm {% if is_manager %}section-readonly{% endif %}">
                     <div class="card-header bg-light">
                         <h5 class="mb-0"><i class="bi bi-house-door me-2"></i>Детали помещения</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="container_windows_count">
                                 <label class="form-label">{{ form.windows_count.label }}</label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
@@ -710,8 +717,11 @@
                                 {% else %}
                                     {{ form.windows_count }}
                                 {% endif %}
+                                {% if form.windows_count.errors %}
+                                <div class="text-danger small">{{ form.windows_count.errors.0 }}</div>
+                                {% endif %}
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="container_bathrooms_count">
                                 <label class="form-label">{{ form.bathrooms_count.label }}</label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
@@ -720,6 +730,9 @@
                                     </div>
                                 {% else %}
                                     {{ form.bathrooms_count }}
+                                {% endif %}
+                                {% if form.bathrooms_count.errors %}
+                                <div class="text-danger small">{{ form.bathrooms_count.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -764,6 +777,9 @@
                                 {% else %}
                                     {{ form.lead_channel }}
                                 {% endif %}
+                                {% if form.lead_channel.errors %}
+                                <div class="text-danger small">{{ form.lead_channel.errors.0 }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.priority.label }}</label>
@@ -774,6 +790,9 @@
                                     </div>
                                 {% else %}
                                     {{ form.priority }}
+                                {% endif %}
+                                {% if form.priority.errors %}
+                                <div class="text-danger small">{{ form.priority.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -1026,9 +1045,34 @@ document.addEventListener('DOMContentLoaded', function() {
             servicePriceDisplay.textContent = match ? `${match[1]} сом` : '—';
         }
 
+        function toggleServiceFields() {
+            if (!serviceSelect) return;
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            const serviceName = selectedOption ? selectedOption.textContent.toLowerCase() : '';
+            const isDryCleaning = serviceName.includes('химчистка');
+
+            const containers = [
+                'container_property_type',
+                'container_rooms_count',
+                'container_area',
+                'card_property_details'
+            ];
+
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = isDryCleaning ? 'none' : '';
+                }
+            });
+        }
+
         updateServicePrice();
+        toggleServiceFields();
         if (serviceSelect) {
-            serviceSelect.addEventListener('change', updateServicePrice);
+            serviceSelect.addEventListener('change', function() {
+                updateServicePrice();
+                toggleServiceFields();
+            });
         }
     
     // Single submit handler for all operations

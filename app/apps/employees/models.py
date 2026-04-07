@@ -71,6 +71,49 @@ class Employee(models.Model):
         null=True,
         help_text='Автоматически рассчитывается на основе даты приема и срока найма'
     )
+    contract_file = models.FileField(
+        'Файл договора',
+        upload_to='employees/contracts/',
+        blank=True,
+        null=True,
+        help_text='Загрузите скан или фото договора'
+    )
+    
+    # Паспортные данные (вынесены в основную модель для удобства)
+    passport_type = models.CharField(
+        'Тип документа',
+        max_length=20,
+        choices=[
+            ('PASSPORT', 'Паспорт'),
+            ('ID_CARD', 'ID карта'),
+            ('CERTIFICATE', 'Свидетельство'),
+            ('OTHER', 'Другой документ'),
+        ],
+        default='PASSPORT',
+        blank=True
+    )
+    passport_number = models.CharField(
+        'Номер документа',
+        max_length=50,
+        blank=True,
+        default=''
+    )
+    passport_issued_by = models.CharField(
+        'Кем выдан',
+        max_length=255,
+        blank=True,
+        default=''
+    )
+    passport_issue_date = models.DateField(
+        'Дата выдачи',
+        blank=True,
+        null=True
+    )
+    passport_expiry_date = models.DateField(
+        'Дата окончания срока',
+        blank=True,
+        null=True
+    )
     fire_date = models.DateField(
         'Дата увольнения',
         blank=True,
