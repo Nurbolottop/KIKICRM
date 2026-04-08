@@ -119,13 +119,17 @@ class Order(TimeStampedModel):
     # Параметры помещения
     rooms_count = models.PositiveIntegerField(
         'Количество комнат',
-        default=1
+        default=1,
+        null=True,
+        blank=True
     )
     area = models.DecimalField(
         'Площадь (м²)',
         max_digits=6,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
     windows_count = models.PositiveIntegerField(
         'Количество окон',
@@ -136,7 +140,9 @@ class Order(TimeStampedModel):
     )
     bathrooms_count = models.PositiveIntegerField(
         'Количество санузлов',
-        default=1
+        default=1,
+        null=True,
+        blank=True
     )
 
     # Дополнительно
@@ -156,13 +162,16 @@ class Order(TimeStampedModel):
         max_digits=10,
         decimal_places=2,
         default=0,
+        null=True,
         blank=True
     )
     price = models.DecimalField(
         'Итоговая цена',
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
     status = models.CharField(
         'Статус заказа',
@@ -224,6 +233,7 @@ class Order(TimeStampedModel):
         max_digits=10,
         decimal_places=2,
         default=0,
+        null=True,
         blank=True,
         help_text='Указывается оператором при создании заказа'
     )
