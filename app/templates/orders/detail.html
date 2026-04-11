@@ -628,8 +628,9 @@
                     </h6>
                 </div>
                 <div class="card-body">
+                    <textarea id="orderCopyTextSource" class="d-none">{{ order_copy_text }}</textarea>
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-dark" id="copyOrderFormButton" data-copy-text="{{ order_copy_text|escapejs }}">
+                        <button type="button" class="btn btn-outline-dark" id="copyOrderFormButton">
                             <i class="bi bi-clipboard"></i> Скопировать форму
                         </button>
 
@@ -1162,9 +1163,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const copyOrderFormButton = document.getElementById('copyOrderFormButton');
+    const orderCopyTextSource = document.getElementById('orderCopyTextSource');
     if (copyOrderFormButton) {
         copyOrderFormButton.addEventListener('click', async function () {
-            const copyText = copyOrderFormButton.dataset.copyText || '';
+            const copyText = orderCopyTextSource ? orderCopyTextSource.value : '';
             if (!copyText) {
                 alert('Нет данных для копирования');
                 return;
