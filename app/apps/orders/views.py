@@ -26,6 +26,73 @@ from apps.services.models import ServiceInventoryTemplate
 logger = logging.getLogger(__name__)
 
 
+def _build_order_copy_text(order):
+    russian_months = {
+        1: 'января', 2: 'февраля', 3: 'марта', 4: 'апреля',
+        5: 'мая', 6: 'июня', 7: 'июля', 8: 'августа',
+        9: 'сентября', 10: 'октября', 11: 'ноября', 12: 'декабря'
+    }
+
+    client = order.client
+    client_name = client.get_full_name() if client else '—'
+    client_phone = client.phone if client and client.phone else '—'
+    client_address = order.address or (client.address if client and client.address else '—')
+
+    scheduled_date = '—'
+    if order.scheduled_date:
+        month_name = russian_months.get(order.scheduled_date.month, '')
+        scheduled_date = f"{order.scheduled_date.day} {month_name}".strip()
+    scheduled_time = order.scheduled_time.strftime('%H:%M') if order.scheduled_time else '—'
+
+    rooms_count = order.rooms_count if order.rooms_count is not None else '—'
+    area = f"{order.area:.2f}" if order.area is not None else '—'
+    bathrooms = order.bathrooms_count if order.bathrooms_count is not None else '—'
+    windows = order.windows_count if order.windows_count is not None else '—'
+
+    service_name = order.service.name if order.service else '—'
+    extra_services = order.work_scope if order.work_scope else 'Нет'
+    special_notes = order.comment if order.comment else '—'
+
+    payment_method = getattr(order, 'payment_method', None) or 'наличка'
+    prepayment_text = f"• Задаток: {order.prepayment_amount:.2f} сом\n" if order.prepayment_amount else ''
+
+    if order.preliminary_price and order.preliminary_price > 0:
+        total_text = f"{order.preliminary_price:.2f} сом (предварительно)"
+    elif order.price and order.price > 0:
+        total_text = f"{order.price:.2f} сом"
+    else:
+        total_text = 'Сумму посчитать на месте'
+
+    order_code = order.order_code or f"#{order.id}"
+    return (
+        f"🆕 Заказ {order_code}\n\n"
+        f"Клиент:\n"
+        f"• ФИО: {client_name}\n"
+        f"• Телефон: {client_phone}\n"
+        f"• Адрес: {client_address}\n\n"
+        f"Детали уборки:\n"
+        f"• Дата и время: {scheduled_date}, {scheduled_time}\n"
+        f"• Вид помещения: {order.get_property_type_display()}\n"
+        f"• Комнаты: {rooms_count}\n"
+        f"• Площадь: {area} м²\n"
+        f"• Санузлы: {bathrooms}\n"
+        f"• Окна: {windows}\n"
+        f"• После ремонта: {'Да' if order.after_renovation else 'Нет'}\n\n"
+        f"Услуги:\n"
+        f"• Основная: {service_name}\n"
+        f"• Доп.услуги: {extra_services}\n"
+        f"• Особые пожелания: {special_notes}\n\n"
+        f"Оплата:\n"
+        f"• Способ: {payment_method}\n"
+        f"{prepayment_text}\n"
+        f"💰 Итоговая сумма: {total_text}\n\n"
+        f"⚠️ Примечание:\n"
+        f"1. Клиент должен проверить работу сразу после уборки. Жалобы после ухода клинеров не принимаются.\n\n"
+        f"2. В доме, в квартире и в объекте должна быть вода, в каждой комнате должен быть свет.\n\n"
+        f"3. Оплату строго давать менеджеру если наличка, если перевод на номер мбанк +996 221 241 172 Кишимжан К и чек оператору."
+    )
+
+
 def _parse_decimal(value, default='0'):
     try:
         if value in (None, ''):
@@ -444,6 +511,7 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         context['tasks_completed'] = context['tasks_list'].filter(
             status__in=['DONE', 'SKIPPED']
         ).count()
+        context['order_copy_text'] = _build_order_copy_text(order)
         
         return context
     

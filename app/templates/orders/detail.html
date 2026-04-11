@@ -629,6 +629,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-dark" id="copyOrderFormButton" data-copy-text="{{ order_copy_text|escapejs }}">
+                            <i class="bi bi-clipboard"></i> Скопировать форму
+                        </button>
+
                         {# OPERATOR ACTIONS #}
                         {% if operator_actions.can_reject %}
                         <form method="post" action="{% url 'order_reject' order.id %}">
@@ -1157,6 +1161,46 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const copyOrderFormButton = document.getElementById('copyOrderFormButton');
+    if (copyOrderFormButton) {
+        copyOrderFormButton.addEventListener('click', async function () {
+            const copyText = copyOrderFormButton.dataset.copyText || '';
+            if (!copyText) {
+                alert('Нет данных для копирования');
+                return;
+            }
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(copyText);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = copyText;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'absolute';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+
+                const originalText = copyOrderFormButton.innerHTML;
+                copyOrderFormButton.innerHTML = '<i class="bi bi-check2"></i> Скопировано';
+                copyOrderFormButton.classList.remove('btn-outline-dark');
+                copyOrderFormButton.classList.add('btn-success');
+                setTimeout(function () {
+                    copyOrderFormButton.innerHTML = originalText;
+                    copyOrderFormButton.classList.remove('btn-success');
+                    copyOrderFormButton.classList.add('btn-outline-dark');
+                }, 2000);
+            } catch (error) {
+                console.error(error);
+                alert('Не удалось скопировать текст');
+            }
+        });
+    }
+
     const confirmModalEl = document.getElementById('confirmActionModal');
     const confirmModalTitleEl = document.getElementById('confirmActionModalLabel');
     const confirmModalBodyEl = document.getElementById('confirmActionModalBody');
