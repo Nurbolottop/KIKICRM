@@ -152,7 +152,8 @@ class OrderForm(forms.ModelForm):
         
         # Получаем услугу для условной валидации
         service = cleaned_data.get('service')
-        is_dry_cleaning = service and 'химчистка' in service.name.lower()
+        # Используем флаг is_extra_only вместо хардкода по названию
+        is_extra_only = service and getattr(service, 'is_extra_only', False)
 
         # Проверка обязательных полей
         required_fields = {
@@ -163,8 +164,8 @@ class OrderForm(forms.ModelForm):
             'scheduled_time': 'Время уборки',
         }
         
-        # Для обычных услуг (не химчистка) комнаты и санузлы обязательны
-        if not is_dry_cleaning:
+        # Для обычных услуг (не доп.) — комнаты и санузлы обязательны
+        if not is_extra_only:
             required_fields.update({
                 'rooms_count': 'Количество комнат',
                 'bathrooms_count': 'Количество санузлов',
@@ -175,6 +176,7 @@ class OrderForm(forms.ModelForm):
                 self.add_error(field, f'{label} обязателен для заполнения')
         
         return cleaned_data
+
 
     def _is_operator(self, user):
         """Проверка является ли пользователь оператором."""

@@ -395,10 +395,9 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         context['is_manager'] = self._is_manager(self.request.user)
         context['is_operator'] = self._is_operator(self.request.user)
         from apps.services.models import Service
-        context['service_prices'] = {
-            str(service.id): str(service.price)
-            for service in Service.objects.filter(is_active=True).only('id', 'price')
-        }
+        active_services = Service.objects.filter(is_active=True).only('id', 'price', 'is_extra_only')
+        context['service_prices'] = {str(s.id): str(s.price) for s in active_services}
+        context['service_extra_map'] = {str(s.id): s.is_extra_only for s in active_services}
         context['inventory_items'] = InventoryItem.objects.filter(is_active=True).select_related('category').order_by(
             'item_type', 'category__name', 'name'
         )
@@ -679,6 +678,11 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         inventory_rows, inventory_prefilled = build_inventory_usage_initial(order)
         context['inventory_usage_rows'] = inventory_rows
         context['inventory_usage_prefilled'] = inventory_prefilled
+        # Данные об услугах для JS (цена и флаг is_extra_only)
+        from apps.services.models import Service as SvcModel
+        active_services = SvcModel.objects.filter(is_active=True).only('id', 'price', 'is_extra_only')
+        context['service_prices'] = {str(s.id): str(s.price) for s in active_services}
+        context['service_extra_map'] = {str(s.id): s.is_extra_only for s in active_services}
         
         # Дополнительные задачи (extra_tasks)
         context['extra_tasks'] = OrderTask.objects.filter(

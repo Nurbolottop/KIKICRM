@@ -93,6 +93,7 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
             service.senior_cleaner_count = request.POST.get('senior_cleaner_count', service.senior_cleaner_count)
             service.cleaner_count = request.POST.get('cleaner_count', service.cleaner_count)
             service.is_active = request.POST.get('is_active') == 'on'
+            service.is_extra_only = request.POST.get('is_extra_only') == 'on'
             
             # Handle room-based checklist from JSON data
             checklist_data = request.POST.get('checklist_data')
@@ -133,6 +134,7 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
                     'senior_cleaner_count': service.senior_cleaner_count,
                     'cleaner_count': service.cleaner_count,
                     'is_active': service.is_active,
+                    'is_extra_only': service.is_extra_only,
                     'checklist': service.checklist,
                     'image_url': service.image.url if service.image else None,
                 }

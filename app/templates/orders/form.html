@@ -1125,6 +1125,7 @@
 </style>
 
 {{ service_prices|json_script:"service-prices-data" }}
+{{ service_extra_map|json_script:"service-extra-map-data" }}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1136,6 +1137,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const servicePriceDisplay = document.getElementById('service-price-display');
         const servicePricesNode = document.getElementById('service-prices-data');
         const servicePrices = servicePricesNode ? JSON.parse(servicePricesNode.textContent) : {};
+        const serviceExtraMapNode = document.getElementById('service-extra-map-data');
+        const serviceExtraMap = serviceExtraMapNode ? JSON.parse(serviceExtraMapNode.textContent) : {};
         
         // Debug: log form errors if present
         const formErrors = document.querySelectorAll('.invalid-feedback, .text-danger, .alert-danger');
@@ -1166,23 +1169,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function toggleServiceFields() {
             if (!serviceSelect) return;
-            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const serviceName = selectedOption ? selectedOption.textContent.toLowerCase() : '';
-            const isDryCleaning = serviceName.includes('химчистка');
+            const serviceId = String(serviceSelect.value || '').trim();
+            // Используем флаг is_extra_only из контекста (не хардкод)
+            const isExtraOnly = serviceExtraMap[serviceId] === true;
 
+            // Блоки деталей помещения, которые скрываем для доп. услуг
             const containers = [
                 'container_property_type',
                 'container_rooms_count',
                 'container_area',
-                'card_property_details'
+                'container_windows_count',
+                'container_bathrooms_count',
+                'card_property_details',
             ];
 
             containers.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    el.style.display = isDryCleaning ? 'none' : '';
+                    el.style.display = isExtraOnly ? 'none' : '';
                 }
             });
+
+            // Блок «Тип помещения + дата»: прячем только container_property_type
+            // Блок «Детали помещения» (карточка card_property_details) — скрываем
+            const afterRenovationContainer = document.querySelector('.form-check:has(#id_after_renovation)');
+            if (afterRenovationContainer) {
+                afterRenovationContainer.style.display = isExtraOnly ? 'none' : '';
+            }
+
+            // Показываем бадж что это доп. услуга
+            let extraBadge = document.getElementById('extra-only-badge');
+            if (isExtraOnly) {
+                if (!extraBadge) {
+                    extraBadge = document.createElement('span');
+                    extraBadge.id = 'extra-only-badge';
+                    extraBadge.className = 'badge bg-info text-dark ms-2';
+                    extraBadge.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Доп. услуга — помещение не нужно';
+                    const svcLabel = document.querySelector('label[for="id_service"]');
+                    if (svcLabel) svcLabel.appendChild(extraBadge);
+                }
+            } else {
+                if (extraBadge) extraBadge.remove();
+            }
         }
 
         updateServicePrice();

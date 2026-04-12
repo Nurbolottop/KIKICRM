@@ -7,7 +7,7 @@ class ServiceForm(forms.ModelForm):
     
     class Meta:
         model = Service
-        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'is_active']
+        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'is_active', 'is_extra_only']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control', 
@@ -57,6 +57,10 @@ class ServiceForm(forms.ModelForm):
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
+            }),
+            'is_extra_only': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_is_extra_only',
             }),
         }
 

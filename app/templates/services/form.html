@@ -273,9 +273,24 @@
                             <div class="form-text mt-2">Этот шаблон будет подставляться менеджеру в заказе как стартовый список инвентаря.</div>
                         </div>
                         
-                        <div class="mb-3 form-check">
-                            {{ form.is_active }}
-                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">Активна</label>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label">Активна</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check" id="extra-only-check-wrapper">
+                                    {{ form.is_extra_only }}
+                                    <label for="{{ form.is_extra_only.id_for_label }}" class="form-check-label fw-medium text-info">
+                                        <i class="bi bi-plus-circle me-1"></i> Только доп. услуга
+                                    </label>
+                                    <div class="form-text">
+                                        Включите для услуг типа «Химчистка мебели», «Мытьё окон» — при выборе такой услуги в заказе поля помещения (<em>комнаты, площадь, санузлы</em>) не потребуются.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="d-flex justify-content-between">
