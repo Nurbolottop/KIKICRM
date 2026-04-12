@@ -48,7 +48,7 @@
                             {% endif %}
                         </div>
 
-                        <div class="row">
+                        <div class="row" id="svc-room-count-block">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.senior_cleaner_salary.id_for_label }}" class="form-label">Оплата ст. клинеру (сом)</label>
                                 {{ form.senior_cleaner_salary }}
@@ -86,7 +86,7 @@
                         </div>
                         
                         <!-- Чеклист по комнатам -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="svc-checklist-block">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <label class="form-label mb-0">Чеклист по комнатам</label>
                                 <div class="d-flex gap-2">
@@ -730,6 +730,23 @@ document.addEventListener('input', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
     scheduleTotalDeadlineUpdate();
+
+    // ── Скрываем поля помещения если is_extra_only ────────────
+    const extraOnlyChk = document.getElementById('id_is_extra_only');
+    const roomBlock    = document.getElementById('svc-room-count-block');
+    const checklistBlock = document.getElementById('svc-checklist-block');
+
+    function applyExtraOnlyToggle() {
+        if (!extraOnlyChk) return;
+        const hide = extraOnlyChk.checked;
+        if (roomBlock) roomBlock.style.display = hide ? 'none' : '';
+        if (checklistBlock) checklistBlock.style.display = hide ? 'none' : '';
+    }
+
+    if (extraOnlyChk) {
+        extraOnlyChk.addEventListener('change', applyExtraOnlyToggle);
+        applyExtraOnlyToggle(); // применяем при загрузке (edit mode)
+    }
 });
 </script>
 {% endblock %}

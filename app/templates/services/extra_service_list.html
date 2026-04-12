@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Доп. услуги (прайс-лист) - CRM KIKI{% endblock %}
+{% block page_title %}Доп. услуги{% endblock %}
+
+{% block content %}
+<div class="extra-services-container">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1">Дополнительные услуги</h2>
+            <p class="text-muted mb-0">Прайс-лист позиций, добавляемых к заказу</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'services_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Основные услуги
+            </a>
+            <button class="btn btn-primary" id="addExtraSvcBtn" data-bs-toggle="modal" data-bs-target="#extraSvcModal">
+                <i class="bi bi-plus-lg"></i> Добавить позицию
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Price list table -->
+    {% if extra_services %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="extraServicesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="width:40%">Название</th>
+                            <th>Описание</th>
+                            <th class="text-end" style="width:130px">Цена</th>
+                            <th class="text-center" style="width:90px">Статус</th>
+                            <th class="text-end pe-3" style="width:120px">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for es in extra_services %}
+                        <tr id="row-{{ es.id }}" class="{% if not es.is_active %}opacity-50{% endif %}">
+                            <td class="ps-3 fw-medium">
+                                <span class="es-name-{{ es.id }}">{{ es.name }}</span>
+                            </td>
+                            <td class="text-muted small">
+                                <span class="es-desc-{{ es.id }}">{{ es.description|default:"—" }}</span>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-primary-subtle text-primary fs-6 es-price-{{ es.id }}">
+                                    {{ es.price|floatformat:0 }} сом
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if es.is_active %}
+                                <span class="badge bg-success-subtle text-success">Активна</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Скрыта</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                        onclick="openEditModal({{ es.id }}, '{{ es.name|escapejs }}', '{{ es.description|escapejs }}', '{{ es.price }}', {{ es.is_active|lower }})"
+                                        title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="post" action="{% url 'extra_service_delete' es.id %}"
+                                        onsubmit="return confirm('Удалить «{{ es.name }}»?')">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-tags" style="font-size:64px; color:#dee2e6;"></i>
+        <h5 class="text-muted mt-3">Прайс-лист пуст</h5>
+        <p class="text-muted">Добавьте позиции доп. услуг — они потом появятся в форме заказа</p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#extraSvcModal">
+            <i class="bi bi-plus-lg"></i> Добавить первую позицию
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Создание / Редактирование -->
+<div class="modal fade" id="extraSvcModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="extraSvcModalTitle">Добавить позицию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="extraSvcError" class="alert alert-danger d-none"></div>
+                <input type="hidden" id="editSvcId" value="">
+
+                <div class="mb-3">
+                    <label class="form-label required">Название <span class="text-danger">*</span></label>
+                    <input type="text" id="svcName" class="form-control" placeholder="Напр: Диван 3-местный">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Описание</label>
+                    <textarea id="svcDesc" class="form-control" rows="2" placeholder="Необязательно"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label required">Цена (сом) <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="number" id="svcPrice" class="form-control" min="0" step="1" placeholder="0">
+                        <span class="input-group-text">сом</span>
+                    </div>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" id="svcIsActive" class="form-check-input" checked>
+                    <label class="form-check-label" for="svcIsActive">Активна (видна операторам)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveSvcBtn" onclick="saveExtraService()">
+                    <i class="bi bi-check-lg"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.extra-services-container { max-width: 960px; }
+.table > :not(caption) > * > * { padding: 0.85rem 0.75rem; }
+</style>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const CREATE_URL = '{% url "extra_service_create" %}';
+
+function getUpdateUrl(id) {
+    return `/services/extra/${id}/update/`;
+}
+
+function openEditModal(id, name, desc, price, isActive) {
+    document.getElementById('extraSvcModalTitle').textContent = 'Редактировать позицию';
+    document.getElementById('editSvcId').value = id;
+    document.getElementById('svcName').value = name;
+    document.getElementById('svcDesc').value = desc;
+    document.getElementById('svcPrice').value = price;
+    document.getElementById('svcIsActive').checked = isActive;
+    document.getElementById('extraSvcError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('extraSvcModal')).show();
+}
+
+document.getElementById('addExtraSvcBtn').addEventListener('click', function () {
+    document.getElementById('extraSvcModalTitle').textContent = 'Добавить позицию';
+    document.getElementById('editSvcId').value = '';
+    document.getElementById('svcName').value = '';
+    document.getElementById('svcDesc').value = '';
+    document.getElementById('svcPrice').value = '';
+    document.getElementById('svcIsActive').checked = true;
+    document.getElementById('extraSvcError').classList.add('d-none');
+});
+
+async function saveExtraService() {
+    const id = document.getElementById('editSvcId').value;
+    const name = document.getElementById('svcName').value.trim();
+    const desc = document.getElementById('svcDesc').value.trim();
+    const price = document.getElementById('svcPrice').value.trim();
+    const isActive = document.getElementById('svcIsActive').checked;
+    const errEl = document.getElementById('extraSvcError');
+
+    if (!name || !price) {
+        errEl.textContent = 'Название и цена обязательны';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const url = id ? getUpdateUrl(id) : CREATE_URL;
+    const body = new URLSearchParams({
+        name, description: desc, price,
+        is_active: isActive ? 'on' : '',
+        csrfmiddlewaretoken: CSRF,
+    });
+
+    const btn = document.getElementById('saveSvcBtn');
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch(url, { method: 'POST', body });
+        const data = await resp.json();
+        if (data.ok) {
+            window.location.reload();
+        } else {
+            errEl.textContent = data.error || 'Ошибка сохранения';
+            errEl.classList.remove('d-none');
+        }
+    } catch (e) {
+        errEl.textContent = 'Сетевая ошибка';
+        errEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

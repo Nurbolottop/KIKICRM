@@ -3,11 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.views import View
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.db.models.deletion import ProtectedError
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
-from .models import Service, ServiceInventoryTemplate
+from .models import Service, ServiceInventoryTemplate, ExtraService
 from .forms import ServiceForm
 from apps.inventory.models import InventoryItem
 
@@ -289,3 +289,87 @@ class ServiceDeleteView(LoginRequiredMixin, DeleteView):
         except ProtectedError:
             messages.error(request, f'Нельзя удалить услугу "{self.object.name}", так как она используется в заказах.')
         return redirect(self.get_success_url())
+
+
+# ─────────────────────────────────────────────────────────────
+#  ExtraService (Прайс-лист доп. услуг)
+# ─────────────────────────────────────────────────────────────
+
+class ExtraServiceListView(LoginRequiredMixin, ListView):
+    """Список доп. услуг (прайс-лист)."""
+    model = ExtraService
+    template_name = 'services/extra_service_list.html'
+    context_object_name = 'extra_services'
+    ordering = ['name']
+
+
+class ExtraServiceCreateAjaxView(LoginRequiredMixin, View):
+    """AJAX создание доп. услуги."""
+    def post(self, request):
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        price_raw = request.POST.get('price', '0').strip()
+        is_active = request.POST.get('is_active') == 'on'
+
+        if not name:
+            return JsonResponse({'ok': False, 'error': 'Название обязательно'}, status=400)
+        try:
+            price = float(price_raw)
+        except (ValueError, TypeError):
+            return JsonResponse({'ok': False, 'error': 'Некорректная цена'}, status=400)
+
+        svc = ExtraService.objects.create(
+            name=name,
+            description=description,
+            price=price,
+            is_active=is_active,
+        )
+        return JsonResponse({
+            'ok': True,
+            'extra_service': {
+                'id': svc.id,
+                'name': svc.name,
+                'description': svc.description,
+                'price': str(svc.price),
+                'is_active': svc.is_active,
+            }
+        })
+
+
+class ExtraServiceUpdateAjaxView(LoginRequiredMixin, View):
+    """AJAX обновление доп. услуги."""
+    def post(self, request, pk):
+        svc = get_object_or_404(ExtraService, pk=pk)
+        svc.name = request.POST.get('name', svc.name).strip()
+        svc.description = request.POST.get('description', svc.description).strip()
+        price_raw = request.POST.get('price', str(svc.price)).strip()
+        try:
+            svc.price = float(price_raw)
+        except (ValueError, TypeError):
+            pass
+        svc.is_active = request.POST.get('is_active') == 'on'
+        svc.save()
+        return JsonResponse({
+            'ok': True,
+            'extra_service': {
+                'id': svc.id,
+                'name': svc.name,
+                'description': svc.description,
+                'price': str(svc.price),
+                'is_active': svc.is_active,
+            }
+        })
+
+
+class ExtraServiceDeleteView(LoginRequiredMixin, View):
+    """Удаление доп. услуги (POST)."""
+    def post(self, request, pk):
+        from django.contrib import messages
+        svc = get_object_or_404(ExtraService, pk=pk)
+        name = svc.name
+        try:
+            svc.delete()
+            messages.success(request, f'Доп. услуга «{name}» удалена.')
+        except ProtectedError:
+            messages.error(request, f'Нельзя удалить «{name}» — используется в заказах.')
+        return redirect('extra_services_list')

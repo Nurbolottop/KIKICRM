@@ -181,7 +181,7 @@
                             <input type="number" name="senior_cleaner_salary" id="editSeniorCleanerSalary" class="form-control" step="0.01" value="{{ service.senior_cleaner_salary|default:0 }}">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="edit-room-count-block">
                             <label class="form-label">Количество комнат</label>
                             <input type="number" name="room_count" id="editRoomCount" class="form-control" min="1" step="1" value="{{ service.room_count|default:1 }}">
                         </div>
@@ -210,7 +210,7 @@
                         </div>
                         
                         <!-- Checklist Edit -->
-                        <div class="col-12">
+                        <div class="col-12" id="edit-checklist-block">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <label class="form-label mb-0">Чеклист по комнатам</label>
                                 <div class="d-flex gap-2">
@@ -599,6 +599,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     scheduleEditTotalDeadlineUpdate();
+
+    // ── Скрываем поля помещения при is_extra_only ─────────────
+    const editExtraChk = document.getElementById('editIsExtraOnly');
+    const editRoomBlock = document.getElementById('edit-room-count-block');
+    const editChecklistBlock = document.getElementById('edit-checklist-block');
+
+    function applyEditExtraToggle() {
+        if (!editExtraChk) return;
+        const hide = editExtraChk.checked;
+        if (editRoomBlock) editRoomBlock.style.display = hide ? 'none' : '';
+        if (editChecklistBlock) editChecklistBlock.style.display = hide ? 'none' : '';
+    }
+
+    if (editExtraChk) {
+        editExtraChk.addEventListener('change', applyEditExtraToggle);
+        applyEditExtraToggle(); // применяем при загрузке
+    }
 });
 
 // Enter key for room tasks
