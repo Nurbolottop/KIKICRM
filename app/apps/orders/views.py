@@ -15,12 +15,12 @@ from apps.common.permissions import (
     can_view_orders, can_create_orders, can_edit_orders, can_delete_orders,
     can_assign_cleaners, PermissionRequiredMixin
 )
-from .models import Order, OrderEmployee, OrderInventoryUsage, OrderPhoto, RefuseSettings, OrderStatus
+from .models import Order, OrderEmployee, OrderInventoryUsage, OrderPhoto, RefuseSettings, OrderStatus, OrderExtraService
 from .forms import OrderForm
 from apps.orders.services.order_status_service import OrderStatusChecker, OrderStatusService
 from apps.notifications.services.notification_service import NotificationService
 from apps.inventory.models import InventoryItem, InventoryTransaction, TransactionType
-from apps.services.models import ServiceInventoryTemplate
+from apps.services.models import ServiceInventoryTemplate, ExtraService
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,18 @@ def _build_order_copy_text(order):
     windows = order.windows_count if order.windows_count is not None else '—'
 
     service_name = order.service.name if order.service else '—'
-    extra_services = order.work_scope if order.work_scope else 'Нет'
+    # Доп. услуги: сначала из OrderExtraService, если нет — из work_scope (текст)
+    order_extra_svcs = order.order_extra_services.select_related('extra_service').all()
+    if order_extra_svcs.exists():
+        extra_services_lines = [
+            f"- {oes.extra_service.name} x{oes.quantity} = {oes.total_price:.0f} сом"
+            for oes in order_extra_svcs
+        ]
+        extra_services = '\n'.join(extra_services_lines)
+    elif order.work_scope:
+        extra_services = order.work_scope
+    else:
+        extra_services = 'Нет'
     special_notes = order.comment if order.comment else '—'
 
     payment_method = getattr(order, 'payment_method', None) or 'наличка'
@@ -186,6 +197,46 @@ def sync_order_inventory_usage(order, request):
                 comment=f'Возврат инвентаря после удаления строки использования по заказу {order.order_code}',
             )
         usage.delete()
+
+
+def sync_order_extra_services(order, request):
+    """Синхронизирует доп. услуги заказа на основе POST-данных."""
+    service_ids = request.POST.getlist('extra_service_id[]')
+    quantities = request.POST.getlist('extra_service_qty[]')
+    notes = request.POST.getlist('extra_service_note[]')
+
+    parsed = []
+    for idx, raw_id in enumerate(service_ids):
+        sid = (raw_id or '').strip()
+        if not sid:
+            continue
+        try:
+            qty = max(1, int(quantities[idx]) if idx < len(quantities) else 1)
+        except (ValueError, TypeError):
+            qty = 1
+        note = (notes[idx] if idx < len(notes) else '').strip()
+        parsed.append((int(sid), qty, note))
+
+    kept_ids = []
+    svc_map = {s.id: s for s in ExtraService.objects.filter(id__in=[r[0] for r in parsed])}
+
+    for svc_id, qty, note in parsed:
+        svc = svc_map.get(svc_id)
+        if not svc:
+            continue
+        obj, created = OrderExtraService.objects.update_or_create(
+            order=order,
+            extra_service=svc,
+            defaults={
+                'quantity': qty,
+                'price_at_order': svc.price,
+                'note': note,
+            }
+        )
+        kept_ids.append(obj.id)
+
+    # Удаляем те доп. услуги, которых нет в новом списке
+    order.order_extra_services.exclude(id__in=kept_ids).delete()
 
 
 class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -374,6 +425,9 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
                 context['selected_client'] = Client.objects.get(pk=client_id)
             except Client.DoesNotExist:
                 pass
+        # Массив активных доп. услуг для выбора оператором
+        context['extra_services_available'] = ExtraService.objects.filter(is_active=True).order_by('name')
+        context['order_extra_services'] = []  # при создании заказа пусто
         return context
     
     def form_valid(self, form):
@@ -381,6 +435,9 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         form.instance.created_by = user
 
         response = super().form_valid(form)
+        
+        # 0. Синхронизация доп. услуг
+        sync_order_extra_services(self.object, self.request)
         
         # 1. Отправляем уведомление о создании заказа (всегда)
         try:
@@ -512,6 +569,7 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
             status__in=['DONE', 'SKIPPED']
         ).count()
         context['order_copy_text'] = _build_order_copy_text(order)
+        context['order_extra_services'] = order.order_extra_services.select_related('extra_service').all()
         
         return context
     
@@ -627,6 +685,10 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
             order=order,
             order_position__gte=100000  # Доп. задачи имеют позиции >= 100000
         ).order_by('order_position')
+        
+        # Доп. услуги: список доступных и уже прикреплённых к заказу
+        context['extra_services_available'] = ExtraService.objects.filter(is_active=True).order_by('name')
+        context['order_extra_services'] = order.order_extra_services.select_related('extra_service').all()
         
         return context
     
@@ -764,6 +826,9 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
                     )
 
             sync_order_inventory_usage(order, self.request)
+        
+        # Синхронизация доп. услуг доступна для всех ролей (оператор, менеджер, основатель)
+        sync_order_extra_services(self.object, self.request)
         
         return response
     

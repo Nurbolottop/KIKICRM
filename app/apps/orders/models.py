@@ -626,6 +626,55 @@ class OrderInventoryUsage(models.Model):
         return f'{self.order.order_code} — {self.inventory_item.name} ({self.quantity})'
 
 
+class OrderExtraService(models.Model):
+    """Дополнительная услуга, прикреплённая к заказу."""
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='order_extra_services',
+        verbose_name='Заказ'
+    )
+    extra_service = models.ForeignKey(
+        'services.ExtraService',
+        on_delete=models.PROTECT,
+        related_name='order_usages',
+        verbose_name='Доп. услуга'
+    )
+    quantity = models.PositiveIntegerField(
+        'Количество',
+        default=1,
+        help_text='Количество единиц данной доп. услуги'
+    )
+    price_at_order = models.DecimalField(
+        'Цена на момент заказа',
+        max_digits=10,
+        decimal_places=2,
+        help_text='Фиксируется при добавлении, чтобы изменение базовой цены не влияло на старые заказы'
+    )
+    note = models.CharField(
+        'Примечание',
+        max_length=255,
+        blank=True,
+        default=''
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Доп. услуга в заказе'
+        verbose_name_plural = 'Доп. услуги в заказах'
+        ordering = ['extra_service__name']
+        unique_together = ('order', 'extra_service')
+
+    def __str__(self):
+        return f'{self.order.order_code} — {self.extra_service.name} x{self.quantity}'
+
+    @property
+    def total_price(self):
+        """Итоговая стоимость позиции."""
+        return self.price_at_order * self.quantity
+
+
 @receiver(post_save, sender=Order)
 def order_completed_notification(sender, instance, created, **kwargs):
     """Отправляет уведомление при завершении заказа."""

@@ -678,14 +678,133 @@
                             </div>
                         </div>
 
-                        <!-- Доп. услуги и Особые пожелания -->
+                        <!-- Дополнительные услуги (структурированный список) -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">
+                                        <i class="bi bi-plus-circle-dotted text-primary me-2"></i>Дополнительные услуги
+                                        <span class="badge bg-secondary ms-1">необязательно</span>
+                                    </label>
+                                    {% if not is_manager %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-extra-service-btn">
+                                        <i class="bi bi-plus-lg"></i> Добавить услугу
+                                    </button>
+                                    {% endif %}
+                                </div>
+
+                                {% if is_manager %}
+                                    <!-- Для менеджера показываем только список прикреплённых доп. услуг (readonly) -->
+                                    {% if order_extra_services %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Услуга</th>
+                                                    <th class="text-center" style="width:100px">Кол-во</th>
+                                                    <th class="text-end" style="width:130px">Цена за ед.</th>
+                                                    <th class="text-end" style="width:130px">Итого</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for oes in order_extra_services %}
+                                                <tr>
+                                                    <td>{{ oes.extra_service.name }}</td>
+                                                    <td class="text-center">{{ oes.quantity }}</td>
+                                                    <td class="text-end">{{ oes.price_at_order }} сом</td>
+                                                    <td class="text-end fw-medium">{{ oes.total_price }} сом</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-muted small fst-italic">Доп. услуги не добавлены</div>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Для оператора/основателя — редактируемый список -->
+                                    <div id="extra-services-container" class="d-grid gap-2">
+                                        {% for oes in order_extra_services %}
+                                        <div class="extra-service-row d-flex gap-2 align-items-center flex-wrap">
+                                            <select class="form-select form-select-sm" name="extra_service_id[]" style="flex: 2; min-width: 200px;">
+                                                <option value="">— Выберите доп. услугу —</option>
+                                                {% for es in extra_services_available %}
+                                                <option value="{{ es.id }}"
+                                                    data-price="{{ es.price }}"
+                                                    {% if oes.extra_service_id == es.id %}selected{% endif %}>
+                                                    {{ es.name }} — {{ es.price }} сом
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="input-group input-group-sm" style="flex: 0 0 120px;">
+                                                <input type="number" class="form-control extra-svc-qty"
+                                                    name="extra_service_qty[]"
+                                                    min="1" value="{{ oes.quantity }}" placeholder="1">
+                                                <span class="input-group-text">шт</span>
+                                            </div>
+                                            <input type="text" class="form-control form-control-sm"
+                                                name="extra_service_note[]"
+                                                value="{{ oes.note }}"
+                                                placeholder="Примечание"
+                                                style="flex: 2; min-width: 140px;">
+                                            <span class="extra-svc-subtotal badge bg-success" style="min-width:90px; text-align:right;">
+                                                {{ oes.total_price }} сом
+                                            </span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger extra-service-remove">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        {% empty %}
+                                        <div class="text-muted small fst-italic" id="extra-service-empty-hint">
+                                            <i class="bi bi-info-circle me-1"></i>Доп. услуги не добавлены. Нажмите «Добавить услугу».
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    <template id="extra-service-row-template">
+                                        <div class="extra-service-row d-flex gap-2 align-items-center flex-wrap">
+                                            <select class="form-select form-select-sm" name="extra_service_id[]" style="flex: 2; min-width: 200px;">
+                                                <option value="">— Выберите доп. услугу —</option>
+                                                {% for es in extra_services_available %}
+                                                <option value="{{ es.id }}" data-price="{{ es.price }}">
+                                                    {{ es.name }} — {{ es.price }} сом
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="input-group input-group-sm" style="flex: 0 0 120px;">
+                                                <input type="number" class="form-control extra-svc-qty"
+                                                    name="extra_service_qty[]"
+                                                    min="1" value="1" placeholder="1">
+                                                <span class="input-group-text">шт</span>
+                                            </div>
+                                            <input type="text" class="form-control form-control-sm"
+                                                name="extra_service_note[]"
+                                                placeholder="Примечание"
+                                                style="flex: 2; min-width: 140px;">
+                                            <span class="extra-svc-subtotal badge bg-secondary" style="min-width:90px; text-align:right;">0 сом</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger extra-service-remove">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <div class="form-text mt-1">
+                                        <i class="bi bi-lightbulb me-1"></i>
+                                        Например: химчистка дивана, мытьё окон, уборка балкона — выберите из списка и укажите количество.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Особые пожелания + заметки -->
                         <div class="row g-3 mt-3">
                             <div class="col-md-6">
-                                <label class="form-label">{{ form.work_scope.label }}</label>
+                                <label class="form-label">Доп. пожелания / объём работы</label>
                                 {{ form.work_scope }}
                                 {% if form.work_scope.errors %}
                                 <div class="text-danger small">{{ form.work_scope.errors.0 }}</div>
                                 {% endif %}
+                                <div class="form-text">Укажите здесь что-то нестандартное, чего нет в списке доп. услуг</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ form.comment.label }}</label>
@@ -1212,6 +1331,58 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inventoryUsageContainer) {
         bindInventoryUsageRemoveButtons(inventoryUsageContainer);
     }
+
+    // ===== OPERATOR SECTION: Extra Services =====
+    const addExtraSvcBtn = document.getElementById('add-extra-service-btn');
+    const extraSvcContainer = document.getElementById('extra-services-container');
+    const extraSvcTemplate = document.getElementById('extra-service-row-template');
+
+    function calcExtraSvcSubtotal(row) {
+        const sel = row.querySelector('select[name="extra_service_id[]"]');
+        const qty = row.querySelector('input[name="extra_service_qty[]"]');
+        const badge = row.querySelector('.extra-svc-subtotal');
+        if (!sel || !qty || !badge) return;
+        const selectedOpt = sel.options[sel.selectedIndex];
+        const price = parseFloat(selectedOpt ? (selectedOpt.getAttribute('data-price') || '0') : '0');
+        const q = parseInt(qty.value) || 1;
+        const total = price * q;
+        badge.textContent = total.toFixed(0) + ' сом';
+        badge.className = 'extra-svc-subtotal badge ' + (total > 0 ? 'bg-success' : 'bg-secondary');
+    }
+
+    function bindExtraSvcRow(row) {
+        const sel = row.querySelector('select[name="extra_service_id[]"]');
+        const qty = row.querySelector('input[name="extra_service_qty[]"]');
+        const removeBtn = row.querySelector('.extra-service-remove');
+        if (sel) sel.addEventListener('change', () => calcExtraSvcSubtotal(row));
+        if (qty) qty.addEventListener('input', () => calcExtraSvcSubtotal(row));
+        if (removeBtn) removeBtn.addEventListener('click', () => {
+            row.remove();
+            const hint = document.getElementById('extra-service-empty-hint');
+            if (hint && extraSvcContainer && !extraSvcContainer.querySelector('.extra-service-row')) {
+                hint.style.display = '';
+            }
+        });
+        calcExtraSvcSubtotal(row);
+    }
+
+    function addExtraSvcRow() {
+        if (!extraSvcTemplate || !extraSvcContainer) return;
+        const hint = document.getElementById('extra-service-empty-hint');
+        if (hint) hint.style.display = 'none';
+        const fragment = extraSvcTemplate.content.cloneNode(true);
+        const row = fragment.querySelector('.extra-service-row');
+        if (row) bindExtraSvcRow(row);
+        extraSvcContainer.appendChild(fragment);
+    }
+
+    if (addExtraSvcBtn) {
+        addExtraSvcBtn.addEventListener('click', addExtraSvcRow);
+    }
+    if (extraSvcContainer) {
+        extraSvcContainer.querySelectorAll('.extra-service-row').forEach(row => bindExtraSvcRow(row));
+    }
+
     } catch (err) {
         console.error(err);
     }

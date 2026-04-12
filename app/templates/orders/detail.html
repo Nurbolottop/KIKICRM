@@ -198,6 +198,46 @@
                 </div>
             </div>
 
+             <!-- Блок: Дополнительные услуги -->
+            {% if order_extra_services %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h6 class="text-muted text-uppercase mb-0">
+                        <i class="bi bi-plus-circle-fill text-primary"></i> Дополнительные услуги
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Услуга</th>
+                                    <th class="text-center" style="width:80px">Кол-во</th>
+                                    <th class="text-end" style="width:120px">Цена</th>
+                                    <th class="text-end pe-3" style="width:120px">Итого</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for oes in order_extra_services %}
+                                <tr>
+                                    <td class="ps-3">
+                                        <span class="fw-medium">{{ oes.extra_service.name }}</span>
+                                        {% if oes.note %}
+                                        <br><small class="text-muted">{{ oes.note }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ oes.quantity }}</td>
+                                    <td class="text-end">{{ oes.price_at_order }} сом</td>
+                                    <td class="text-end pe-3 fw-bold text-success">{{ oes.total_price }} сом</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Блок: Детали помещения -->
             <div class="card mb-4 border-0 shadow-sm">
                 <div class="card-header bg-white border-0 pt-3">
