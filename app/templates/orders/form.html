@@ -676,6 +676,37 @@
                                 <div class="text-danger small">{{ form.prepayment_amount.errors.0 }}</div>
                                 {% endif %}
                             </div>
+
+                            <!-- Финансовое резюме (только для оператора) -->
+                            {% if not is_manager %}
+                            <div class="col-12 mt-2">
+                                <div class="card border-0 bg-light rounded-3 p-3" id="financial-summary">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-calculator text-primary"></i>
+                                        <span class="fw-semibold text-primary">Финансовое резюме</span>
+                                        <span class="badge bg-primary-subtle text-primary">автоматически</span>
+                                    </div>
+                                    <div class="row g-2 small">
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted">Стоимость услуги</div>
+                                            <div class="fw-medium" id="summary-service-price">— сом</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted">Доп. услуги</div>
+                                            <div class="fw-medium" id="summary-extra-price">0 сом</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted">Задаток</div>
+                                            <div class="fw-medium text-warning" id="summary-prepayment">0 сом</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted fw-semibold">К доплате</div>
+                                            <div class="fs-6 fw-bold text-success" id="summary-remaining">— сом</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- Дополнительные услуги (структурированный список) -->
@@ -1219,6 +1250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             serviceSelect.addEventListener('change', function() {
                 updateServicePrice();
                 toggleServiceFields();
+                updateFinancialSummary();
             });
         }
     
@@ -1410,6 +1442,87 @@ document.addEventListener('DOMContentLoaded', function() {
     if (extraSvcContainer) {
         extraSvcContainer.querySelectorAll('.extra-service-row').forEach(row => bindExtraSvcRow(row));
     }
+
+    // ── Финансовое резюме (автосумма) ────────────────────────────
+    function updateFinancialSummary() {
+        const summaryEl = document.getElementById('financial-summary');
+        if (!summaryEl) return;
+
+        // 1. Стоимость выбранной основной услуги (из servicePrices)
+        const serviceId = serviceSelect ? String(serviceSelect.value || '').trim() : '';
+        let servicePrice = parseFloat(servicePrices[serviceId] || '0') || 0;
+        // Если нет в map — берём из preliminary_price
+        if (servicePrice === 0) {
+            const prelimInput = document.getElementById('id_preliminary_price');
+            if (prelimInput) servicePrice = parseFloat(prelimInput.value) || 0;
+        }
+
+        // 2. Сумма доп. услуг
+        let extraTotal = 0;
+        if (extraSvcContainer) {
+            extraSvcContainer.querySelectorAll('.extra-service-row').forEach(row => {
+                const sel = row.querySelector('select[name="extra_service_id[]"]');
+                const qty = row.querySelector('input[name="extra_service_qty[]"]');
+                if (!sel || sel.selectedIndex <= 0) return;
+                const price = parseFloat(sel.options[sel.selectedIndex].getAttribute('data-price') || '0') || 0;
+                const q = parseInt((qty && qty.value) || '1') || 1;
+                extraTotal += price * q;
+            });
+        }
+
+        // 3. Задаток
+        const prepaymentInput = document.getElementById('id_prepayment_amount');
+        const prepayment = parseFloat((prepaymentInput && prepaymentInput.value) || '0') || 0;
+
+        // 4. Итого и «К доплате»
+        const grandTotal = servicePrice + extraTotal;
+        const remaining  = grandTotal > 0 ? Math.max(0, grandTotal - prepayment) : 0;
+
+        document.getElementById('summary-service-price').textContent =
+            servicePrice > 0 ? servicePrice.toFixed(0) + ' сом' : '— сом';
+        document.getElementById('summary-extra-price').textContent =
+            extraTotal.toFixed(0) + ' сом';
+        document.getElementById('summary-prepayment').textContent =
+            prepayment.toFixed(0) + ' сом';
+        const remEl = document.getElementById('summary-remaining');
+        if (grandTotal > 0) {
+            remEl.textContent = remaining.toFixed(0) + ' сом';
+            remEl.className = 'fs-6 fw-bold ' + (remaining > 0 ? 'text-danger' : 'text-success');
+        } else {
+            remEl.textContent = '— сом';
+            remEl.className = 'fs-6 fw-bold text-muted';
+        }
+    }
+
+    // Слушаем изменения, влияющие на сумму
+    const watchIds = ['id_service', 'id_preliminary_price', 'id_prepayment_amount'];
+    watchIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateFinancialSummary);
+        if (el) el.addEventListener('input',  updateFinancialSummary);
+    });
+
+    // Перехватываем обновление доп. услуг
+    const origCalc = calcExtraSvcSubtotal;
+    const origBind = bindExtraSvcRow;
+    document.addEventListener('change', function(e) {
+        if (e.target && (
+            e.target.name === 'extra_service_id[]' ||
+            e.target.name === 'extra_service_qty[]'
+        )) { updateFinancialSummary(); }
+    });
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.name === 'extra_service_qty[]') {
+            updateFinancialSummary();
+        }
+    });
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.closest && e.target.closest('.extra-service-remove')) {
+            setTimeout(updateFinancialSummary, 50);
+        }
+    });
+
+    updateFinancialSummary(); // первоначальный расчёт
 
     } catch (err) {
         console.error(err);
