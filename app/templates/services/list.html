@@ -1,204 +1,347 @@
 {% extends 'base.html' %}
-
-{% block title %}Услуги - CRM KIKI{% endblock %}
+{% block title %}Услуги — CRM KIKI{% endblock %}
 {% block page_title %}Услуги{% endblock %}
 
 {% block content %}
-<div class="services-container">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 services-topbar flex-wrap gap-2">
+<div class="svc-page">
+
+    <!-- ── Топбар ─────────────────────────────────────── -->
+    <div class="svc-topbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
-            <h2 class="mb-1">Основные услуги</h2>
-            <p class="text-muted mb-0">{{ services|length }} услуг в каталоге</p>
+            <h2 class="mb-0 fw-bold">Каталог услуг</h2>
+            <p class="text-muted mb-0 small mt-1">
+                <i class="bi bi-basket me-1"></i>{{ services|length }} основных
+                {% if extra_count %} · <i class="bi bi-tags me-1"></i>{{ extra_count }} доп.{% endif %}
+            </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'extra_services_list' %}" class="btn btn-outline-info">
-                <i class="bi bi-tags"></i> Доп. услуги (прайс)
+            <a href="{% url 'extra_services_list' %}" class="btn btn-outline-secondary btn-sm px-3">
+                <i class="bi bi-tags me-1"></i> Прайс-лист
             </a>
-            <a href="{% url 'service_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i> Добавить услугу
+            <a href="{% url 'service_create' %}" class="btn btn-primary btn-sm px-3" style="border-radius:20px;">
+                <i class="bi bi-plus-lg me-1"></i> Добавить услугу
             </a>
         </div>
     </div>
-    
+
+    <!-- ── Поиск + переключатель вида ─────────────────── -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div class="svc-search-wrap position-relative" style="max-width:340px;flex:1;">
+            <i class="bi bi-search position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);font-size:.85rem;"></i>
+            <input id="svc-search" type="search" class="form-control form-control-sm ps-4"
+                   placeholder="Поиск по названию…" autocomplete="off"
+                   style="border-radius:20px;">
+        </div>
+        <div class="btn-group btn-group-sm" role="group">
+            <button id="btn-view-grid" class="btn btn-outline-secondary active" title="Сетка">
+                <i class="bi bi-grid-3x3-gap"></i>
+            </button>
+            <button id="btn-view-table" class="btn btn-outline-secondary" title="Таблица">
+                <i class="bi bi-list-ul"></i>
+            </button>
+        </div>
+    </div>
+
     {% if services %}
-    <div class="row g-4">
+
+    <!-- ══ ВИД: СЕТКА ════════════════════════════════════ -->
+    <div id="view-grid" class="row g-3">
         {% for service in services %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card service-card h-100 {% if not service.is_active %}opacity-75{% endif %}">
-                <!-- Image -->
-                <div class="service-image-wrapper">
+        <div class="col-sm-6 col-lg-4 col-xl-3 svc-item" data-name="{{ service.name|lower }}">
+            <div class="svc-card {% if not service.is_active %}svc-card--inactive{% endif %}"
+                 id="svc-card-{{ service.id }}">
+
+                <!-- Картинка -->
+                <div class="svc-card__img">
                     {% if service.image %}
-                    <img src="{{ service.image.url }}" class="service-image" alt="{{ service.name }}">
+                    <img src="{{ service.image.url }}" alt="{{ service.name }}">
                     {% else %}
-                    <div class="service-image-placeholder">
-                        <i class="bi bi-basket"></i>
+                    <div class="svc-card__placeholder">
+                        <i class="bi bi-{% if service.is_extra_only %}sparkle{% else %}house-heart{% endif %}"></i>
                     </div>
                     {% endif %}
+
                     {% if not service.is_active %}
-                    <span class="badge bg-secondary service-status">Неактивна</span>
+                    <span class="svc-badge svc-badge--off">Неактивна</span>
+                    {% endif %}
+                    {% if service.is_extra_only %}
+                    <span class="svc-badge svc-badge--extra">Хим. чистка</span>
                     {% endif %}
                 </div>
-                
-                <div class="card-body">
-                    <h5 class="card-title mb-2">{{ service.name }}</h5>
-                    <p class="card-text text-muted service-description">
-                        {% if service.description %}
-                            {{ service.description|truncatewords:15 }}
-                        {% else %}
-                            Нет описания
-                        {% endif %}
+
+                <!-- Тело -->
+                <div class="svc-card__body">
+                    <div class="svc-card__name">{{ service.name }}</div>
+                    <p class="svc-card__desc">
+                        {% if service.description %}{{ service.description|truncatewords:12 }}{% else %}<span class="text-muted fst-italic">Без описания</span>{% endif %}
                     </p>
-                    <div class="service-price">{{ service.price|floatformat:0 }} сом</div>
+                    <div class="svc-card__price">
+                        {% if service.price %}{{ service.price|floatformat:0 }} сом{% else %}<span class="text-muted">Цена на месте</span>{% endif %}
+                    </div>
                 </div>
-                
-                <div class="card-footer bg-transparent">
-                    <a href="{% url 'service_detail' service.id %}" class="btn btn-outline-primary w-100">
-                        <i class="bi bi-eye"></i> Подробнее
+
+                <!-- Подвал -->
+                <div class="svc-card__footer">
+                    <a href="{% url 'service_detail' service.id %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                        <i class="bi bi-eye me-1"></i> Подробнее
+                    </a>
+                    <a href="{% url 'service_update' service.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
                     </a>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    
-    <!-- Pagination -->
-    {% if is_paginated %}
-    <nav aria-label="Page navigation" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page=1">«</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">‹</a>
-            </li>
-            {% endif %}
-            
-            <li class="page-item active">
-                <span class="page-link">{{ page_obj.number }} из {{ paginator.num_pages }}</span>
-            </li>
-            
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">›</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ paginator.num_pages }}">»</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-    
+
+    <!-- ══ ВИД: ТАБЛИЦА ══════════════════════════════════ -->
+    <div id="view-table" class="d-none">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+            <table class="table table-hover align-middle mb-0" id="svc-table">
+                <thead style="background:linear-gradient(135deg,#f8f9ff,#eef2ff);">
+                    <tr style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:#6366f1;">
+                        <th style="width:50px;"></th>
+                        <th>Название</th>
+                        <th class="text-end" style="width:150px;">Цена</th>
+                        <th class="text-center" style="width:110px;">Статус</th>
+                        <th style="width:120px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr class="svc-item svc-row" data-name="{{ service.name|lower }}" id="svc-row-{{ service.id }}">
+                        <td>
+                            <div class="svc-table-icon">
+                                {% if service.image %}
+                                <img src="{{ service.image.url }}" alt="">
+                                {% else %}
+                                <i class="bi bi-basket text-primary"></i>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" style="font-size:.93rem;">{{ service.name }}</div>
+                            {% if service.is_extra_only %}
+                            <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e;font-size:.68rem;">Хим. чистка</span>
+                            {% endif %}
+                            {% if service.description %}
+                            <div class="text-muted small">{{ service.description|truncatewords:8 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold" style="color:#6366f1;font-size:.95rem;">
+                            {% if service.price %}{{ service.price|floatformat:0 }} сом{% else %}<span class="text-muted fw-normal" style="font-size:.82rem;">Цена на месте</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if service.is_active %}
+                            <span class="badge rounded-pill bg-success-subtle text-success px-2">Активна</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary px-2">Неактивна</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{% url 'service_detail' service.id %}" class="btn btn-xs btn-outline-primary" title="Подробнее">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'service_update' service.id %}" class="btn btn-xs btn-outline-secondary" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Пусто при фильтре -->
+    <div id="svc-empty-search" class="text-center py-5 d-none">
+        <i class="bi bi-search display-5 opacity-25 d-block mb-2"></i>
+        <p class="text-muted">Ничего не найдено</p>
+    </div>
+
     {% else %}
     <div class="text-center py-5">
-        <div class="mb-3">
-            <i class="bi bi-basket" style="font-size: 64px; color: #dee2e6;"></i>
-        </div>
+        <i class="bi bi-basket display-4 opacity-25 d-block mb-3"></i>
         <h5 class="text-muted">Пока нет услуг</h5>
-        <p class="text-muted">Добавьте первую услугу, чтобы начать работу</p>
-        <a href="{% url 'service_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Добавить услугу
+        <a href="{% url 'service_create' %}" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-lg me-1"></i> Добавить первую услугу
         </a>
     </div>
     {% endif %}
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1">«</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">‹</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">›</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ paginator.num_pages }}">»</a></li>
+        {% endif %}
+    </ul></nav>
+    {% endif %}
+
 </div>
 
+<!-- ─── СТИЛИ ──────────────────────────────────────────── -->
 <style>
-.service-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
+/* ── Карточки ─────────── */
+.svc-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
     overflow: hidden;
-}
-
-.service-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-}
-
-.service-image-wrapper {
-    position: relative;
-    height: 180px;
-    overflow: hidden;
-}
-
-.service-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.service-image-placeholder {
-    width: 100%;
-    height: 100%;
+    transition: transform .2s, box-shadow .2s;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-size: 48px;
+    flex-direction: column;
+    height: 100%;
+}
+.svc-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(99,102,241,.15); }
+.svc-card--inactive { opacity: .7; }
+
+.svc-card__img {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.svc-card__img img { width:100%; height:100%; object-fit:cover; }
+.svc-card__placeholder {
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    font-size: 44px; color: rgba(255,255,255,.85);
 }
 
-.service-status {
+.svc-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px; right: 10px;
+    font-size: .68rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
 }
+.svc-badge--off  { background:#6b7280; color:#fff; }
+.svc-badge--extra { background:#fef3c7; color:#92400e; top:10px; left:10px; right:auto; }
 
-.service-description {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 12px;
+.svc-card__body { padding: 14px 16px 10px; flex:1; }
+.svc-card__name { font-weight: 700; font-size: .93rem; margin-bottom: 5px; line-height:1.35; }
+.svc-card__desc { font-size: .8rem; color: #6b7280; margin-bottom: 10px; line-height: 1.45; }
+.svc-card__price { font-size: 1.1rem; font-weight: 700; color: #6366f1; }
+
+.svc-card__footer {
+    padding: 10px 14px 14px;
+    display: flex;
+    gap: 6px;
 }
+.svc-card__footer .btn { font-size: .8rem; border-radius: 10px; }
 
-.service-price {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--primary-color);
+/* ── Таблица ─────────── */
+.svc-table-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px; overflow: hidden;
+    background: #eef2ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
 }
+.svc-table-icon img { width:100%; height:100%; object-fit:cover; }
+.btn-xs { padding: 3px 8px; font-size: .78rem; border-radius: 8px; }
 
-@media (max-width: 768px) {
-    .services-topbar {
-        flex-direction: column;
-        align-items: stretch !important;
-        gap: 0.85rem;
-    }
-
-    .services-container .row.g-4 {
-        --bs-gutter-x: 0.9rem;
-        --bs-gutter-y: 0.9rem;
-    }
-
-    .service-image-wrapper {
-        height: 170px;
-    }
+/* ── Подсветка новой/изменённой услуги ─── */
+@keyframes svc-highlight {
+    0%   { box-shadow: 0 0 0 0 rgba(99,102,241,.6), 0 2px 10px rgba(0,0,0,.07); background: #ede9fe; }
+    40%  { box-shadow: 0 0 0 8px rgba(99,102,241,.15), 0 10px 28px rgba(99,102,241,.2); }
+    100% { box-shadow: 0 2px 10px rgba(0,0,0,.07); background: #fff; }
 }
+.svc-card--highlight { animation: svc-highlight 2.5s ease forwards; }
+
+@keyframes svc-row-highlight {
+    0%   { background: #ede9fe; }
+    100% { background: transparent; }
+}
+.svc-row--highlight td { animation: svc-row-highlight 2.5s ease forwards; }
+
+/* ── Поиск ─── */
+#svc-search { border-color: #e5e7eb; }
+#svc-search:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
 
 @media (max-width: 576px) {
-    .service-card {
-        border-radius: 14px;
-    }
-
-    .service-image-wrapper {
-        height: 155px;
-    }
-
-    .service-card .card-body,
-    .service-card .card-footer {
-        padding: 0.9rem;
-    }
-
-    .service-description {
-        font-size: 0.86rem;
-        margin-bottom: 10px;
-    }
-
-    .service-price {
-        font-size: 1.1rem;
-    }
+    .svc-topbar { flex-direction: column; align-items: stretch; }
+    .svc-card__img { height: 130px; }
 }
 </style>
+
+<!-- ─── JS ──────────────────────────────────────────────── -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Переключатель вида ────────────────────────────────
+    const gridView  = document.getElementById('view-grid');
+    const tableView = document.getElementById('view-table');
+    const btnGrid   = document.getElementById('btn-view-grid');
+    const btnTable  = document.getElementById('btn-view-table');
+    const VIEW_KEY  = 'svc_view_pref';
+
+    function setView(v) {
+        if (v === 'table') {
+            gridView.classList.add('d-none');
+            tableView.classList.remove('d-none');
+            btnGrid.classList.remove('active');
+            btnTable.classList.add('active');
+        } else {
+            tableView.classList.add('d-none');
+            gridView.classList.remove('d-none');
+            btnTable.classList.remove('active');
+            btnGrid.classList.add('active');
+        }
+        localStorage.setItem(VIEW_KEY, v);
+    }
+
+    btnGrid.addEventListener('click',  () => setView('grid'));
+    btnTable.addEventListener('click', () => setView('table'));
+
+    // Восстанавливаем предпочтение
+    setView(localStorage.getItem(VIEW_KEY) || 'grid');
+
+    // ── Живой поиск ──────────────────────────────────────
+    const searchInput = document.getElementById('svc-search');
+    const emptyHint   = document.getElementById('svc-empty-search');
+
+    searchInput.addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        let visible = 0;
+        document.querySelectorAll('.svc-item').forEach(el => {
+            const match = !q || el.dataset.name.includes(q);
+            el.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        emptyHint && (emptyHint.classList.toggle('d-none', visible > 0));
+    });
+
+    // ── Подсветка только что добавленной/изменённой услуги ─
+    const params = new URLSearchParams(window.location.search);
+    const highlightId = params.get('highlight');
+    if (highlightId) {
+        // Карточка
+        const card = document.getElementById('svc-card-' + highlightId);
+        if (card) {
+            card.classList.add('svc-card--highlight');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // Строка таблицы
+        const row = document.getElementById('svc-row-' + highlightId);
+        if (row) {
+            row.classList.add('svc-row--highlight');
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // Убираем параметр из URL без перезагрузки
+        params.delete('highlight');
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params : '');
+        history.replaceState({}, '', newUrl);
+    }
+});
+</script>
 {% endblock %}

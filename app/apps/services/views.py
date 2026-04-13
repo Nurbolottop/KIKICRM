@@ -56,10 +56,15 @@ class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'services/list.html'
     context_object_name = 'services'
-    paginate_by = 20
-    
+    paginate_by = 50
+
     def get_queryset(self):
         return super().get_queryset().order_by('name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['extra_count'] = ExtraService.objects.count()
+        return context
 
 
 class ServiceDetailView(LoginRequiredMixin, DetailView):
@@ -199,9 +204,8 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
             try:
                 import json
                 rooms = json.loads(checklist_data)
-                # Фильтруем пустые комнаты
                 self.object.checklist = [
-                    room for room in rooms 
+                    room for room in rooms
                     if room.get('name') or room.get('tasks')
                 ]
                 self.object.save()
@@ -212,7 +216,6 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
 
         try:
             from apps.notifications.services.telegram_service import TelegramService
-
             user = self.request.user
             user_display = (
                 (getattr(user, 'full_name', '') or '').strip()
@@ -229,7 +232,10 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
             TelegramService().send_status_change_message(text)
         except Exception:
             pass
-        return response
+
+        # Редирект на список с подсветкой новой услуги
+        from django.urls import reverse
+        return redirect(reverse('services_list') + f'?highlight={self.object.pk}')
 
 
 class ServiceUpdateView(LoginRequiredMixin, UpdateView):
@@ -239,7 +245,8 @@ class ServiceUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'services/form.html'
 
     def get_success_url(self):
-        return reverse_lazy('service_detail', kwargs={'pk': self.object.pk})
+        from django.urls import reverse
+        return reverse('services_list') + f'?highlight={self.object.pk}'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
