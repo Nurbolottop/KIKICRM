@@ -723,12 +723,19 @@
 
             <!-- Block 4: Price & Parameters (Operator fields) -->
             <div class="col-12">
-                <div class="card border-0 shadow-sm {% if is_manager %}section-readonly{% endif %}">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                        <h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Параметры и стоимость</h5>
-                        <div class="service-price-badge">
-                            <span class="text-muted">Цена услуги:</span>
-                            <span id="service-price-display">
+                <div class="card border-0 shadow-sm rounded-4 {% if is_manager %}section-readonly{% endif %}" style="overflow: hidden;">
+                    <!-- Красивый заголовок карточки -->
+                    <div class="card-header border-0 pb-0 pt-4 px-4 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                        <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width: 38px; height: 38px; background: rgba(99,102,241,0.1);">
+                                <i class="bi bi-cash-coin text-primary fs-5"></i>
+                            </div>
+                            Параметры и стоимость
+                        </h5>
+                        <div class="service-price-badge py-1 px-3 rounded-pill" style="background: #f8f9fa; border: 1px solid #e9ecef;">
+                            <span class="text-muted small me-1">Базовая цена услуги:</span>
+                            <span id="service-price-display" class="fw-bold text-dark">
                                 {% if form.instance.service and form.instance.service.price %}
                                     {{ form.instance.service.price }} сом
                                 {% else %}
@@ -737,7 +744,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body px-4 pb-4 pt-3">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label {% if form.preliminary_price.field.required %}required{% endif %}">{{ form.preliminary_price.label }}</label>
@@ -814,7 +821,6 @@
                                     <div class="d-flex align-items-center gap-2 mb-2">
                                         <i class="bi bi-calculator text-primary"></i>
                                         <span class="fw-semibold text-primary">Финансовое резюме</span>
-                                        <span class="badge bg-primary-subtle text-primary">автоматически</span>
                                     </div>
                                     <div class="row g-2 small">
                                         <div class="col-6 col-md-3">
