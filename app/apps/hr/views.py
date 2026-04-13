@@ -263,13 +263,18 @@ def hr_employee_edit(request, pk):
                 if 'contract_file' in request.FILES:
                     employee.contract_file = request.FILES['contract_file']
                 
-                # Обновляем паспортные данные в модели Employee
                 employee.passport_type = doc_type
                 employee.passport_number = doc_number
                 employee.passport_issued_by = issued_by
                 employee.passport_issue_date = issue_date
                 employee.passport_expiry_date = expiry_date
-                
+
+                # Фото паспорта
+                if 'passport_photo_front' in request.FILES:
+                    employee.passport_photo_front = request.FILES['passport_photo_front']
+                if 'passport_photo_back' in request.FILES:
+                    employee.passport_photo_back = request.FILES['passport_photo_back']
+
                 employee.save()
 
                 messages.success(request, f'Данные {emp.full_name} обновлены.')

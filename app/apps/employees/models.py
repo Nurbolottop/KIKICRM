@@ -114,6 +114,20 @@ class Employee(models.Model):
         blank=True,
         null=True
     )
+    passport_photo_front = models.ImageField(
+        'Фото паспорта (передняя сторона)',
+        upload_to='employees/passports/',
+        blank=True,
+        null=True,
+        help_text='Фото передней стороны паспорта/ID карты'
+    )
+    passport_photo_back = models.ImageField(
+        'Фото паспорта (задняя сторона)',
+        upload_to='employees/passports/',
+        blank=True,
+        null=True,
+        help_text='Фото задней стороны паспорта/ID карты'
+    )
     fire_date = models.DateField(
         'Дата увольнения',
         blank=True,

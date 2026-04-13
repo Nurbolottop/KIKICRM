@@ -113,11 +113,49 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Дата выдачи</label>
-                        <input type="date" name="issue_date" class="form-control" value="{{ emp.passport_issue_date|date:'Y-m-d' }}">
+                        <input type="date" name="issue_date" class="form-control" value="{{ emp.employee.passport_issue_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Дата окончания</label>
-                        <input type="date" name="expiry_date" class="form-control" value="{{ emp.passport_expiry_date|date:'Y-m-d' }}">
+                        <input type="date" name="expiry_date" class="form-control" value="{{ emp.employee.passport_expiry_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <!-- Фото паспорта -->
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-card-image me-1 text-primary"></i> Передняя сторона
+                        </label>
+                        {% if emp.employee.passport_photo_front %}
+                        <div class="mb-2">
+                            <a href="{{ emp.employee.passport_photo_front.url }}" target="_blank">
+                                <img src="{{ emp.employee.passport_photo_front.url }}"
+                                     alt="Передняя сторона"
+                                     class="img-thumbnail"
+                                     style="max-height:120px; object-fit:cover; border-radius:8px;">
+                            </a>
+                            <div class="small text-muted mt-1">Загрузить новое ↓</div>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="passport_photo_front" accept="image/*" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-card-image me-1 text-primary"></i> Задняя сторона
+                        </label>
+                        {% if emp.employee.passport_photo_back %}
+                        <div class="mb-2">
+                            <a href="{{ emp.employee.passport_photo_back.url }}" target="_blank">
+                                <img src="{{ emp.employee.passport_photo_back.url }}"
+                                     alt="Задняя сторона"
+                                     class="img-thumbnail"
+                                     style="max-height:120px; object-fit:cover; border-radius:8px;">
+                            </a>
+                            <div class="small text-muted mt-1">Загрузить новое ↓</div>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="passport_photo_back" accept="image/*" class="form-control">
                     </div>
                 </div>
             </div>
