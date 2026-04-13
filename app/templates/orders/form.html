@@ -723,31 +723,31 @@
 
             <!-- Block 4: Price & Parameters (Operator fields) -->
             <div class="col-12">
-                <div class="card border-0 shadow-sm rounded-4 {% if is_manager %}section-readonly{% endif %}" style="overflow: hidden;">
-                    <!-- Красивый заголовок карточки -->
-                    <div class="card-header border-0 pb-0 pt-4 px-4 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                        <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width: 38px; height: 38px; background: rgba(99,102,241,0.1);">
-                                <i class="bi bi-cash-coin text-primary fs-5"></i>
+                <div class="card border-0 shadow-sm {% if is_manager %}section-readonly{% endif %}" style="overflow:hidden;">
+                    <!-- Заголовок -->
+                    <div class="card-header border-0 py-3" style="background:linear-gradient(135deg,#f8f9ff 0%,#eef2ff 100%);">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center" style="width:34px;height:34px;background:rgba(99,102,241,.15);">
+                                <i class="bi bi-cash-coin text-primary"></i>
                             </div>
-                            Параметры и стоимость
-                        </h5>
-                        <div class="service-price-badge py-1 px-3 rounded-pill" style="background: #f8f9fa; border: 1px solid #e9ecef;">
-                            <span class="text-muted small me-1">Базовая цена услуги:</span>
-                            <span id="service-price-display" class="fw-bold text-dark">
-                                {% if form.instance.service and form.instance.service.price %}
-                                    {{ form.instance.service.price }} сом
-                                {% else %}
-                                    —
-                                {% endif %}
+                            <h5 class="mb-0 fw-semibold">Параметры и стоимость</h5>
+                            {% if form.instance.service and form.instance.service.price %}
+                            <span class="badge rounded-pill ms-auto" style="background:#e0e7ff;color:#4338ca;font-size:.78rem;">
+                                <i class="bi bi-tag me-1"></i>{{ form.instance.service.price }} сом
                             </span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="card-body px-4 pb-4 pt-3">
+
+                    <div class="card-body pt-3">
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label {% if form.preliminary_price.field.required %}required{% endif %}">{{ form.preliminary_price.label }}</label>
+
+                            <!-- Предварительная цена -->
+                            <div class="col-sm-6 col-md-4">
+                                <label class="form-label d-flex align-items-center gap-1 {% if form.preliminary_price.field.required %}required{% endif %}">
+                                    <i class="bi bi-cash text-primary opacity-75" style="font-size:.85rem;"></i>
+                                    {{ form.preliminary_price.label }}
+                                </label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
                                         <i class="bi bi-cash text-muted"></i>
@@ -763,41 +763,13 @@
                                 <div class="text-danger small">{{ form.preliminary_price.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4" id="container_rooms_count">
-                                <label class="form-label {% if form.rooms_count.field.required %}required{% endif %}">{{ form.rooms_count.label }}</label>
-                                {% if is_manager %}
-                                    <div class="field-readonly">
-                                        <i class="bi bi-door-open text-muted"></i>
-                                        <span>{{ form.instance.rooms_count|default:"—" }}</span>
-                                    </div>
-                                {% else %}
-                                    {{ form.rooms_count }}
-                                {% endif %}
-                                {% if form.rooms_count.errors %}
-                                <div class="text-danger small">{{ form.rooms_count.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-4" id="container_area">
-                                <label class="form-label {% if form.area.field.required %}required{% endif %}">{{ form.area.label }}</label>
-                                {% if is_manager %}
-                                    <div class="field-readonly">
-                                        <i class="bi bi-arrows-fullscreen text-muted"></i>
-                                        <span>{{ form.instance.area|default:"—" }} м²</span>
-                                    </div>
-                                {% else %}
-                                    <div class="input-group">
-                                        {{ form.area }}
-                                        <span class="input-group-text">м²</span>
-                                    </div>
-                                {% endif %}
-                                {% if form.area.errors %}
-                                <div class="text-danger small">{{ form.area.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-4">
-                                <label class="form-label">{{ form.prepayment_amount.label }}</label>
+
+                            <!-- Задаток -->
+                            <div class="col-sm-6 col-md-4">
+                                <label class="form-label d-flex align-items-center gap-1">
+                                    <i class="bi bi-wallet2 text-primary opacity-75" style="font-size:.85rem;"></i>
+                                    {{ form.prepayment_amount.label }}
+                                </label>
                                 {% if is_manager %}
                                     <div class="field-readonly">
                                         <i class="bi bi-cash-coin text-muted"></i>
@@ -814,40 +786,51 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Финансовое резюме (только для оператора) -->
-                            {% if not is_manager %}
-                            <div class="col-12 mt-2">
-                                <div class="card border-0 bg-light rounded-3 p-3" id="financial-summary">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <i class="bi bi-calculator text-primary"></i>
-                                        <span class="fw-semibold text-primary">Финансовое резюме</span>
+                            <!-- Кол-во комнат (скрывается для is_extra_only) -->
+                            <div class="col-sm-6 col-md-4" id="container_rooms_count">
+                                <label class="form-label d-flex align-items-center gap-1 {% if form.rooms_count.field.required %}required{% endif %}">
+                                    <i class="bi bi-door-open text-primary opacity-75" style="font-size:.85rem;"></i>
+                                    {{ form.rooms_count.label }}
+                                </label>
+                                {% if is_manager %}
+                                    <div class="field-readonly">
+                                        <i class="bi bi-door-open text-muted"></i>
+                                        <span>{{ form.instance.rooms_count|default:"—" }}</span>
                                     </div>
-                                    <div class="row g-2 small">
-                                        <div class="col-6 col-md-3">
-                                            <div class="text-muted">Стоимость услуги</div>
-                                            <div class="fw-medium" id="summary-service-price">— сом</div>
-                                        </div>
-                                        <div class="col-6 col-md-3">
-                                            <div class="text-muted">Доп. услуги</div>
-                                            <div class="fw-medium" id="summary-extra-price">0 сом</div>
-                                        </div>
-                                        <div class="col-6 col-md-3">
-                                            <div class="text-muted">Задаток</div>
-                                            <div class="fw-medium text-warning" id="summary-prepayment">0 сом</div>
-                                        </div>
-                                        <div class="col-6 col-md-3">
-                                            <div class="text-muted fw-semibold">К доплате</div>
-                                            <div class="fs-6 fw-bold text-success" id="summary-remaining">— сом</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                {% else %}
+                                    {{ form.rooms_count }}
+                                {% endif %}
+                                {% if form.rooms_count.errors %}
+                                <div class="text-danger small">{{ form.rooms_count.errors.0 }}</div>
+                                {% endif %}
                             </div>
-                            {% endif %}
+
+                            <!-- Площадь (скрывается для is_extra_only) -->
+                            <div class="col-sm-6 col-md-4" id="container_area">
+                                <label class="form-label d-flex align-items-center gap-1 {% if form.area.field.required %}required{% endif %}">
+                                    <i class="bi bi-arrows-fullscreen text-primary opacity-75" style="font-size:.85rem;"></i>
+                                    {{ form.area.label }}
+                                </label>
+                                {% if is_manager %}
+                                    <div class="field-readonly">
+                                        <i class="bi bi-arrows-fullscreen text-muted"></i>
+                                        <span>{{ form.instance.area|default:"—" }} м²</span>
+                                    </div>
+                                {% else %}
+                                    <div class="input-group">
+                                        {{ form.area }}
+                                        <span class="input-group-text">м²</span>
+                                    </div>
+                                {% endif %}
+                                {% if form.area.errors %}
+                                <div class="text-danger small">{{ form.area.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
                         </div>
 
-
                         <!-- Особые пожелания + заметки -->
-                        <div class="row g-3 mt-3">
+                        <div class="row g-3 mt-2">
                             <div class="col-md-6">
                                 <label class="form-label">Доп. пожелания / объём работы</label>
                                 {{ form.work_scope }}
@@ -864,6 +847,7 @@
                                 {% endif %}
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -1269,7 +1253,6 @@ document.addEventListener('DOMContentLoaded', function() {
             serviceSelect.addEventListener('change', function() {
                 updateServicePrice();
                 toggleServiceFields();
-                updateFinancialSummary();
             });
         }
     
@@ -1462,86 +1445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         extraSvcContainer.querySelectorAll('.extra-service-row').forEach(row => bindExtraSvcRow(row));
     }
 
-    // ── Финансовое резюме (автосумма) ────────────────────────────
-    function updateFinancialSummary() {
-        const summaryEl = document.getElementById('financial-summary');
-        if (!summaryEl) return;
-
-        // 1. Стоимость выбранной основной услуги (из servicePrices)
-        const serviceId = serviceSelect ? String(serviceSelect.value || '').trim() : '';
-        let servicePrice = parseFloat(servicePrices[serviceId] || '0') || 0;
-        // Если нет в map — берём из preliminary_price
-        if (servicePrice === 0) {
-            const prelimInput = document.getElementById('id_preliminary_price');
-            if (prelimInput) servicePrice = parseFloat(prelimInput.value) || 0;
-        }
-
-        // 2. Сумма доп. услуг
-        let extraTotal = 0;
-        if (extraSvcContainer) {
-            extraSvcContainer.querySelectorAll('.extra-service-row').forEach(row => {
-                const sel = row.querySelector('select[name="extra_service_id[]"]');
-                const qty = row.querySelector('input[name="extra_service_qty[]"]');
-                if (!sel || sel.selectedIndex <= 0) return;
-                const price = parseFloat(sel.options[sel.selectedIndex].getAttribute('data-price') || '0') || 0;
-                const q = parseInt((qty && qty.value) || '1') || 1;
-                extraTotal += price * q;
-            });
-        }
-
-        // 3. Задаток
-        const prepaymentInput = document.getElementById('id_prepayment_amount');
-        const prepayment = parseFloat((prepaymentInput && prepaymentInput.value) || '0') || 0;
-
-        // 4. Итого и «К доплате»
-        const grandTotal = servicePrice + extraTotal;
-        const remaining  = grandTotal > 0 ? Math.max(0, grandTotal - prepayment) : 0;
-
-        document.getElementById('summary-service-price').textContent =
-            servicePrice > 0 ? servicePrice.toFixed(0) + ' сом' : '— сом';
-        document.getElementById('summary-extra-price').textContent =
-            extraTotal.toFixed(0) + ' сом';
-        document.getElementById('summary-prepayment').textContent =
-            prepayment.toFixed(0) + ' сом';
-        const remEl = document.getElementById('summary-remaining');
-        if (grandTotal > 0) {
-            remEl.textContent = remaining.toFixed(0) + ' сом';
-            remEl.className = 'fs-6 fw-bold ' + (remaining > 0 ? 'text-danger' : 'text-success');
-        } else {
-            remEl.textContent = '— сом';
-            remEl.className = 'fs-6 fw-bold text-muted';
-        }
-    }
-
-    // Слушаем изменения, влияющие на сумму
-    const watchIds = ['id_service', 'id_preliminary_price', 'id_prepayment_amount'];
-    watchIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', updateFinancialSummary);
-        if (el) el.addEventListener('input',  updateFinancialSummary);
-    });
-
-    // Перехватываем обновление доп. услуг
-    const origCalc = calcExtraSvcSubtotal;
-    const origBind = bindExtraSvcRow;
-    document.addEventListener('change', function(e) {
-        if (e.target && (
-            e.target.name === 'extra_service_id[]' ||
-            e.target.name === 'extra_service_qty[]'
-        )) { updateFinancialSummary(); }
-    });
-    document.addEventListener('input', function(e) {
-        if (e.target && e.target.name === 'extra_service_qty[]') {
-            updateFinancialSummary();
-        }
-    });
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.closest && e.target.closest('.extra-service-remove')) {
-            setTimeout(updateFinancialSummary, 50);
-        }
-    });
-
-    updateFinancialSummary(); // первоначальный расчёт
 
     } catch (err) {
         console.error(err);
