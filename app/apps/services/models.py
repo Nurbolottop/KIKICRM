@@ -23,7 +23,10 @@ class Service(BaseModel):
     price = models.DecimalField(
         'Цена',
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Оставьте пустым если цена считается на месте (напр. Химчистка)'
     )
     senior_cleaner_salary = models.DecimalField(
         'ЗП ст. клинеру',
