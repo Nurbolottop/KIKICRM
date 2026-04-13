@@ -16,15 +16,50 @@
     .form-control:focus, .form-select:focus {
         border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
     }
-    .created-badge {
-        background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;
-        padding: 1.5rem; margin-bottom: 2rem;
+
+    /* Дефолтный пароль — плашка */
+    .default-pwd-banner {
+        display: flex; align-items: center; gap: 10px;
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 10px; padding: 0.6rem 1rem;
+        font-size: 0.88rem; color: #1e40af;
+        cursor: pointer; user-select: none;
     }
-    .created-title { color: #166534; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.75rem; }
-    .created-info { display: grid; gap: 0.5rem; }
+    .default-pwd-banner .pwd-text {
+        font-weight: 700; font-family: monospace; font-size: 1rem;
+        letter-spacing: 1px; color: #1d4ed8;
+    }
+    .default-pwd-banner .pwd-change-link {
+        margin-left: auto; font-size: 0.78rem; color: #6366f1;
+        text-decoration: underline; white-space: nowrap;
+    }
+
+    /* Карточка после создания */
+    .created-card {
+        background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px;
+        padding: 1.75rem; margin-bottom: 2rem; max-width: 600px; margin: 0 auto 2rem;
+    }
+    .created-title { color: #166534; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
+    .created-grid { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
     .created-item { display: flex; justify-content: space-between; font-size: 0.92rem; }
     .created-label { color: #6b7280; }
-    .created-val { font-weight: 600; color: #111827; }
+    .created-val { font-weight: 700; color: #111827; }
+
+    /* Блок ссылки + кнопка копировать */
+    .copy-block {
+        background: white; border: 1px solid #d1fae5; border-radius: 10px;
+        padding: 0.85rem 1rem; margin-bottom: 1rem;
+    }
+    .copy-block-label { font-size: 0.78rem; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
+    .copy-block-url { font-family: monospace; color: #4f46e5; font-size: 0.87rem; word-break: break-all; }
+    .btn-copy-all {
+        width: 100%; padding: 0.75rem; border-radius: 10px; font-weight: 600; font-size: 0.92rem;
+        background: #4f46e5; color: white; border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background 0.2s;
+    }
+    .btn-copy-all:hover { background: #4338ca; }
+    .btn-copy-all.copied { background: #16a34a; }
 {% endblock %}
 
 {% block content %}
@@ -33,21 +68,79 @@
     </div>
 
     {% if created_user %}
-    <div class="hr-form-card mb-4 border-success" style="background: #f0fdf4;">
-        <div class="created-title"><i class="bi bi-check-circle-fill me-2"></i>Справедливо! Сотрудник создан.</div>
-        <div class="created-info">
-            <div class="created-item"><span class="created-label">Имя:</span> <span class="created-val">{{ created_user.full_name }}</span></div>
-            <div class="created-item"><span class="created-label">Телефон:</span> <span class="created-val">{{ created_user.phone }}</span></div>
-            <div class="created-item"><span class="created-label">Пароль:</span> <span class="created-val">{{ created_user.password }}</span></div>
-            <div class="created-item"><span class="created-label">Роль:</span> <span class="created-val">{{ created_user.role }}</span></div>
+    <!-- ── КАРТОЧКА ПОСЛЕ СОЗДАНИЯ ──────────────────────────── -->
+    <div class="created-card">
+        <div class="created-title"><i class="bi bi-check-circle-fill me-2"></i>Сотрудник создан!</div>
+        <div class="created-grid">
+            <div class="created-item">
+                <span class="created-label">Имя:</span>
+                <span class="created-val" id="cval-name">{{ created_user.full_name }}</span>
+            </div>
+            <div class="created-item">
+                <span class="created-label">Телефон:</span>
+                <span class="created-val" id="cval-phone">{{ created_user.phone }}</span>
+            </div>
+            <div class="created-item">
+                <span class="created-label">Пароль:</span>
+                <span class="created-val" id="cval-password">{{ created_user.password }}</span>
+            </div>
+            <div class="created-item">
+                <span class="created-label">Роль:</span>
+                <span class="created-val" id="cval-role">{{ created_user.role }}</span>
+            </div>
         </div>
-        <div class="mt-3 p-3 bg-white border rounded">
-            <div class="small fw-bold text-muted mb-1">Ссылка для входа:</div>
-            <code class="text-primary d-block overflow-hidden">{{ created_user.login_url }}</code>
+
+        <div class="copy-block">
+            <div class="copy-block-label">Ссылка для входа:</div>
+            <div class="copy-block-url" id="cval-url">{{ created_user.login_url }}</div>
         </div>
-        <a href="{% url 'hr_employee_create' %}" class="btn btn-outline-success w-100 mt-4">Добавить еще одного</a>
+
+        <!-- Кнопка «Скопировать данные» -->
+        <button class="btn-copy-all mb-3" id="btn-copy-all" onclick="copyCredentials()">
+            <i class="bi bi-clipboard" id="copy-icon"></i>
+            <span id="copy-label">Скопировать данные для отправки</span>
+        </button>
+
+        <a href="{% url 'hr_employee_create' %}" class="btn btn-outline-success w-100" style="border-radius:10px;">
+            <i class="bi bi-person-plus me-1"></i> Добавить ещё одного
+        </a>
     </div>
+
+    <script>
+    function copyCredentials() {
+        const name     = document.getElementById('cval-name').textContent.trim();
+        const phone    = document.getElementById('cval-phone').textContent.trim();
+        const password = document.getElementById('cval-password').textContent.trim();
+        const role     = document.getElementById('cval-role').textContent.trim();
+        const url      = document.getElementById('cval-url').textContent.trim();
+
+        const text =
+            `Данные для входа в KIKI:\n\n` +
+            `Имя: ${name}\n` +
+            `Телефон (логин): ${phone}\n` +
+            `Пароль: ${password}\n` +
+            `Ссылка для входа:\n${url}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            const btn   = document.getElementById('btn-copy-all');
+            const icon  = document.getElementById('copy-icon');
+            const label = document.getElementById('copy-label');
+            btn.classList.add('copied');
+            icon.className  = 'bi bi-clipboard-check';
+            label.textContent = 'Скопировано! Отправьте сотруднику';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                icon.className  = 'bi bi-clipboard';
+                label.textContent = 'Скопировать данные для отправки';
+            }, 3000);
+        }).catch(() => {
+            alert('Не удалось скопировать. Скопируйте вручную.');
+        });
+    }
+    </script>
+
     {% else %}
+    <!-- ── ФОРМА СОЗДАНИЯ ───────────────────────────────────── -->
     <div class="hr-form-card">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -59,10 +152,33 @@
                 <label class="form-label">Номер телефона (для входа) *</label>
                 <input type="text" name="phone" class="form-control" placeholder="+996XXXXXXXXX" required value="{{ phone }}">
             </div>
-            <div class="mb-3">
-                <label class="form-label">Пароль {% if not default_password %}*{% endif %}</label>
-                <input type="text" name="password" class="form-control" placeholder="{% if default_password %}Оставьте пустым для: {{ default_password }}{% else %}Минимум 6 символов{% endif %}">
+
+            <!-- Пароль: если есть дефолтный — показываем плашку, поле скрыто -->
+            {% if default_password %}
+            <div class="mb-3" id="pwd-section">
+                <!-- Плашка дефолтного пароля -->
+                <div class="default-pwd-banner" id="pwd-banner" onclick="showCustomPwd()">
+                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                    <span>Дефолтный пароль:&nbsp;<span class="pwd-text">{{ default_password }}</span></span>
+                    <span class="pwd-change-link">Изменить</span>
+                </div>
+                <!-- Скрытый инпут кастомного пароля -->
+                <div id="pwd-custom-field" style="display:none; margin-top:8px;">
+                    <input type="text" name="password" id="pwd-input" class="form-control"
+                           placeholder="Введите свой пароль (мин. 6 символов)">
+                    <div class="mt-1">
+                        <a href="#" onclick="hideCustomPwd(); return false;"
+                           style="font-size:.8rem; color:#6b7280;">↩ Использовать дефолтный ({{ default_password }})</a>
+                    </div>
+                </div>
             </div>
+            {% else %}
+            <div class="mb-3">
+                <label class="form-label">Пароль *</label>
+                <input type="text" name="password" class="form-control" placeholder="Минимум 6 символов">
+            </div>
+            {% endif %}
+
             <div class="mb-4">
                 <label class="form-label">Роль *</label>
                 <select name="role" class="form-select">
@@ -77,6 +193,21 @@
             </button>
         </form>
     </div>
+
+    <script>
+    function showCustomPwd() {
+        document.getElementById('pwd-banner').style.display = 'none';
+        document.getElementById('pwd-custom-field').style.display = '';
+        document.getElementById('pwd-input').focus();
+    }
+
+    function hideCustomPwd() {
+        document.getElementById('pwd-custom-field').style.display = 'none';
+        document.getElementById('pwd-input').value = '';
+        document.getElementById('pwd-banner').style.display = 'flex';
+    }
+    </script>
+
     {% endif %}
 {% endblock %}
 
