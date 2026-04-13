@@ -447,7 +447,25 @@
                                     {{ form.category }}
                                 {% endif %}
                                 {% if form.category.errors %}
-                                               <!-- Дополнительные услуги — обновлённый дизайн -->
+                                <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label {% if form.service.field.required %}required{% endif %}">{{ form.service.label }}</label>
+                                {% if is_manager %}
+                                    <div class="field-readonly">
+                                        <i class="bi bi-basket text-muted"></i>
+                                        <span>{{ form.instance.service.name|default:"—" }}</span>
+                                    </div>
+                                {% else %}
+                                    {{ form.service }}
+                                {% endif %}
+                                {% if form.service.errors %}
+                                <div class="text-danger small">{{ form.service.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
                         <div class="row g-3 mt-2">
                             <div class="col-12">
                                 <div class="extra-svc-section rounded-3 border border-primary-subtle p-3" style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);">

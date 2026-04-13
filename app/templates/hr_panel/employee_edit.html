@@ -91,38 +91,7 @@
                 <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                     <i class="bi bi-person-badge text-primary"></i> Паспортные данные
                 </h5>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Тип документа</label>
-                        <select name="document_type" class="form-select">
-                            <option value="PASSPORT" {% if emp.passport_type == 'PASSPORT' %}selected{% endif %}>Паспорт</option>
-                            <option value="ID_CARD" {% if emp.passport_type == 'ID_CARD' %}selected{% endif %}>ID карта</option>
-                            <option value="CERTIFICATE" {% if emp.passport_type == 'CERTIFICATE' %}selected{% endif %}>Свидетельство</option>
-                            <option value="OTHER" {% if emp.passport_type == 'OTHER' %}selected{% endif %}>Другой документ</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Номер документа</label>
-                        <input type="text" name="document_number" class="form-control" placeholder="ID1234567" value="{{ emp.passport_number }}">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Кем выдан</label>
-                    <input type="text" name="issued_by" class="form-control" placeholder="МКК 50-50" value="{{ emp.passport_issued_by }}">
-                </div>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Дата выдачи</label>
-                        <input type="date" name="issue_date" class="form-control" value="{{ emp.employee.passport_issue_date|date:'Y-m-d' }}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Дата окончания</label>
-                        <input type="date" name="expiry_date" class="form-control" value="{{ emp.employee.passport_expiry_date|date:'Y-m-d' }}">
-                    </div>
-                </div>
-
-                <!-- Фото паспорта -->
-                <div class="row g-3 mt-1">
                     <div class="col-md-6">
                         <label class="form-label">
                             <i class="bi bi-card-image me-1 text-primary"></i> Передняя сторона
@@ -133,7 +102,7 @@
                                 <img src="{{ emp.employee.passport_photo_front.url }}"
                                      alt="Передняя сторона"
                                      class="img-thumbnail"
-                                     style="max-height:120px; object-fit:cover; border-radius:8px;">
+                                     style="max-height:140px; width:100%; object-fit:cover; border-radius:10px;">
                             </a>
                             <div class="small text-muted mt-1">Загрузить новое ↓</div>
                         </div>
@@ -150,7 +119,7 @@
                                 <img src="{{ emp.employee.passport_photo_back.url }}"
                                      alt="Задняя сторона"
                                      class="img-thumbnail"
-                                     style="max-height:120px; object-fit:cover; border-radius:8px;">
+                                     style="max-height:140px; width:100%; object-fit:cover; border-radius:10px;">
                             </a>
                             <div class="small text-muted mt-1">Загрузить новое ↓</div>
                         </div>
