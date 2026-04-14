@@ -42,12 +42,31 @@
         </div>
     </div>
 
+    <!-- ── Фильтр по категориям ──────────────────────────── -->
+    {% if categories %}
+    <div class="svc-cat-filter d-flex flex-wrap gap-2 mb-4" id="cat-filter-bar">
+        <button class="svc-cat-pill {% if not active_category %}active{% endif %}"
+                data-cat="" style="--pill-color:#6366f1;">
+            <i class="bi bi-grid me-1"></i>Все
+        </button>
+        {% for cat in categories %}
+        <button class="svc-cat-pill {% if active_category == cat.id|stringformat:'s' %}active{% endif %}"
+                data-cat="{{ cat.id }}"
+                style="--pill-color:{{ cat.color }};">
+            <i class="bi {{ cat.icon }} me-1"></i>{{ cat.name }}
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% if services %}
 
     <!-- ══ ВИД: СЕТКА ════════════════════════════════════ -->
     <div id="view-grid" class="row g-3">
         {% for service in services %}
-        <div class="col-sm-6 col-lg-4 col-xl-3 svc-item" data-name="{{ service.name|lower }}">
+        <div class="col-sm-6 col-lg-4 col-xl-3 svc-item"
+             data-name="{{ service.name|lower }}"
+             data-cat="{{ service.category_id|default:'' }}">
             <div class="svc-card {% if not service.is_active %}svc-card--inactive{% endif %}"
                  id="svc-card-{{ service.id }}">
 
@@ -66,6 +85,11 @@
                     {% endif %}
                     {% if service.is_extra_only %}
                     <span class="svc-badge svc-badge--extra">Хим. чистка</span>
+                    {% endif %}
+                    {% if service.category %}
+                    <span class="svc-badge svc-badge--cat" style="background:{{ service.category.color }}20;color:{{ service.category.color }};border:1px solid {{ service.category.color }}40;top:auto;bottom:10px;left:10px;right:auto;">
+                        <i class="bi {{ service.category.icon }} me-1"></i>{{ service.category.name }}
+                    </span>
                     {% endif %}
                 </div>
 
@@ -109,7 +133,10 @@
                 </thead>
                 <tbody>
                     {% for service in services %}
-                    <tr class="svc-item svc-row" data-name="{{ service.name|lower }}" id="svc-row-{{ service.id }}">
+                    <tr class="svc-item svc-row"
+                        data-name="{{ service.name|lower }}"
+                        data-cat="{{ service.category_id|default:'' }}"
+                        id="svc-row-{{ service.id }}">
                         <td>
                             <div class="svc-table-icon">
                                 {% if service.image %}
@@ -123,6 +150,11 @@
                             <div class="fw-semibold" style="font-size:.93rem;">{{ service.name }}</div>
                             {% if service.is_extra_only %}
                             <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e;font-size:.68rem;">Хим. чистка</span>
+                            {% endif %}
+                            {% if service.category %}
+                            <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background:{{ service.category.color }}18;color:{{ service.category.color }};font-size:.68rem;border:1px solid {{ service.category.color }}35;">
+                                <i class="bi {{ service.category.icon }}"></i>{{ service.category.name }}
+                            </span>
                             {% endif %}
                             {% if service.description %}
                             <div class="text-muted small">{{ service.description|truncatewords:8 }}</div>
@@ -268,6 +300,40 @@
 #svc-search { border-color: #e5e7eb; }
 #svc-search:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
 
+/* ── Фильтр категорий ─── */
+.svc-cat-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 50px;
+    border: 2px solid color-mix(in srgb, var(--pill-color) 40%, transparent);
+    background: color-mix(in srgb, var(--pill-color) 8%, #fff);
+    color: var(--pill-color);
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    white-space: nowrap;
+}
+.svc-cat-pill:hover {
+    background: color-mix(in srgb, var(--pill-color) 16%, #fff);
+    border-color: var(--pill-color);
+    transform: translateY(-1px);
+}
+.svc-cat-pill.active {
+    background: var(--pill-color);
+    border-color: var(--pill-color);
+    color: #fff;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--pill-color) 35%, transparent);
+}
+
+.svc-badge--cat {
+    font-size: .65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
 @media (max-width: 576px) {
     .svc-topbar { flex-direction: column; align-items: stretch; }
     .svc-card__img { height: 130px; }
@@ -302,42 +368,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
     btnGrid.addEventListener('click',  () => setView('grid'));
     btnTable.addEventListener('click', () => setView('table'));
-
-    // Восстанавливаем предпочтение
     setView(localStorage.getItem(VIEW_KEY) || 'grid');
 
-    // ── Живой поиск ──────────────────────────────────────
+    // ── Состояние фильтров ────────────────────────────────
+    let activeCat = '';
     const searchInput = document.getElementById('svc-search');
     const emptyHint   = document.getElementById('svc-empty-search');
 
-    searchInput.addEventListener('input', function () {
-        const q = this.value.toLowerCase().trim();
+    function applyFilters() {
+        const q = (searchInput ? searchInput.value.toLowerCase().trim() : '');
         let visible = 0;
         document.querySelectorAll('.svc-item').forEach(el => {
-            const match = !q || el.dataset.name.includes(q);
-            el.style.display = match ? '' : 'none';
-            if (match) visible++;
+            const nameMatch = !q || el.dataset.name.includes(q);
+            const catMatch  = !activeCat || el.dataset.cat === activeCat;
+            const show = nameMatch && catMatch;
+            el.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
-        emptyHint && (emptyHint.classList.toggle('d-none', visible > 0));
+        emptyHint && emptyHint.classList.toggle('d-none', visible > 0);
+    }
+
+    // Живой поиск
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+
+    // ── Фильтр категорий ─────────────────────────────────
+    document.querySelectorAll('.svc-cat-pill').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.svc-cat-pill').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            activeCat = this.dataset.cat;
+            applyFilters();
+        });
     });
 
     // ── Подсветка только что добавленной/изменённой услуги ─
     const params = new URLSearchParams(window.location.search);
     const highlightId = params.get('highlight');
     if (highlightId) {
-        // Карточка
         const card = document.getElementById('svc-card-' + highlightId);
         if (card) {
             card.classList.add('svc-card--highlight');
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        // Строка таблицы
         const row = document.getElementById('svc-row-' + highlightId);
         if (row) {
             row.classList.add('svc-row--highlight');
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        // Убираем параметр из URL без перезагрузки
         params.delete('highlight');
         const newUrl = window.location.pathname + (params.toString() ? '?' + params : '');
         history.replaceState({}, '', newUrl);

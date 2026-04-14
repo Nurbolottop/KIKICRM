@@ -7,7 +7,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.db.models.deletion import ProtectedError
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
-from .models import Service, ServiceInventoryTemplate, ExtraService
+from .models import Service, ServiceInventoryTemplate, ExtraService, ServiceCategory
 from .forms import ServiceForm
 from apps.inventory.models import InventoryItem
 
@@ -59,11 +59,17 @@ class ServiceListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        return super().get_queryset().order_by('name')
+        qs = super().get_queryset().select_related('category').order_by('name')
+        category_id = self.request.GET.get('category')
+        if category_id and category_id.isdigit():
+            qs = qs.filter(category_id=int(category_id))
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['extra_count'] = ExtraService.objects.count()
+        context['categories'] = ServiceCategory.objects.all()
+        context['active_category'] = self.request.GET.get('category', '')
         return context
 
 
@@ -99,6 +105,12 @@ class ServiceAjaxUpdateView(LoginRequiredMixin, View):
             service.cleaner_count = request.POST.get('cleaner_count', service.cleaner_count)
             service.is_active = request.POST.get('is_active') == 'on'
             service.is_extra_only = request.POST.get('is_extra_only') == 'on'
+            # Handle category
+            category_id = request.POST.get('category')
+            if category_id and category_id.isdigit():
+                service.category_id = int(category_id)
+            elif category_id == '':
+                service.category_id = None
             
             # Handle room-based checklist from JSON data
             checklist_data = request.POST.get('checklist_data')

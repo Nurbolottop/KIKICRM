@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Service, ExtraService
+from .models import Service, ExtraService, ServiceCategory
+
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'color', 'icon', 'ordering']
+    ordering = ['ordering', 'name']
+
 
 
 @admin.register(Service)
@@ -9,6 +16,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'name',
+        'category',
         'room_count',
         'price',
         'senior_cleaner_salary',
@@ -18,7 +26,8 @@ class ServiceAdmin(admin.ModelAdmin):
         'is_active'
     ]
     list_filter = [
-        'is_active'
+        'is_active',
+        'category',
     ]
     search_fields = [
         'name'
@@ -27,7 +36,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Основная информация', {
-            'fields': ('name', 'description', 'image')
+            'fields': ('category', 'name', 'description', 'image')
         }),
         ('Детали', {
             'fields': ('room_count', 'price', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'checklist', 'is_active')

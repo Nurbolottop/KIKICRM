@@ -385,11 +385,7 @@ function saveService() {
     
     formData.set('checklist_data', JSON.stringify(rooms));
     
-    // Debug: log what we're sending
-    console.log('Saving service...');
-    console.log('Rooms:', rooms);
-    console.log('URL:', "{% url 'service_ajax_update' service.id %}");
-    
+
     fetch("{% url 'service_ajax_update' service.id %}", {
         method: 'POST',
         headers: {
@@ -405,9 +401,8 @@ function saveService() {
         return r.json();
     })
     .then(data => {
-        console.log('Response data:', data);
         if (data.ok) {
-            window.location.reload();
+            window.location.href = "{% url 'services_list' %}?highlight={{ service.id }}";
         } else {
             alert('Ошибка сохранения: ' + (data.error || 'неизвестная ошибка'));
         }

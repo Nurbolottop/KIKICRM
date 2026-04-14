@@ -3,9 +3,44 @@ from django.db import models
 from apps.common.models import BaseModel
 
 
+class ServiceCategory(models.Model):
+    """Категория услуги (например, Квартира, Химчистка, Офис)."""
+
+    name = models.CharField('Название', max_length=100, unique=True)
+    color = models.CharField(
+        'Цвет (hex)',
+        max_length=20,
+        default='#6366f1',
+        help_text='HEX-цвет для бейджика, например #6366f1'
+    )
+    icon = models.CharField(
+        'Bootstrap-иконка',
+        max_length=50,
+        default='bi-tag',
+        help_text='Имя Bootstrap Icons класса, например bi-house или bi-sparkles'
+    )
+    ordering = models.PositiveIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Категория услуги'
+        verbose_name_plural = 'Категории услуг'
+        ordering = ['ordering', 'name']
+
+    def __str__(self):
+        return self.name
+
+
 class Service(BaseModel):
     """Модель услуги CRM KIKI."""
 
+    category = models.ForeignKey(
+        ServiceCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='services',
+        verbose_name='Категория'
+    )
     name = models.CharField(
         'Название услуги',
         max_length=150

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Service
+from .models import Service, ServiceCategory
 
 
 class ServiceForm(forms.ModelForm):
@@ -7,8 +7,11 @@ class ServiceForm(forms.ModelForm):
     
     class Meta:
         model = Service
-        fields = ['name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'is_active', 'is_extra_only']
+        fields = ['category', 'name', 'description', 'image', 'price', 'room_count', 'senior_cleaner_salary', 'senior_cleaner_bonus', 'senior_cleaner_count', 'cleaner_count', 'is_active', 'is_extra_only']
         widgets = {
+            'category': forms.Select(attrs={
+                'class': 'form-select',
+            }),
             'name': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'placeholder': 'Название услуги'
