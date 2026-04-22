@@ -190,10 +190,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.phone.id_for_label }}" class="form-label">Телефон <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">+996</span>
-                                    {{ form.phone }}
-                                </div>
+                                {{ form.phone }}
                                 {% if form.phone.errors %}
                                     <div class="text-danger small">{{ form.phone.errors }}</div>
                                 {% endif %}
@@ -212,10 +209,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.whatsapp.id_for_label }}" class="form-label">WhatsApp</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">+996</span>
-                                    {{ form.whatsapp }}
-                                </div>
+                                {{ form.whatsapp }}
                                 {% if form.whatsapp.errors %}
                                     <div class="text-danger small">{{ form.whatsapp.errors }}</div>
                                 {% endif %}
@@ -285,25 +279,50 @@ function cleanPhoneInput(input) {
     input.addEventListener('paste', function(e) {
         e.preventDefault();
         let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-        
-        // Удаляем все не-цифровые символы
-        let digits = pastedText.replace(/\D/g, '');
-        
-        // Удаляем префикс 996 если он есть в начале
-        if (digits.startsWith('996')) {
-            digits = digits.slice(3);
+
+        let text = String(pastedText || '').trim();
+        const hasPlus = text.startsWith('+');
+
+        // Оставляем только цифры
+        let digits = text.replace(/\D/g, '');
+
+        // Если пользователь вставил без + и это явно кыргызский локальный формат,
+        // автоматически приводим к +996..., иначе оставляем как есть.
+        if (!hasPlus) {
+            if (digits.startsWith('996') && digits.length === 12) {
+                this.value = '+' + digits;
+                return;
+            }
+            if (digits.startsWith('0') && digits.length === 10) {
+                this.value = '+996' + digits.slice(1);
+                return;
+            }
+            if (digits.length === 9) {
+                this.value = '+996' + digits;
+                return;
+            }
+
+            this.value = digits;
+            return;
         }
-        
-        // Ограничиваем до 9 цифр (количество цифр после кода страны)
-        digits = digits.slice(0, 9);
-        
-        // Вставляем очищенный номер
-        this.value = digits;
+
+        // Если вставили с +, сохраняем международный формат
+        this.value = '+' + digits;
     });
     
-    // Ограничиваем ввод только цифрами при ручном наборе
+    // При ручном вводе разрешаем + только в начале, дальше только цифры
     input.addEventListener('input', function(e) {
-        this.value = this.value.replace(/\D/g, '').slice(0, 9);
+        let value = String(this.value || '').trim();
+        const hasPlus = value.startsWith('+');
+        let digits = value.replace(/\D/g, '');
+
+        // Не ограничиваем по стране; просто держим в пределах max_length модели
+        const maxLen = 20;
+        if (hasPlus) {
+            this.value = ('+' + digits).slice(0, maxLen);
+            return;
+        }
+        this.value = digits.slice(0, maxLen);
     });
 }
 

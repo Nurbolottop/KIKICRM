@@ -75,7 +75,55 @@ class NotificationService:
         # Order code
         order_code = order.order_code if order.order_code else f"#{order.id}"
 
-        text = f"""
+        # Доп. услуги из order_extra_services
+        try:
+            extra_services_qs = order.order_extra_services.select_related('extra_service').all()
+            if extra_services_qs.exists():
+                extra_lines = '\n'.join(
+                    f"  — {oes.extra_service.name} × {oes.quantity}"
+                    f"{' (' + str(oes.extra_service.price) + ' сом)' if oes.extra_service.price else ''}"
+                    for oes in extra_services_qs
+                )
+            else:
+                extra_lines = extra_services or 'Нет'
+        except Exception:
+            extra_lines = extra_services or 'Нет'
+
+        # Определяем: это химчистка/доп.услуга или обычная уборка
+        is_extra_only = order.service and getattr(order.service, 'is_extra_only', False)
+
+        if is_extra_only:
+            # ── Блок для Химчистки / доп. услуг ───────────────
+            text = f"""
+🧺 <b>Заказ {order_code}</b>
+
+<b>Клиент:</b>
+• ФИО: {client_name}
+• Телефон: {client_phone}
+• Адрес: {client_address}
+
+<b>🗓 Дата и время:</b> {scheduled_date}, {scheduled_time}
+
+<b>Услуга:</b>
+• Тип: {service_name}
+• Доп. услуги:
+{extra_lines}
+• Особые пожелания: {notes}
+
+<b>Оплата:</b>
+• Способ: {payment_method}
+{f"• Задаток: {prepayment} сом" if prepayment else ""}
+
+💰 <b>Итоговая сумма: {price_text}</b>
+
+⚠️ <b>Примечание:</b>
+1. Клиент должен проверить работу сразу после выполнения. Жалобы после ухода клинеров не принимаются.
+
+2. Оплату строго давать менеджеру если наличка, если перевод на номер мбанк +996 221 241 172 Кишимжан К и чек оператору.
+"""
+        else:
+            # ── Блок для обычной уборки ────────────────────────
+            text = f"""
 🆕 <b>Заказ {order_code}</b>
 
 <b>Клиент:</b>
@@ -94,7 +142,8 @@ class NotificationService:
 
 <b>Услуги:</b>
 • Основная: {service_name}
-• Доп.услуги: {extra_services}
+• Доп.услуги:
+{extra_lines}
 • Особые пожелания: {notes}
 
 <b>Оплата:</b>
