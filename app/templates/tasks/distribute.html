@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Распределение задач — Заказ {{ order.order_code }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width: 900px;">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <a href="{% url 'orders:detail' order.id %}" class="text-muted text-decoration-none mb-2 d-inline-block">
+                <i class="bi bi-arrow-left me-1"></i> Назад к заказу
+            </a>
+            <h4 class="mb-0 fw-bold">
+                <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>Распределение задач
+            </h4>
+            <p class="text-muted mb-0 mt-1">
+                Заказ <strong>{{ order.order_code }}</strong> — {{ order.service.name|default:"—" }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Employees legend -->
+    {% if order_employees %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="text-muted small me-2"><i class="bi bi-people me-1"></i>Сотрудники на заказе:</span>
+                {% for oe in order_employees %}
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1" style="font-size: 0.8rem;">
+                    <i class="bi bi-person-fill me-1"></i>{{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                    <small class="text-muted">({{ oe.get_role_on_order_display }})</small>
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rooms with tasks -->
+    {% for room in rooms %}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-door-open text-primary me-2"></i>{{ room.name }}
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for oe in order_employees %}
+                    <label class="btn btn-sm {% if oe.employee.id in room.assigned_ids %}btn-primary{% else %}btn-outline-secondary{% endif %} room-emp-btn"
+                           style="font-size: 0.78rem; padding: 3px 10px; cursor: pointer;"
+                           data-room="{{ room.name }}">
+                        <input type="checkbox" class="d-none room-check"
+                               data-room="{{ room.name }}"
+                               value="{{ oe.employee.id }}"
+                               {% if oe.employee.id in room.assigned_ids %}checked{% endif %}>
+                        {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+                {% for task in room.tasks %}
+                <li class="list-group-item py-2 px-3 border-0 d-flex align-items-center" data-task-id="{{ task.id }}" data-room="{{ room.name }}">
+                    <i class="bi bi-check2-square text-success me-2 opacity-50"></i>
+                    <span class="small">{{ task.title }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if extra_tasks %}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-warning bg-opacity-10 border-bottom py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-plus-circle text-warning me-2"></i>Дополнительные задачи
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for oe in order_employees %}
+                    <label class="btn btn-sm {% if oe.employee.id in extra_assigned_ids %}btn-primary{% else %}btn-outline-secondary{% endif %} room-emp-btn"
+                           style="font-size: 0.78rem; padding: 3px 10px; cursor: pointer;"
+                           data-room="__extra__">
+                        <input type="checkbox" class="d-none room-check"
+                               data-room="__extra__"
+                               value="{{ oe.employee.id }}"
+                               {% if oe.employee.id in extra_assigned_ids %}checked{% endif %}>
+                        {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+                {% for task in extra_tasks %}
+                <li class="list-group-item py-2 px-3 border-0 d-flex align-items-center" data-task-id="{{ task.id }}" data-room="__extra__">
+                    <i class="bi bi-check2-square text-warning me-2 opacity-50"></i>
+                    <span class="small">{{ task.title }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not rooms and not extra_tasks %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+        <p>Задачи ещё не сгенерированы.</p>
+    </div>
+    {% endif %}
+
+    <!-- Save bar -->
+    <div class="d-flex gap-2 justify-content-end mt-4 mb-5">
+        <a href="{% url 'orders:detail' order.id %}" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-x-lg me-1"></i>Отмена
+        </a>
+        <button type="button" class="btn btn-primary px-4" id="saveDistributionBtn">
+            <i class="bi bi-check-lg me-1"></i>Сохранить распределение
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle employee button for a room
+    document.querySelectorAll('.room-emp-btn').forEach(label => {
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cb = this.querySelector('.room-check');
+            cb.checked = !cb.checked;
+            if (cb.checked) {
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-primary');
+            } else {
+                this.classList.remove('btn-primary');
+                this.classList.add('btn-outline-secondary');
+            }
+        });
+    });
+
+    // Save distribution via AJAX
+    document.getElementById('saveDistributionBtn').addEventListener('click', async function() {
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Сохраняю...';
+
+        // Collect: for each room, which employees are checked
+        const roomAssignments = {};
+        document.querySelectorAll('.room-check').forEach(cb => {
+            const room = cb.getAttribute('data-room');
+            if (!roomAssignments[room]) roomAssignments[room] = [];
+            if (cb.checked) {
+                roomAssignments[room].push(cb.value);
+            }
+        });
+
+        // Build task-level assignments from room-level
+        const taskAssignments = {};
+        document.querySelectorAll('[data-task-id]').forEach(li => {
+            const taskId = li.getAttribute('data-task-id');
+            const room = li.getAttribute('data-room');
+            taskAssignments[taskId] = roomAssignments[room] || [];
+        });
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('assignments', JSON.stringify(taskAssignments));
+
+        try {
+            const response = await fetch('{% url "tasks:bulk_assign_tasks" order.id %}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.href = '{% url "orders:detail" order.id %}';
+            } else {
+                alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Произошла ошибка при сохранении');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-check-lg me-1"></i>Сохранить распределение';
+        }
+    });
+});
+</script>
+{% endblock %}

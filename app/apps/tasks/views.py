@@ -1,7 +1,7 @@
 """
 Views для управления задачами чеклистов (Task Checklist System).
 """
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
@@ -312,3 +312,61 @@ def bulk_assign_tasks(request, order_id):
     messages.success(request, 'Задачи успешно распределены')
     return redirect('orders:detail', pk=order_id)
 
+
+@login_required
+def distribute_tasks_page(request, order_id):
+    """
+    Отдельная страница для распределения задач по комнатам.
+    """
+    from apps.orders.models import Order
+
+    if not (can_assign_cleaners(request.user) or can_assign_cleaner_tasks(request.user)):
+        messages.error(request, 'Нет прав для распределения задач')
+        return redirect('orders:detail', pk=order_id)
+
+    order = get_object_or_404(Order, id=order_id)
+
+    # Ensure tasks are generated
+    TaskChecklistService.generate_order_tasks(order)
+
+    all_tasks = order.tasks.prefetch_related(
+        'assigned_employees', 'assigned_employees__user'
+    ).order_by('order_position', 'id')
+
+    main_tasks = all_tasks.filter(order_position__lt=100000)
+    extra_tasks = list(all_tasks.filter(order_position__gte=100000))
+
+    # Group main tasks by room
+    rooms_dict = {}
+    for task in main_tasks:
+        room_name = "Общее"
+        if task.description and task.description.startswith("Комната: "):
+            room_name = task.description.replace("Комната: ", "")
+
+        if room_name not in rooms_dict:
+            rooms_dict[room_name] = {'name': room_name, 'tasks': [], 'assigned_ids': set()}
+        rooms_dict[room_name]['tasks'].append(task)
+
+        for emp in task.assigned_employees.all():
+            rooms_dict[room_name]['assigned_ids'].add(emp.id)
+
+    rooms = list(rooms_dict.values())
+
+    # Extra tasks assigned IDs
+    extra_assigned_ids = set()
+    for task in extra_tasks:
+        for emp in task.assigned_employees.all():
+            extra_assigned_ids.add(emp.id)
+
+    order_employees = order.order_employees.select_related(
+        'employee__user'
+    ).filter(finished_at__isnull=True)
+
+    context = {
+        'order': order,
+        'rooms': rooms,
+        'extra_tasks': extra_tasks,
+        'extra_assigned_ids': extra_assigned_ids,
+        'order_employees': order_employees,
+    }
+    return render(request, 'tasks/distribute.html', context)
