@@ -54,17 +54,28 @@
             document.getElementById('installAppBtn')?.classList.remove('d-none');
         });
 
-        // Show install button for iOS
+        // Show install button logic
         window.addEventListener('DOMContentLoaded', () => {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-            if (isIOS && !isStandalone) {
+            
+            // If already installed, hide everything
+            if (isStandalone) {
+                document.getElementById('installAppBtn')?.classList.add('d-none');
+                return;
+            }
+
+            // Show for iOS users who haven't installed yet
+            if (isIOS) {
                 document.getElementById('installAppBtn')?.classList.remove('d-none');
             }
+            
+            // Note: For Android/Chrome, the 'beforeinstallprompt' event (above) will handle showing the button
         });
 
         async function installApp() {
             if (deferredPrompt) {
+                // For Android/Chrome
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
@@ -72,16 +83,50 @@
                     document.getElementById('installAppBtn')?.classList.add('d-none');
                 }
             } else {
-                // For iOS or browsers that don't support beforeinstallprompt
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                if (isIOS) {
-                    alert('Чтобы установить приложение на iPhone:\n1. Нажмите кнопку "Поделиться" (квадрат со стрелкой)\n2. Выберите "На экран «Домой»"');
-                } else {
-                    alert('Ваше устройство уже установило приложение или не поддерживает автоматическую установку.');
-                }
+                // For iOS or cases where prompt is not available
+                const installModal = new bootstrap.Modal(document.getElementById('installInstructionsModal'));
+                installModal.show();
             }
         }
     </script>
+
+    <!-- Modal: Install Instructions -->
+    <div class="modal fade" id="installInstructionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header text-white border-0" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                    <h5 class="modal-title fw-bold">Установка CRM KIKI</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-4">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="bi bi-phone-vibrate text-primary fs-1"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Как установить на iPhone/iPad?</h5>
+                        <p class="text-muted">Для работы приложения как полноценной программы, выполните эти шаги:</p>
+                    </div>
+                    
+                    <div class="text-start bg-light p-3 rounded-4 mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">1</span>
+                            <span>Нажмите кнопку <strong>«Поделиться»</strong> <i class="bi bi-box-arrow-up text-primary ms-1"></i> (внизу в Safari)</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">2</span>
+                            <span>Прокрутите список вниз и выберите <strong>«На экран «Домой»»</strong> <i class="bi bi-plus-square text-primary ms-1"></i></span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">3</span>
+                            <span>Нажмите <strong>«Добавить»</strong> в верхнем углу.</span>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary w-100 py-3 fw-bold rounded-3" data-bs-dismiss="modal">Понятно, спасибо!</button>
+                </div>
+            </div>
+        </div>
+    </div>
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>
