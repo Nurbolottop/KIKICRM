@@ -397,6 +397,7 @@
             </div>
 
             <!-- SECTION 2: Operator Data (SECOND - for operator to edit) -->
+            {% if not is_manager %}
             <div class="col-12">
                 <div class="card border-0 shadow-sm section-operator">
                     <div class="card-header bg-primary bg-opacity-10 border-0">
@@ -952,6 +953,8 @@
                     </div>
                 </div>
             </div>
+
+            {% endif %} {# end if not is_manager — hide operator sections #}
 
             <!-- Block 7: Comments moved to operator section -->
 
