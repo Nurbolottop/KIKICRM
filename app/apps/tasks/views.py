@@ -70,7 +70,7 @@ def start_task(request, task_id):
     can_start = False
     if request.user.is_superuser:
         can_start = True
-    elif task.assigned_employee and task.assigned_employee.user == request.user:
+    elif task.assigned_employees.filter(user=request.user).exists():
         can_start = True
     elif can_assign_cleaner_tasks(request.user):  # Senior Cleaner / Manager
         can_start = True
@@ -108,7 +108,7 @@ def complete_task(request, task_id):
     can_complete = False
     if request.user.is_superuser:
         can_complete = True
-    elif task.assigned_employee and task.assigned_employee.user == request.user:
+    elif task.assigned_employees.filter(user=request.user).exists():
         can_complete = True
     elif can_assign_cleaner_tasks(request.user):  # Senior Cleaner / Manager
         can_complete = True

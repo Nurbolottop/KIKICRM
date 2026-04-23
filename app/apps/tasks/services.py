@@ -92,8 +92,7 @@ class TaskChecklistService:
         Returns:
             Обновленная задача
         """
-        task.assigned_employee = employee
-        task.save(update_fields=['assigned_employee'])
+        task.assigned_employees.add(employee)
         return task
     
     @staticmethod
@@ -216,7 +215,7 @@ class TaskChecklistService:
         Returns:
             Список задач
         """
-        tasks = OrderTask.objects.filter(assigned_employee=employee)
+        tasks = OrderTask.objects.filter(assigned_employees=employee)
         
         if status:
             tasks = tasks.filter(status=status)
