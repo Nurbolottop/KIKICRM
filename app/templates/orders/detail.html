@@ -445,8 +445,18 @@
                                     {% elif task.status == 'SKIPPED' %}
                                     <span class="badge bg-secondary">Пропущено</span>
                                     {% endif %}
-                                    {% if task.assigned_employee %}
-                                    <span class="badge bg-info ms-1">{{ task.assigned_employee.user.full_name|default:task.assigned_employee.user.phone }}</span>
+                                    {% if task.assigned_employees.all %}
+                                        {% for emp in task.assigned_employees.all %}
+                                            <span class="badge bg-info ms-1">{{ emp.user.full_name|default:emp.user.phone }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% if can_edit_order %}
+                                    <button class="btn btn-link btn-sm p-0 ms-2 text-primary js-manage-task-assignees" 
+                                            data-task-id="{{ task.id }}" 
+                                            data-task-title="{{ task.title }}"
+                                            data-assigned-ids="[{% for emp in task.assigned_employees.all %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}]">
+                                        <i class="bi bi-person-plus"></i>
+                                    </button>
                                     {% endif %}
                                 </div>
                             </div>
@@ -825,7 +835,24 @@
                             {% for task in extra_tasks_list %}
                             <li class="list-group-item py-2 border-0 bg-transparent d-flex align-items-center">
                                 <i class="bi bi-check2-square text-success me-2"></i>
-                                <span class="flex-grow-1">{{ task.title }}</span>
+                                <div class="flex-grow-1">
+                                    <span class="fw-medium">{{ task.title }}</span>
+                                    <div class="mt-1">
+                                        {% if task.assigned_employees.all %}
+                                            {% for emp in task.assigned_employees.all %}
+                                                <span class="badge bg-info ms-1">{{ emp.user.full_name|default:emp.user.phone }}</span>
+                                            {% endfor %}
+                                        {% endif %}
+                                        {% if can_edit_order %}
+                                        <button class="btn btn-link btn-sm p-0 ms-2 text-primary js-manage-task-assignees" 
+                                                data-task-id="{{ task.id }}" 
+                                                data-task-title="{{ task.title }}"
+                                                data-assigned-ids="[{% for emp in task.assigned_employees.all %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}]">
+                                            <i class="bi bi-person-plus"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
                                 <span class="badge bg-dark ms-2">доп задача</span>
                             </li>
                             {% endfor %}
@@ -1446,6 +1473,108 @@ document.addEventListener('DOMContentLoaded', function () {
             addRow();
         }
     });
+});
+</script>
+
+
+<!-- Modal for Task Assignment -->
+<div class="modal fade" id="manageTaskAssigneesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-people me-2"></i>Назначить исполнителей</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h6 id="modalTaskTitle" class="mb-3 fw-bold"></h6>
+                <form id="manageTaskAssigneesForm">
+                    <input type="hidden" id="modalTaskId" name="task_id">
+                    <div class="list-group" id="modalEmployeesList">
+                        {% for oe in all_order_employees %}
+                        <label class="list-group-item d-flex align-items-center cursor-pointer">
+                            <input class="form-check-input me-3" type="checkbox" name="employee_ids" value="{{ oe.employee.id }}">
+                            <div>
+                                <div class="fw-medium">{{ oe.employee.user.full_name|default:oe.employee.user.phone }}</div>
+                                <div class="text-muted small">
+                                    {% if oe.role_on_order == 'senior_cleaner' %}Старший клинер{% elif oe.role_on_order == 'cleaner' %}Клинер{% else %}Стажер{% endif %}
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveTaskAssigneesBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const manageModalEl = document.getElementById('manageTaskAssigneesModal');
+    const manageModal = window.bootstrap ? new bootstrap.Modal(manageModalEl) : null;
+    const manageForm = document.getElementById('manageTaskAssigneesForm');
+    const modalTaskTitle = document.getElementById('modalTaskTitle');
+    const modalTaskId = document.getElementById('modalTaskId');
+    const saveBtn = document.getElementById('saveTaskAssigneesBtn');
+
+    document.querySelectorAll('.js-manage-task-assignees').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const taskTitle = this.getAttribute('data-task-title');
+            const assignedIds = JSON.parse(this.getAttribute('data-assigned-ids') || '[]');
+
+            modalTaskId.value = taskId;
+            modalTaskTitle.textContent = taskTitle;
+
+            // Reset checkboxes
+            manageForm.querySelectorAll('input[name="employee_ids"]').forEach(cb => {
+                cb.checked = assignedIds.includes(parseInt(cb.value));
+            });
+
+            if (manageModal) manageModal.show();
+        });
+    });
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async function() {
+            const taskId = modalTaskId.value;
+            const formData = new FormData(manageForm);
+            
+            // Collect all selected IDs
+            const employeeIds = [];
+            manageForm.querySelectorAll('input[name="employee_ids"]:checked').forEach(cb => {
+                employeeIds.push(cb.value);
+            });
+
+            const submitData = new FormData();
+            employeeIds.forEach(id => submitData.append('employee_ids[]', id));
+            submitData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            try {
+                const response = await fetch(`/api/task/${taskId}/assign/`, {
+                    method: 'POST',
+                    body: submitData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Произошла ошибка при сохранении');
+            }
+        });
+    }
 });
 </script>
 

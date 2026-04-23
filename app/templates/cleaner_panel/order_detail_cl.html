@@ -691,34 +691,22 @@
                                                 Дедлайн: {{ t.deadline|date:"d.m.Y H:i" }}
                                             </div>
                                         {% endif %}
-                                        {% if t.assigned_employee %}
+                                        {% if t.assigned_employees.all %}
                                             <div class="text-muted small mt-1">
-                                                <i class="bi bi-person"></i>
-                                                <span class="assignee-label" data-task-id="{{ t.id }}">{{ t.assigned_employee.user.full_name|default:t.assigned_employee.user.phone }}</span>
+                                                <i class="bi bi-people"></i>
+                                                {% for emp in t.assigned_employees.all %}
+                                                    <span class="badge bg-light text-dark border">{{ emp.user.full_name|default:emp.user.phone }}</span>
+                                                {% endfor %}
                                             </div>
                                         {% else %}
-                                            <div class="text-muted small mt-1">
-                                                <i class="bi bi-person"></i>
-                                                <span class="assignee-label" data-task-id="{{ t.id }}">Не назначено</span>
+                                            <div class="text-muted small mt-1 text-danger">
+                                                <i class="bi bi-person-x"></i>
+                                                <span>Не назначено</span>
                                             </div>
                                         {% endif %}
                                     </div>
 
                                     <div class="task-right">
-                                        {% if can_assign and not work_started %}
-                                            <form method="post" action="{% url 'assign_task_cl' order.id t.id %}" class="d-flex gap-2 align-items-center js-assign-form" data-task-id="{{ t.id }}">
-                                                {% csrf_token %}
-                                                <select name="assigned_employee_id" class="form-select form-select-sm task-assign-select" required>
-                                                    <option value="" {% if not t.assigned_employee %}selected{% endif %}>Назначить...</option>
-                                                    {% for emp in assigned_employees %}
-                                                        <option value="{{ emp.id }}" {% if t.assigned_employee_id == emp.id %}selected{% endif %}>
-                                                            {{ emp.user.full_name|default:emp.user.phone }}
-                                                        </option>
-                                                    {% endfor %}
-                                                </select>
-                                                <button class="btn btn-sm btn-outline-primary js-assign-submit" type="submit">OK</button>
-                                            </form>
-                                        {% endif %}
 
                                         {% if work_started and employee and employee in t.assigned_employees.all %}
                                             {% if t.status == 'IN_PROGRESS' %}
@@ -758,9 +746,9 @@
         {% if is_senior and not work_started %}
         <div class="text-muted small mb-3">
             {% if not all_tasks_assigned %}
-                Чтобы начать работу, назначь исполнителя для каждой задачи.
+                <i class="bi bi-info-circle me-1"></i> Ожидайте, пока менеджер распределит все задачи.
             {% else %}
-                Все задачи распределены — можно начинать работу.
+                <i class="bi bi-check-circle me-1"></i> Все задачи распределены — можно начинать работу.
             {% endif %}
         </div>
         {% endif %}

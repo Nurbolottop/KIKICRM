@@ -86,7 +86,7 @@ body.crm-body {
 }
 
 .sidebar-nav {
-    padding: 12px 0;
+    padding: 12px 0 80px; /* Added 80px bottom padding for mobile browsers */
 }
 
 .nav-list {

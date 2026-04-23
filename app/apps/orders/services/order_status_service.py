@@ -319,8 +319,8 @@ class OrderStatusService:
                     # Находим всех уникальных клинеров, назначенных на задачи этой комнаты
                     assigned_employee_ids = list(
                         room_tasks.filter(
-                            assigned_employee__isnull=False
-                        ).values_list('assigned_employee_id', flat=True).distinct()
+                            assigned_employees__isnull=False
+                        ).values_list('assigned_employees__id', flat=True).distinct()
                     )
                     
                     # Делим оплату комнаты между всеми назначенными клинерами
