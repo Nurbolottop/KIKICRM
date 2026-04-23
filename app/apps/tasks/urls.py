@@ -20,5 +20,6 @@ urlpatterns = [
     path('my-tasks/', views.my_tasks, name='my_tasks'),
     
     # Массовое распределение задач
+    path('order/<int:order_id>/tasks/distribute/', views.distribute_tasks_page, name='distribute_tasks'),
     path('order/<int:order_id>/tasks/bulk-assign/', views.bulk_assign_tasks, name='bulk_assign_tasks'),
 ]
