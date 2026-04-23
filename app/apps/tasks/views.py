@@ -19,8 +19,8 @@ from .services import TaskChecklistService
 @require_POST
 def assign_task_to_employee(request, task_id):
     """
-    Назначить задачу сотруднику.
-    Доступно: Manager, Senior Cleaner, Founder
+    Назначить задачу сотрудникам (Multiple).
+    Доступно: Manager, Founder, Super Admin
     """
     if not (can_assign_cleaners(request.user) or can_assign_cleaner_tasks(request.user)):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -29,31 +29,34 @@ def assign_task_to_employee(request, task_id):
         return redirect('orders_list')
     
     task = get_object_or_404(OrderTask, id=task_id)
-    employee_id = request.POST.get('employee_id')
+    employee_ids = request.POST.getlist('employee_ids[]') or request.POST.getlist('employee_ids')
     
-    if not employee_id:
+    # Очищаем текущих сотрудников перед назначением новых (если это полная перезапись)
+    task.assigned_employees.clear()
+    
+    if not employee_ids:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': 'Не выбран сотрудник'})
-        messages.error(request, 'Не выбран сотрудник')
+            return JsonResponse({'success': True, 'message': 'Все исполнители сняты с задачи'})
+        messages.success(request, 'Исполнители сняты')
         return redirect('order_detail', pk=task.order.id)
     
-    try:
-        employee = Employee.objects.get(id=employee_id)
-        TaskChecklistService.assign_task_to_employee(task, employee, request.user)
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': f'Задача назначена {employee.user.full_name}',
-                'employee_name': employee.user.full_name
-            })
-        messages.success(request, f'Задача назначена {employee.user.full_name}')
-        
-    except Employee.DoesNotExist:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': 'Сотрудник не найден'})
-        messages.error(request, 'Сотрудник не найден')
+    assigned_names = []
+    for emp_id in employee_ids:
+        try:
+            employee = Employee.objects.get(id=emp_id)
+            TaskChecklistService.assign_task_to_employee(task, employee, request.user)
+            assigned_names.append(employee.user.full_name or employee.user.phone)
+        except Employee.DoesNotExist:
+            continue
+            
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': f'Задача назначена: {", ".join(assigned_names)}',
+            'assigned_names': assigned_names
+        })
     
+    messages.success(request, f'Задача назначена: {", ".join(assigned_names)}')
     return redirect('order_detail', pk=task.order.id)
 
 

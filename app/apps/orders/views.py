@@ -560,7 +560,10 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         
         # Task counters for checklist
         # Доп. задачи создаются с высоким order_position (>= 100000) и отображаются отдельно
-        all_tasks_qs = order.tasks.order_by('order_position', 'id')
+        all_tasks_qs = order.tasks.prefetch_related('assigned_employees', 'assigned_employees__user').order_by('order_position', 'id')
+        context['all_order_employees'] = order.order_employees.select_related('employee__user').filter(
+            finished_at__isnull=True
+        )
         context['extra_tasks_list'] = all_tasks_qs.filter(order_position__gte=100000)
         context['tasks_list'] = all_tasks_qs.filter(order_position__lt=100000)  # Только обычные задачи
         context['tasks_total'] = context['tasks_list'].count()
