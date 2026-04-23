@@ -559,7 +559,14 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
             context['actual_work_hours'] = None
         
         # Task counters for checklist
-        # Доп. задачи создаются с высоким order_position (>= 100000) и отображаются отдельно
+        # Убедимся, что задачи сгенерированы (если заказ в процессе или дальше)
+        if order.manager_status in ['PROCESS', 'REVIEW', 'DELIVERED']:
+            try:
+                from apps.tasks.services import TaskChecklistService
+                TaskChecklistService.generate_order_tasks(order)
+            except Exception:
+                pass
+
         all_tasks_qs = order.tasks.prefetch_related('assigned_employees', 'assigned_employees__user').order_by('order_position', 'id')
         context['all_order_employees'] = order.order_employees.select_related('employee__user').filter(
             finished_at__isnull=True

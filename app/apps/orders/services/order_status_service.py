@@ -211,6 +211,13 @@ class OrderStatusService:
         order.manager_status = Order.ManagerStatus.PROCESS
         order.save()
         
+        # Генерируем задачи из шаблона чеклиста
+        try:
+            from apps.tasks.services import TaskChecklistService
+            TaskChecklistService.generate_order_tasks(order)
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to generate order tasks: {e}")
+        
         # Отправляем уведомление
         OrderStatusService._send_status_notification(
             order, 

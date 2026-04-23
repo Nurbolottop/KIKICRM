@@ -38,6 +38,25 @@ class TaskChecklistService:
         ).first()
         
         if not template:
+            # Попробуем сгенерировать из поля checklist модели Service (JSON fallback)
+            if order.service and order.service.checklist:
+                created_tasks = []
+                pos = 1
+                for room in order.service.checklist:
+                    room_name = room.get('name', 'Комната')
+                    tasks = room.get('tasks', [])
+                    for task_title in tasks:
+                        if not task_title: continue
+                        order_task = OrderTask.objects.create(
+                            order=order,
+                            title=task_title,
+                            description=f"Комната: {room_name}",
+                            order_position=pos,
+                            status=OrderTaskStatus.PENDING
+                        )
+                        created_tasks.append(order_task)
+                        pos += 1
+                return created_tasks
             return []
         
         # Получаем активные задачи из шаблона
