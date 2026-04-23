@@ -589,6 +589,10 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         context['order_copy_text'] = _build_order_copy_text(order)
         context['order_extra_services'] = order.order_extra_services.select_related('extra_service').all()
         
+        # Доп. услуги для выбора в модалке
+        from apps.services.models import ExtraService
+        context['extra_services_available'] = ExtraService.objects.filter(is_active=True).order_by('name')
+        
         return context
     
     def _can_transfer(self, user):

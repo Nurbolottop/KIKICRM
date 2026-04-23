@@ -398,79 +398,6 @@
             </div>
             {% endif %}
 
-            <!-- Блок: Чеклист задач -->
-            {% if tasks_list %}
-            <div class="card mb-4 border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
-                    <h6 class="text-muted text-uppercase mb-0">
-                        <i class="bi bi-check2-square"></i> Чеклист задач
-                    </h6>
-                    <span class="badge bg-primary">{{ tasks_completed }} / {{ tasks_total }} выполнено</span>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        {% for task in tasks_list %}
-                        <div class="list-group-item d-flex align-items-center py-3 px-0 border-bottom">
-                            <div class="flex-shrink-0 me-3">
-                                {% if task.status == 'DONE' %}
-                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                    <i class="bi bi-check-lg text-white"></i>
-                                </div>
-                                {% elif task.status == 'IN_PROGRESS' %}
-                                <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                    <i class="bi bi-hourglass-split text-white"></i>
-                                </div>
-                                {% elif task.status == 'SKIPPED' %}
-                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                    <i class="bi bi-x-lg text-white"></i>
-                                </div>
-                                {% else %}
-                                <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                    <i class="bi bi-circle text-muted"></i>
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1 {% if task.status == 'DONE' %}text-decoration-line-through text-muted{% endif %}">{{ task.title }}</h6>
-                                {% if task.description %}
-                                <p class="mb-0 small text-muted">{{ task.description|truncatechars:100 }}</p>
-                                {% endif %}
-                                <div class="mt-1">
-                                    {% if task.status == 'PENDING' %}
-                                    <span class="badge bg-light text-dark">Ожидает</span>
-                                    {% elif task.status == 'IN_PROGRESS' %}
-                                    <span class="badge bg-warning">В работе</span>
-                                    {% elif task.status == 'DONE' %}
-                                    <span class="badge bg-success">Выполнено</span>
-                                    {% elif task.status == 'SKIPPED' %}
-                                    <span class="badge bg-secondary">Пропущено</span>
-                                    {% endif %}
-                                    {% if task.assigned_employees.all %}
-                                        {% for emp in task.assigned_employees.all %}
-                                            <span class="badge bg-info ms-1">{{ emp.user.full_name|default:emp.user.phone }}</span>
-                                        {% endfor %}
-                                    {% endif %}
-                                    {% if can_edit_order %}
-                                    <button class="btn btn-link btn-sm p-0 ms-2 text-primary js-manage-task-assignees" 
-                                            data-task-id="{{ task.id }}" 
-                                            data-task-title="{{ task.title }}"
-                                            data-assigned-ids="[{% for emp in task.assigned_employees.all %}{{ emp.id }}{% if not forloop.last %},{% endif %}{% endfor %}]">
-                                        <i class="bi bi-person-plus"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% if task.duration %}
-                            <div class="flex-shrink-0 ms-3 text-end">
-                                <span class="badge bg-light text-dark">{{ task.duration }} мин</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
 
             <!-- Блок: Фото и вложения -->
             {% if order.photos.all or order.attachments.all %}
@@ -1118,8 +1045,26 @@
 
                         <div class="card border-0 bg-light">
                             <div class="card-body">
+                                <!-- Quick add from extra services -->
+                                {% if extra_services_available %}
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small fw-bold">
+                                        <i class="bi bi-lightning me-1"></i>Быстрый выбор из доп. услуг (химчистка и т.д.)
+                                    </label>
+                                    <div class="d-flex flex-wrap gap-2" id="quick-extra-services">
+                                        {% for es in extra_services_available %}
+                                        <button type="button" class="btn btn-sm btn-outline-info quick-extra-svc-btn" 
+                                                data-name="{{ es.name }}" data-price="{{ es.price }}">
+                                            <i class="bi bi-plus-circle me-1"></i>{{ es.name }} <small class="text-muted">({{ es.price }} сом)</small>
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <hr class="my-3">
+                                {% endif %}
+
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="text-muted small">Добавь дополнительные задачи (не из шаблона услуги)</div>
+                                    <div class="text-muted small">Или добавь вручную</div>
                                     <button type="button" class="btn btn-sm btn-outline-primary" id="add-extra-task-btn">
                                         <i class="bi bi-plus-lg"></i> Добавить задачу
                                     </button>
@@ -1467,6 +1412,49 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addBtn) {
         addBtn.addEventListener('click', addRow);
     }
+
+    // Quick add from extra services (химчистка etc.)
+    modal.querySelectorAll('.quick-extra-svc-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const name = this.getAttribute('data-name');
+            const price = this.getAttribute('data-price');
+            
+            // Toggle active state
+            if (this.classList.contains('btn-info')) {
+                // Already selected — remove the task row
+                this.classList.remove('btn-info');
+                this.classList.add('btn-outline-info');
+                // Find and remove matching row
+                container.querySelectorAll('.extra-task-row').forEach(row => {
+                    const input = row.querySelector('input[name="extra_task_title"]');
+                    if (input && input.value === name) {
+                        row.remove();
+                    }
+                });
+                return;
+            }
+            
+            this.classList.remove('btn-outline-info');
+            this.classList.add('btn-info');
+            
+            // Create a task row with the service name
+            if (!template || !container) return;
+            const fragment = template.content.cloneNode(true);
+            const row = fragment.querySelector('.extra-task-row');
+            const input = fragment.querySelector('input[name="extra_task_title"]');
+            if (input) input.value = name;
+            const removeBtn = fragment.querySelector('.extra-task-remove');
+            const self = this;
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    row.remove();
+                    self.classList.remove('btn-info');
+                    self.classList.add('btn-outline-info');
+                });
+            }
+            container.appendChild(fragment);
+        });
+    });
 
     modal.addEventListener('shown.bs.modal', function () {
         if (container && container.children.length === 0) {
