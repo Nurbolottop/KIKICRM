@@ -17,6 +17,8 @@ urlpatterns = [
     # API для статистики
     path('api/order/<int:order_id>/task-stats/', views.get_task_stats, name='order_task_stats'),
     
-    # Страница моих задач (для Cleaner Panel)
     path('my-tasks/', views.my_tasks, name='my_tasks'),
+    
+    # Массовое распределение задач
+    path('order/<int:order_id>/tasks/bulk-assign/', views.bulk_assign_tasks, name='bulk_assign_tasks'),
 ]

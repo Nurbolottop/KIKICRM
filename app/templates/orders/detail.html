@@ -729,8 +729,8 @@
                             <i class="bi bi-play-circle"></i> Перевести в процесс
                         </button>
                         {% elif manager_actions.can_assign and order.manager_status == 'PROCESS' %}
-                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#moveToProcessModal">
-                            <i class="bi bi-person-plus"></i> Добавить клинеров
+                        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#distributeTasksModal">
+                            <i class="bi bi-grid-3x3-gap"></i> Распределить задачи
                         </button>
                         {% endif %}
                         
@@ -1508,6 +1508,96 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="button" class="btn btn-primary" id="saveTaskAssigneesBtn">Сохранить</button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- Modal: Bulk Task Distribution -->
+<div class="modal fade" id="distributeTasksModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Распределить задачи</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'tasks:bulk_assign_tasks' order.id %}">
+                {% csrf_token %}
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th style="width: 300px;">Задача</th>
+                                    <th>Исполнители</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in tasks_list %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ t.title }}</div>
+                                        {% if t.description %}
+                                        <small class="text-muted">{{ t.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            {% for oe in all_order_employees %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="task_{{ t.id }}_employees" 
+                                                       value="{{ oe.employee.id }}" 
+                                                       id="task_{{ t.id }}_emp_{{ oe.employee.id }}"
+                                                       {% if oe.employee in t.assigned_employees.all %}checked{% endif %}>
+                                                <label class="form-check-label small" for="task_{{ t.id }}_emp_{{ oe.employee.id }}">
+                                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                                {% if extra_tasks_list %}
+                                <tr class="table-info">
+                                    <td colspan="2" class="fw-bold">Дополнительные задачи</td>
+                                </tr>
+                                {% for t in extra_tasks_list %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ t.title }}</div>
+                                        {% if t.description %}
+                                        <small class="text-muted">{{ t.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            {% for oe in all_order_employees %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="task_{{ t.id }}_employees" 
+                                                       value="{{ oe.employee.id }}" 
+                                                       id="task_{{ t.id }}_emp_{{ oe.employee.id }}"
+                                                       {% if oe.employee in t.assigned_employees.all %}checked{% endif %}>
+                                                <label class="form-check-label small" for="task_{{ t.id }}_emp_{{ oe.employee.id }}">
+                                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить распределение</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

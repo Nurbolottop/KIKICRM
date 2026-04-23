@@ -141,16 +141,18 @@ body.crm-body {
 
 /* Install App Link */
 .install-app-link {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
     color: white !important;
-    margin: 16px 8px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    margin: 8px 12px 16px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .install-app-link:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
 }
 
 .install-app-link i {

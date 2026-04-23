@@ -252,3 +252,36 @@ def my_tasks(request):
     }
     
     return render(request, 'tasks/my_tasks.html', context)
+
+
+@login_required
+@require_POST
+def bulk_assign_tasks(request, order_id):
+    """
+    Массовое распределение задач между сотрудниками.
+    """
+    if not (can_assign_cleaners(request.user) or can_assign_cleaner_tasks(request.user)):
+        messages.error(request, 'Нет прав для назначения задач')
+        return redirect('orders_list')
+    
+    from apps.orders.models import Order
+    order = get_object_or_404(Order, id=order_id)
+    
+    tasks = order.tasks.all()
+    
+    for task in tasks:
+        # Получаем список ID сотрудников для этой задачи из POST
+        key = f'task_{task.id}_employees'
+        employee_ids = request.POST.getlist(key)
+        
+        # Очищаем и добавляем новых
+        task.assigned_employees.clear()
+        for emp_id in employee_ids:
+            try:
+                employee = Employee.objects.get(id=emp_id)
+                task.assigned_employees.add(employee)
+            except Employee.DoesNotExist:
+                continue
+    
+    messages.success(request, 'Задачи успешно распределены')
+    return redirect('orders:detail', pk=order_id)
