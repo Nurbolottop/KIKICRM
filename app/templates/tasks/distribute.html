@@ -9,7 +9,7 @@
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <a href="{% url 'orders:detail' order.id %}" class="text-muted text-decoration-none mb-2 d-inline-block">
+            <a href="{% url 'order_detail' order.id %}" class="text-muted text-decoration-none mb-2 d-inline-block">
                 <i class="bi bi-arrow-left me-1"></i> Назад к заказу
             </a>
             <h4 class="mb-0 fw-bold">
@@ -118,7 +118,7 @@
 
     <!-- Save bar -->
     <div class="d-flex gap-2 justify-content-end mt-4 mb-5">
-        <a href="{% url 'orders:detail' order.id %}" class="btn btn-outline-secondary px-4">
+        <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-secondary px-4">
             <i class="bi bi-x-lg me-1"></i>Отмена
         </a>
         <button type="button" class="btn btn-primary px-4" id="saveDistributionBtn">
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.href = '{% url "orders:detail" order.id %}';
+                window.location.href = '{% url "order_detail" order.id %}';
             } else {
                 alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
             }

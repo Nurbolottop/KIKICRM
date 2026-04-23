@@ -310,7 +310,7 @@ def bulk_assign_tasks(request, order_id):
         return JsonResponse({'success': True, 'message': 'Задачи успешно распределены'})
     
     messages.success(request, 'Задачи успешно распределены')
-    return redirect('orders:detail', pk=order_id)
+    return redirect('order_detail', pk=order_id)
 
 
 @login_required
@@ -322,7 +322,7 @@ def distribute_tasks_page(request, order_id):
 
     if not (can_assign_cleaners(request.user) or can_assign_cleaner_tasks(request.user)):
         messages.error(request, 'Нет прав для распределения задач')
-        return redirect('orders:detail', pk=order_id)
+        return redirect('order_detail', pk=order_id)
 
     order = get_object_or_404(Order, id=order_id)
 
