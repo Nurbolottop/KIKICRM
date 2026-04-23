@@ -12,6 +12,7 @@ class ExpenseCategory(models.TextChoices):
     UTILITIES = 'UTILITIES', 'Коммунальные услуги'
     OFFICE = 'OFFICE', 'Офисные расходы'
     MARKETING = 'MARKETING', 'Маркетинг'
+    LUNCH = 'LUNCH', 'Обед'
     OTHER = 'OTHER', 'Другое'
 
 
