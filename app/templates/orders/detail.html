@@ -802,27 +802,65 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    {% for room in order.service.checklist %}
-                    <div class="card mb-3 border-0 bg-light">
-                        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
-                            <span class="fw-medium">
-                                <i class="bi bi-door-open text-primary me-2"></i>{{ room.name|default:"Комната" }}
-                            </span>
-                            {% if room.payment %}
-                            <span class="badge bg-success">{{ room.payment }} сом клинеру</span>
+                    {% if tasks_by_room %}
+                        {% for room_name, tasks in tasks_by_room.items %}
+                        <div class="card mb-3 border-0 bg-light">
+                            <div class="card-header bg-white border-bottom py-2">
+                                <span class="fw-medium">
+                                    <i class="bi bi-door-open text-primary me-2"></i>{{ room_name }}
+                                </span>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                {% for task in tasks %}
+                                <li class="list-group-item py-2 border-0 bg-transparent">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-check2-square text-success me-2 mt-1"></i>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <span class="fw-medium">{{ task.title }}</span>
+                                                {% if task.status == 'DONE' %}
+                                                    <span class="badge bg-success-soft text-success small">Выполнено</span>
+                                                {% elif task.status == 'IN_PROGRESS' %}
+                                                    <span class="badge bg-primary-soft text-primary small">В работе</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                                {% for emp in task.assigned_employees.all %}
+                                                    <span class="badge bg-info-soft text-info" style="font-size: 0.7rem;">
+                                                        <i class="bi bi-person"></i> {{ emp.user.full_name|default:emp.user.phone }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for room in order.service.checklist %}
+                        <div class="card mb-3 border-0 bg-light">
+                            <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                                <span class="fw-medium">
+                                    <i class="bi bi-door-open text-primary me-2"></i>{{ room.name|default:"Комната" }}
+                                </span>
+                                {% if room.payment %}
+                                <span class="badge bg-success">{{ room.payment }} сом клинеру</span>
+                                {% endif %}
+                            </div>
+                            {% if room.tasks %}
+                            <ul class="list-group list-group-flush">
+                                {% for task in room.tasks %}
+                                <li class="list-group-item py-2 border-0 bg-transparent">
+                                    <i class="bi bi-check2-square text-success me-2"></i>{{ task }}
+                                </li>
+                                {% endfor %}
+                            </ul>
                             {% endif %}
                         </div>
-                        {% if room.tasks %}
-                        <ul class="list-group list-group-flush">
-                            {% for task in room.tasks %}
-                            <li class="list-group-item py-2 border-0 bg-transparent">
-                                <i class="bi bi-check2-square text-success me-2"></i>{{ task }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% endif %}
 
                     {% if extra_tasks_list %}
                     <div class="card border-0 bg-light mt-3">

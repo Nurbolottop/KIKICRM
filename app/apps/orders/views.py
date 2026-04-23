@@ -572,11 +572,20 @@ class OrderDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
             finished_at__isnull=True
         )
         context['extra_tasks_list'] = all_tasks_qs.filter(order_position__gte=100000)
-        context['tasks_list'] = all_tasks_qs.filter(order_position__lt=100000)  # Только обычные задачи
-        context['tasks_total'] = context['tasks_list'].count()
-        context['tasks_completed'] = context['tasks_list'].filter(
-            status__in=['DONE', 'SKIPPED']
-        ).count()
+        context['tasks_list'] = all_tasks_qs.filter(order_position__lt=100000)
+        
+        # Группируем задачи по комнатам для отображения
+        tasks_by_room = {}
+        for t in context['tasks_list']:
+            room_name = "Общее"
+            if t.description and t.description.startswith("Комната: "):
+                room_name = t.description.replace("Комната: ", "")
+            
+            if room_name not in tasks_by_room:
+                tasks_by_room[room_name] = []
+            tasks_by_room[room_name].append(t)
+        context['tasks_by_room'] = tasks_by_room
+
         context['order_copy_text'] = _build_order_copy_text(order)
         context['order_extra_services'] = order.order_extra_services.select_related('extra_service').all()
         

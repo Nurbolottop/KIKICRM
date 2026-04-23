@@ -454,6 +454,28 @@ body.crm-body {
     margin-right: 12px;
 }
 
+.install-app-link i {
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+/* Soft Badges */
+.badge-soft {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+.bg-primary-soft { background-color: rgba(99, 102, 241, 0.1); }
+.bg-success-soft { background-color: rgba(16, 185, 129, 0.1); }
+.bg-info-soft { background-color: rgba(6, 182, 212, 0.1); }
+.bg-warning-soft { background-color: rgba(245, 158, 11, 0.1); }
+.bg-danger-soft { background-color: rgba(239, 68, 68, 0.1); }
+
+.text-primary { color: #6366f1 !important; }
+.text-success { color: #10b981 !important; }
+.text-info { color: #06b6d4 !important; }
+.text-warning { color: #f59e0b !important; }
+.text-danger { color: #ef4444 !important; }
+
 .stat-icon.clients {
     background: #eef2ff;
     color: var(--primary-color);
