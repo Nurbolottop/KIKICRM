@@ -260,7 +260,7 @@ def order_detail_cl(request, order_id):
     all_assigned_cleaners = _get_assigned_employees_qs(order)
     assigned_employees = [oe.employee for oe in all_assigned_cleaners if oe.employee]
 
-    all_tasks = order.tasks.select_related('assigned_employee', 'assigned_employee__user').order_by('order_position', 'id')
+    all_tasks = order.tasks.prefetch_related('assigned_employees', 'assigned_employees__user').order_by('order_position', 'id')
     extra_tasks = all_tasks.filter(order_position__gte=100000)
     main_tasks = all_tasks.filter(order_position__lt=100000)
 
@@ -272,10 +272,10 @@ def order_detail_cl(request, order_id):
             room = t.description.replace('Комната:', '', 1).strip()
         grouped.setdefault(room or 'Без комнаты', []).append(t)
 
-    can_assign = _is_senior(request.user) and _is_senior_on_order(order, employee)
+    can_assign = False # _is_senior(request.user) and _is_senior_on_order(order, employee)
     can_review = _is_senior(request.user) and _is_senior_on_order(order, employee)
     work_started = _is_work_started(order)
-    all_assigned = main_tasks.exists() and main_tasks.filter(assigned_employee__isnull=True).count() == 0
+    all_assigned = main_tasks.exists() and main_tasks.filter(assigned_employees__isnull=True).count() == 0
 
     # Для таймера берем started_at и finished_at у назначения senior_cleaner
     senior_assignment = OrderEmployee.objects.filter(
@@ -306,62 +306,8 @@ def order_detail_cl(request, order_id):
 @login_required
 @require_POST
 def assign_task_cl(request, order_id, task_id):
-    if not is_cleaner(request.user):
-        return redirect('dashboard')
-
-    order = get_object_or_404(Order, id=order_id)
-    employee = _get_employee(request)
-    if not _is_senior(request.user) or not _is_senior_on_order(order, employee):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Только старший клинер может распределять задачи.'}, status=403)
-        return render(request, 'cleaner_panel/error_cl.html', {
-            'message': 'Только старший клинер может распределять задачи.'
-        })
-
-    if _is_work_started(order):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Нельзя менять распределение после начала работы.'}, status=400)
-        return render(request, 'cleaner_panel/error_cl.html', {
-            'message': 'Нельзя менять распределение после начала работы.'
-        })
-
-    task = get_object_or_404(OrderTask, id=task_id, order=order)
-    old_assignee = task.assigned_employee.user.full_name if task.assigned_employee and task.assigned_employee.user else ''
-    assigned_employee_id = (request.POST.get('assigned_employee_id') or '').strip()
-    if not assigned_employee_id:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Не выбран сотрудник.'}, status=400)
-        return redirect('order_detail_cl', order_id=order.id)
-
-    # Только сотрудники назначенные на этот заказ
-    allowed_employee_ids = set(order.order_employees.values_list('employee_id', flat=True))
-    try:
-        assigned_employee_id_int = int(assigned_employee_id)
-    except ValueError:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Некорректный сотрудник.'}, status=400)
-        return redirect('order_detail_cl', order_id=order.id)
-
-    if assigned_employee_id_int not in allowed_employee_ids:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Этот сотрудник не назначен на заказ.'}, status=400)
-        return render(request, 'cleaner_panel/error_cl.html', {
-            'message': 'Этот сотрудник не назначен на заказ.'
-        })
-
-    task.assigned_employee_id = assigned_employee_id_int
-    task.save(update_fields=['assigned_employee'])
-
-    new_assignee = task.assigned_employee.user.full_name or task.assigned_employee.user.phone
-    if old_assignee and old_assignee != new_assignee:
-        _notify_order_event(order, f"👥 Задача переназначена: {task.title} ({old_assignee} -> {new_assignee})", request.user)
-    else:
-        _notify_order_event(order, f"👥 Задача назначена: {task.title} -> {new_assignee}", request.user)
-
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        assignee = new_assignee
-        return JsonResponse({'ok': True, 'task_id': task.id, 'assigned_employee_id': assigned_employee_id_int, 'assignee': assignee})
-    return redirect('order_detail_cl', order_id=order.id)
+    """Больше не используется — распределяет менеджер."""
+    return JsonResponse({'ok': False, 'error': 'Старший клинер больше не распределяет задачи. Это делает менеджер.'}, status=403)
 
 
 @login_required
@@ -467,86 +413,8 @@ def senior_done_cl(request, order_id):
 @login_required
 @require_POST
 def bulk_assign_tasks_cl(request, order_id):
-    """Оптом назначить задачи (все или по комнате) одному клинеру."""
-    if not is_cleaner(request.user):
-        return redirect('dashboard')
-
-    order = get_object_or_404(Order, id=order_id)
-    employee = _get_employee(request)
-    if not _is_senior(request.user) or not _is_senior_on_order(order, employee):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Только старший клинер может распределять задачи.'}, status=403)
-        return render(request, 'cleaner_panel/error_cl.html', {
-            'message': 'Только старший клинер может распределять задачи.'
-        })
-
-    if _is_work_started(order):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'ok': False, 'error': 'Нельзя менять распределение после начала работы.'}, status=400)
-        return render(request, 'cleaner_panel/error_cl.html', {
-            'message': 'Нельзя менять распределение после начала работы.'
-        })
-
-    assigned_employee_id = (request.POST.get('assigned_employee_id') or '').strip()
-    scope = (request.POST.get('scope') or '').strip()  # all | room
-    room = (request.POST.get('room') or '').strip()  # название комнаты из UI
-    include_extra = (request.POST.get('include_extra') or '').strip() in ['1', 'true', 'True', 'yes', 'on']
-
-    if not assigned_employee_id:
-        return JsonResponse({'ok': False, 'error': 'Не выбран сотрудник.'}, status=400)
-    try:
-        assigned_employee_id_int = int(assigned_employee_id)
-    except ValueError:
-        return JsonResponse({'ok': False, 'error': 'Некорректный сотрудник.'}, status=400)
-
-    allowed_employee_ids = set(order.order_employees.values_list('employee_id', flat=True))
-    if assigned_employee_id_int not in allowed_employee_ids:
-        return JsonResponse({'ok': False, 'error': 'Этот сотрудник не назначен на заказ.'}, status=400)
-
-    # Основные задачи
-    qs = order.tasks.filter(order_position__lt=100000)
-    if include_extra:
-        qs = order.tasks.all()
-
-    if scope == 'room':
-        # Для "Без комнаты" используем пустое/без префикса описание
-        if room and room != 'Без комнаты':
-            qs = qs.filter(description=f'Комната: {room}')
-        else:
-            qs = qs.filter(description='')
-    elif scope != 'all':
-        return JsonResponse({'ok': False, 'error': 'Некорректный scope.'}, status=400)
-
-    updated_ids = list(qs.values_list('id', flat=True))
-    qs.update(assigned_employee_id=assigned_employee_id_int)
-
-    # Собираем ответ для UI
-    assignee_name = ''
-    try:
-        assignee_user = OrderEmployee.objects.select_related('employee__user').get(
-            order=order,
-            employee_id=assigned_employee_id_int,
-        ).employee.user
-        assignee_name = assignee_user.full_name or assignee_user.phone
-    except Exception:
-        assignee_name = str(assigned_employee_id_int)
-
-    if updated_ids:
-        scope_label = f"комната '{room}'" if scope == 'room' and room else 'все задачи'
-        if include_extra:
-            scope_label = 'все задачи включая дополнительные'
-        _notify_order_event(
-            order,
-            f"👥 Массовое назначение: {len(updated_ids)} задач -> {assignee_name} ({scope_label})",
-            request.user
-        )
-
-    return JsonResponse({
-        'ok': True,
-        'assigned_employee_id': assigned_employee_id_int,
-        'assignee': assignee_name,
-        'updated_task_ids': updated_ids,
-    })
+    """Больше не используется — распределяет менеджер."""
+    return JsonResponse({'ok': False, 'error': 'Старший клинер больше не распределяет задачи. Это делает менеджер.'}, status=403)
 
 
 @login_required
@@ -633,7 +501,7 @@ def complete_task_cl(request, order_id, task_id):
     employee = _get_employee(request)
     task = get_object_or_404(OrderTask, id=task_id, order=order)
 
-    if not employee or task.assigned_employee_id != employee.id:
+    if not employee or not task.assigned_employees.filter(id=employee.id).exists():
         return render(request, 'cleaner_panel/error_cl.html', {
             'message': 'Вы можете отмечать только свои задачи.'
         })
