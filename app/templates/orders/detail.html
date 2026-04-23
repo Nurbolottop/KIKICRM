@@ -802,65 +802,27 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    {% if tasks_by_room %}
-                        {% for room_name, tasks in tasks_by_room.items %}
-                        <div class="card mb-3 border-0 bg-light">
-                            <div class="card-header bg-white border-bottom py-2">
-                                <span class="fw-medium">
-                                    <i class="bi bi-door-open text-primary me-2"></i>{{ room_name }}
-                                </span>
-                            </div>
-                            <ul class="list-group list-group-flush">
-                                {% for task in tasks %}
-                                <li class="list-group-item py-2 border-0 bg-transparent">
-                                    <div class="d-flex align-items-start">
-                                        <i class="bi bi-check2-square text-success me-2 mt-1"></i>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <span class="fw-medium">{{ task.title }}</span>
-                                                {% if task.status == 'DONE' %}
-                                                    <span class="badge bg-success-soft text-success small">Выполнено</span>
-                                                {% elif task.status == 'IN_PROGRESS' %}
-                                                    <span class="badge bg-primary-soft text-primary small">В работе</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="mt-1 d-flex flex-wrap gap-1">
-                                                {% for emp in task.assigned_employees.all %}
-                                                    <span class="badge bg-info-soft text-info" style="font-size: 0.7rem;">
-                                                        <i class="bi bi-person"></i> {{ emp.user.full_name|default:emp.user.phone }}
-                                                    </span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        {% for room in order.service.checklist %}
-                        <div class="card mb-3 border-0 bg-light">
-                            <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
-                                <span class="fw-medium">
-                                    <i class="bi bi-door-open text-primary me-2"></i>{{ room.name|default:"Комната" }}
-                                </span>
-                                {% if room.payment %}
-                                <span class="badge bg-success">{{ room.payment }} сом клинеру</span>
-                                {% endif %}
-                            </div>
-                            {% if room.tasks %}
-                            <ul class="list-group list-group-flush">
-                                {% for task in room.tasks %}
-                                <li class="list-group-item py-2 border-0 bg-transparent">
-                                    <i class="bi bi-check2-square text-success me-2"></i>{{ task }}
-                                </li>
-                                {% endfor %}
-                            </ul>
+                    {% for room in order.service.checklist %}
+                    <div class="card mb-3 border-0 bg-light">
+                        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                            <span class="fw-medium">
+                                <i class="bi bi-door-open text-primary me-2"></i>{{ room.name|default:"Комната" }}
+                            </span>
+                            {% if room.payment %}
+                            <span class="badge bg-success">{{ room.payment }} сом клинеру</span>
                             {% endif %}
                         </div>
-                        {% endfor %}
-                    {% endif %}
+                        {% if room.tasks %}
+                        <ul class="list-group list-group-flush">
+                            {% for task in room.tasks %}
+                            <li class="list-group-item py-2 border-0 bg-transparent">
+                                <i class="bi bi-check2-square text-success me-2"></i>{{ task }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
 
                     {% if extra_tasks_list %}
                     <div class="card border-0 bg-light mt-3">
@@ -1551,159 +1513,209 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <!-- Modal: Bulk Task Distribution -->
 <div class="modal fade" id="distributeTasksModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
+    <div class="modal-dialog modal-fullscreen-md-down modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="min-height: 80vh;">
+            <div class="modal-header bg-primary text-white py-3">
                 <h5 class="modal-title"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Распределить задачи</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'tasks:bulk_assign_tasks' order.id %}">
-                {% csrf_token %}
-                <div class="modal-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light sticky-top">
-                                <tr>
-                                    <th style="width: 300px;">Задача</th>
-                                    <th>Исполнители</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for t in tasks_list %}
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">{{ t.title }}</div>
-                                        {% if t.description %}
-                                        <small class="text-muted">{{ t.description|truncatechars:50 }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-wrap gap-3">
-                                            {% for oe in all_order_employees %}
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       name="task_{{ t.id }}_employees" 
-                                                       value="{{ oe.employee.id }}" 
-                                                       id="task_{{ t.id }}_emp_{{ oe.employee.id }}"
-                                                       {% if oe.employee in t.assigned_employees.all %}checked{% endif %}>
-                                                <label class="form-check-label small" for="task_{{ t.id }}_emp_{{ oe.employee.id }}">
-                                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
-                                                </label>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </td>
-                                </tr>
+            <div class="modal-body p-3" id="distributeTasksBody">
+                {% for room_name, tasks in tasks_by_room.items %}
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-header bg-light py-2 fw-bold">
+                        <i class="bi bi-door-open text-primary me-2"></i>{{ room_name }}
+                    </div>
+                    <div class="card-body p-0">
+                        {% for task in tasks %}
+                        <div class="d-flex align-items-start border-bottom px-3 py-2">
+                            <div class="flex-grow-1 me-3" style="min-width: 0;">
+                                <div class="fw-medium">{{ task.title }}</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                                {% for oe in all_order_employees %}
+                                <label class="btn btn-sm {% if oe.employee in task.assigned_employees.all %}btn-primary{% else %}btn-outline-secondary{% endif %} distribute-emp-btn" style="font-size: 0.75rem; padding: 2px 8px; cursor: pointer;">
+                                    <input type="checkbox" class="d-none distribute-check"
+                                           data-task-id="{{ task.id }}"
+                                           value="{{ oe.employee.id }}"
+                                           {% if oe.employee in task.assigned_employees.all %}checked{% endif %}>
+                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                                </label>
                                 {% endfor %}
-                                
-                                {% if extra_tasks_list %}
-                                <tr class="table-info">
-                                    <td colspan="2" class="fw-bold">Дополнительные задачи</td>
-                                </tr>
-                                {% for t in extra_tasks_list %}
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">{{ t.title }}</div>
-                                        {% if t.description %}
-                                        <small class="text-muted">{{ t.description|truncatechars:50 }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-wrap gap-3">
-                                            {% for oe in all_order_employees %}
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       name="task_{{ t.id }}_employees" 
-                                                       value="{{ oe.employee.id }}" 
-                                                       id="task_{{ t.id }}_emp_{{ oe.employee.id }}"
-                                                       {% if oe.employee in t.assigned_employees.all %}checked{% endif %}>
-                                                <label class="form-check-label small" for="task_{{ t.id }}_emp_{{ oe.employee.id }}">
-                                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
-                                                </label>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                                {% endif %}
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сохранить распределение</button>
+                {% endfor %}
+
+                {% if extra_tasks_list %}
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-header bg-warning bg-opacity-25 py-2 fw-bold">
+                        <i class="bi bi-plus-circle me-2"></i>Дополнительные задачи
+                    </div>
+                    <div class="card-body p-0">
+                        {% for task in extra_tasks_list %}
+                        <div class="d-flex align-items-start border-bottom px-3 py-2">
+                            <div class="flex-grow-1 me-3" style="min-width: 0;">
+                                <div class="fw-medium">{{ task.title }}</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                                {% for oe in all_order_employees %}
+                                <label class="btn btn-sm {% if oe.employee in task.assigned_employees.all %}btn-primary{% else %}btn-outline-secondary{% endif %} distribute-emp-btn" style="font-size: 0.75rem; padding: 2px 8px; cursor: pointer;">
+                                    <input type="checkbox" class="d-none distribute-check"
+                                           data-task-id="{{ task.id }}"
+                                           value="{{ oe.employee.id }}"
+                                           {% if oe.employee in task.assigned_employees.all %}checked{% endif %}>
+                                    {{ oe.employee.user.full_name|default:oe.employee.user.phone }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            </form>
+                {% endif %}
+
+                {% if not tasks_by_room and not extra_tasks_list %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    Задачи ещё не сгенерированы. Сначала переведите заказ в процесс.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveBulkAssignBtn">
+                    <i class="bi bi-check-lg me-1"></i>Сохранить распределение
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const manageModalEl = document.getElementById('manageTaskAssigneesModal');
-    const manageModal = window.bootstrap ? new bootstrap.Modal(manageModalEl) : null;
-    const manageForm = document.getElementById('manageTaskAssigneesForm');
-    const modalTaskTitle = document.getElementById('modalTaskTitle');
-    const modalTaskId = document.getElementById('modalTaskId');
-    const saveBtn = document.getElementById('saveTaskAssigneesBtn');
-
-    document.querySelectorAll('.js-manage-task-assignees').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const taskId = this.getAttribute('data-task-id');
-            const taskTitle = this.getAttribute('data-task-title');
-            const assignedIds = JSON.parse(this.getAttribute('data-assigned-ids') || '[]');
-
-            modalTaskId.value = taskId;
-            modalTaskTitle.textContent = taskTitle;
-
-            // Reset checkboxes
-            manageForm.querySelectorAll('input[name="employee_ids"]').forEach(cb => {
-                cb.checked = assignedIds.includes(parseInt(cb.value));
-            });
-
-            if (manageModal) manageModal.show();
+    // Toggle button style on click
+    document.querySelectorAll('.distribute-emp-btn').forEach(label => {
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cb = this.querySelector('.distribute-check');
+            cb.checked = !cb.checked;
+            if (cb.checked) {
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-primary');
+            } else {
+                this.classList.remove('btn-primary');
+                this.classList.add('btn-outline-secondary');
+            }
         });
     });
 
+    // AJAX bulk save
+    const saveBtn = document.getElementById('saveBulkAssignBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', async function() {
-            const taskId = modalTaskId.value;
-            const formData = new FormData(manageForm);
-            
-            // Collect all selected IDs
-            const employeeIds = [];
-            manageForm.querySelectorAll('input[name="employee_ids"]:checked').forEach(cb => {
-                employeeIds.push(cb.value);
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Сохраняю...';
+
+            const assignments = {};
+            document.querySelectorAll('.distribute-check').forEach(cb => {
+                const taskId = cb.getAttribute('data-task-id');
+                if (!assignments[taskId]) assignments[taskId] = [];
+                if (cb.checked) {
+                    assignments[taskId].push(cb.value);
+                }
             });
 
-            const submitData = new FormData();
-            employeeIds.forEach(id => submitData.append('employee_ids[]', id));
-            submitData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            formData.append('assignments', JSON.stringify(assignments));
 
             try {
-                const response = await fetch(`/api/task/${taskId}/assign/`, {
+                const response = await fetch('/order/{{ order.id }}/tasks/bulk-assign/', {
                     method: 'POST',
-                    body: submitData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-
                 const result = await response.json();
                 if (result.success) {
-                    location.reload(); // Refresh to show changes
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('distributeTasksModal'));
+                    if (modal) modal.hide();
+
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg';
+                    alertDiv.style.zIndex = '9999';
+                    alertDiv.innerHTML = '<i class="bi bi-check-circle me-2"></i>' + result.message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                    document.body.appendChild(alertDiv);
+                    setTimeout(() => alertDiv.remove(), 3000);
                 } else {
                     alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
                 }
             } catch (error) {
                 console.error(error);
                 alert('Произошла ошибка при сохранении');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-lg me-1"></i>Сохранить распределение';
             }
         });
+    }
+
+    // Per-task assignees modal (for extra tasks in checklist section)
+    const manageModalEl = document.getElementById('manageTaskAssigneesModal');
+    if (manageModalEl) {
+        const manageModal = window.bootstrap ? new bootstrap.Modal(manageModalEl) : null;
+        const manageForm = document.getElementById('manageTaskAssigneesForm');
+        const modalTaskTitle = document.getElementById('modalTaskTitle');
+        const modalTaskId = document.getElementById('modalTaskId');
+        const perTaskSaveBtn = document.getElementById('saveTaskAssigneesBtn');
+
+        document.querySelectorAll('.js-manage-task-assignees').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const taskTitle = this.getAttribute('data-task-title');
+                const assignedIds = JSON.parse(this.getAttribute('data-assigned-ids') || '[]');
+                modalTaskId.value = taskId;
+                modalTaskTitle.textContent = taskTitle;
+                manageForm.querySelectorAll('input[name="employee_ids"]').forEach(cb => {
+                    cb.checked = assignedIds.includes(parseInt(cb.value));
+                });
+                if (manageModal) manageModal.show();
+            });
+        });
+
+        if (perTaskSaveBtn) {
+            perTaskSaveBtn.addEventListener('click', async function() {
+                const taskId = modalTaskId.value;
+                const employeeIds = [];
+                manageForm.querySelectorAll('input[name="employee_ids"]:checked').forEach(cb => {
+                    employeeIds.push(cb.value);
+                });
+                const submitData = new FormData();
+                employeeIds.forEach(id => submitData.append('employee_ids[]', id));
+                submitData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                try {
+                    const response = await fetch(`/api/task/${taskId}/assign/`, {
+                        method: 'POST',
+                        body: submitData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Произошла ошибка при сохранении');
+                }
+            });
+        }
     }
 });
 </script>
 
 {% endblock %}
+

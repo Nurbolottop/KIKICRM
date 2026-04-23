@@ -258,30 +258,57 @@ def my_tasks(request):
 @require_POST
 def bulk_assign_tasks(request, order_id):
     """
-    Массовое распределение задач между сотрудниками.
+    Массовое распределение задач между сотрудниками (AJAX).
     """
+    import json
+    
     if not (can_assign_cleaners(request.user) or can_assign_cleaner_tasks(request.user)):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Нет прав для назначения задач'})
         messages.error(request, 'Нет прав для назначения задач')
         return redirect('orders_list')
     
     from apps.orders.models import Order
     order = get_object_or_404(Order, id=order_id)
     
-    tasks = order.tasks.all()
+    # Parse JSON assignments: { "task_id": ["emp_id", ...], ... }
+    raw_assignments = request.POST.get('assignments', '{}')
+    try:
+        assignments = json.loads(raw_assignments)
+    except (json.JSONDecodeError, TypeError):
+        assignments = {}
     
-    for task in tasks:
-        # Получаем список ID сотрудников для этой задачи из POST
-        key = f'task_{task.id}_employees'
-        employee_ids = request.POST.getlist(key)
-        
-        # Очищаем и добавляем новых
-        task.assigned_employees.clear()
-        for emp_id in employee_ids:
+    if not assignments:
+        # Fallback: try old form-style task_{id}_employees keys
+        tasks = order.tasks.all()
+        for task in tasks:
+            key = f'task_{task.id}_employees'
+            employee_ids = request.POST.getlist(key)
+            task.assigned_employees.clear()
+            for emp_id in employee_ids:
+                try:
+                    employee = Employee.objects.get(id=emp_id)
+                    task.assigned_employees.add(employee)
+                except Employee.DoesNotExist:
+                    continue
+    else:
+        for task_id_str, emp_ids in assignments.items():
             try:
-                employee = Employee.objects.get(id=emp_id)
-                task.assigned_employees.add(employee)
-            except Employee.DoesNotExist:
+                task = OrderTask.objects.get(id=int(task_id_str), order=order)
+            except (OrderTask.DoesNotExist, ValueError):
                 continue
+            
+            task.assigned_employees.clear()
+            for emp_id in emp_ids:
+                try:
+                    employee = Employee.objects.get(id=int(emp_id))
+                    task.assigned_employees.add(employee)
+                except (Employee.DoesNotExist, ValueError):
+                    continue
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Задачи успешно распределены'})
     
     messages.success(request, 'Задачи успешно распределены')
     return redirect('orders:detail', pk=order_id)
+
