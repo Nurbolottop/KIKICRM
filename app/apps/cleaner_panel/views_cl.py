@@ -434,7 +434,7 @@ def start_work_cl(request, order_id):
         return redirect('order_detail_cl', order_id=order.id)
 
     main_tasks = order.tasks.filter(order_position__lt=100000)
-    if main_tasks.exists() and main_tasks.filter(assigned_employee__isnull=True).exists():
+    if main_tasks.exists() and main_tasks.filter(assigned_employees__isnull=True).exists():
         return render(request, 'cleaner_panel/error_cl.html', {
             'message': 'Сначала распределите все задачи.'
         })
