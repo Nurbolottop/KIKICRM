@@ -128,13 +128,11 @@ class OrderTask(models.Model):
         choices=OrderTaskStatus.choices,
         default=OrderTaskStatus.PENDING
     )
-    assigned_employee = models.ForeignKey(
+    assigned_employees = models.ManyToManyField(
         Employee,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='assigned_tasks',
-        verbose_name='Назначенный сотрудник'
+        verbose_name='Назначенные сотрудники'
     )
     order_position = models.PositiveIntegerField(
         'Порядок',

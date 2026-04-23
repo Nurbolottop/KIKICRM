@@ -271,7 +271,7 @@ ROLE_PERMISSIONS = {
         'dashboard.limited': False,
         # Cleaner Panel
         'cleaner_panel.view': True,
-        'cleaner_panel.assign': True,
+        'cleaner_panel.assign': False,
         # Admin settings
         'admin.settings': False,
     },

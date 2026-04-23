@@ -76,7 +76,6 @@ class OrderTaskAdmin(admin.ModelAdmin):
         'id',
         'order',
         'title',
-        'assigned_employee',
         'status',
         'started_at',
         'finished_at',
@@ -86,17 +85,16 @@ class OrderTaskAdmin(admin.ModelAdmin):
     list_filter = [
         'status',
         'created_at',
-        'assigned_employee',
         'order__service'
     ]
     
     search_fields = [
         'title',
         'order__order_code',
-        'assigned_employee__user__full_name'
+        'assigned_employees__user__full_name'
     ]
     
-    list_editable = ['status', 'assigned_employee']
+    list_editable = ['status']
     
     readonly_fields = [
         'created_at',
@@ -110,7 +108,7 @@ class OrderTaskAdmin(admin.ModelAdmin):
             'fields': ('order', 'title', 'description')
         }),
         ('Назначение', {
-            'fields': ('assigned_employee', 'order_position')
+            'fields': ('assigned_employees', 'order_position')
         }),
         ('Статус', {
             'fields': ('status',)
