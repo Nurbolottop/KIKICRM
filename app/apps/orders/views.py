@@ -984,8 +984,7 @@ class ManagerMoveToProcessView(LoginRequiredMixin, View):
                         pass
 
                 # Назначаем старшего клинера (обязательно)
-                if not senior_cleaner_id:
-                    raise ValueError('Выберите старшего клинера.')
+                # Старший клинер НЕ обязателен: заказ можно перевести в процесс без назначений.
 
                 from apps.employees.models import Employee
                 from apps.accounts.models import User
@@ -1004,22 +1003,27 @@ class ManagerMoveToProcessView(LoginRequiredMixin, View):
                         )
                         return employee
                 
-                senior_cleaner = get_or_create_employee_from_user(senior_cleaner_id)
+                if senior_cleaner_id:
+                    senior_cleaner = get_or_create_employee_from_user(senior_cleaner_id)
 
-                # Удаляем предыдущего старшего клинера (если меняли)
-                order.order_employees.filter(
-                    role_on_order='senior_cleaner'
-                ).exclude(employee=senior_cleaner).delete()
+                    # Удаляем предыдущего старшего клинера (если меняли)
+                    order.order_employees.filter(
+                        role_on_order='senior_cleaner'
+                    ).exclude(employee=senior_cleaner).delete()
 
-                # Создаем/обновляем запись старшего клинера и сохраняем заметку
-                OrderEmployee.objects.update_or_create(
-                    order=order,
-                    employee=senior_cleaner,
-                    defaults={
-                        'role_on_order': 'senior_cleaner',
-                        'notes': notes_for_cleaners,
-                    }
-                )
+                    # Создаем/обновляем запись старшего клинера и сохраняем заметку
+                    OrderEmployee.objects.update_or_create(
+                        order=order,
+                        employee=senior_cleaner,
+                        defaults={
+                            'role_on_order': 'senior_cleaner',
+                            'notes': notes_for_cleaners,
+                        }
+                    )
+                else:
+                    # Если старшего клинера не выбрали — сохраняем заметку как есть (не привязывая к сотруднику)
+                    # и не блокируем перевод заказа в процесс.
+                    pass
 
                 # Назначаем обычных клинеров
                 selected_cleaners = []

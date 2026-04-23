@@ -138,6 +138,24 @@ body.crm-body {
     text-align: center;
 }
 
+/* Install App Link */
+.install-app-link {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+    color: white !important;
+    margin: 16px 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.install-app-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+.install-app-link i {
+    color: white !important;
+}
+
 /* Main Content */
 .crm-main {
     flex: 1;

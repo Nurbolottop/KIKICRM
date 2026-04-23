@@ -1,12 +1,15 @@
 """URL configuration for core project."""
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('manifest.json', TemplateView.as_view(template_name='manifest.json', content_type='application/json')),
+    path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript')),
     
     # Auth
     path('accounts/', include('apps.accounts.urls')),  # Должно быть ПЕРЕД django.contrib.auth.urls

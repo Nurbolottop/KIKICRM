@@ -8,6 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'css/crm.css' %}">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KIKI CRM">
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="crm-body">
@@ -33,6 +38,50 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/sidebar.js' %}"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW error', err));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installAppBtn')?.classList.remove('d-none');
+        });
+
+        // Show install button for iOS
+        window.addEventListener('DOMContentLoaded', () => {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            if (isIOS && !isStandalone) {
+                document.getElementById('installAppBtn')?.classList.remove('d-none');
+            }
+        });
+
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    document.getElementById('installAppBtn')?.classList.add('d-none');
+                }
+            } else {
+                // For iOS or browsers that don't support beforeinstallprompt
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                    alert('Чтобы установить приложение на iPhone:\n1. Нажмите кнопку "Поделиться" (квадрат со стрелкой)\n2. Выберите "На экран «Домой»"');
+                } else {
+                    alert('Ваше устройство уже установило приложение или не поддерживает автоматическую установку.');
+                }
+            }
+        }
+    </script>
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>

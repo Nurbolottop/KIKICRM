@@ -257,8 +257,8 @@ class OrderStatusService:
         if not OrderStatusService._can_change_manager_status(user):
             raise PermissionDenied('Только менеджер может сдать проект.')
         
-        if order.manager_status != Order.ManagerStatus.REVIEW:
-            raise ValueError('Заказ должен быть на проверке.')
+        if order.manager_status not in [Order.ManagerStatus.REVIEW, Order.ManagerStatus.PROCESS]:
+            raise ValueError('Заказ должен быть на проверке или в процессе.')
 
         now = timezone.now()
 
@@ -554,7 +554,7 @@ class OrderStatusChecker:
                 Order.ManagerStatus.PROCESS
             ],
             'can_move_to_process': order.manager_status == Order.ManagerStatus.IN_PROGRESS,
-            'can_deliver': order.manager_status == Order.ManagerStatus.REVIEW,
+            'can_deliver': order.manager_status in [Order.ManagerStatus.REVIEW, Order.ManagerStatus.PROCESS],
         }
 
     @staticmethod
